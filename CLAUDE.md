@@ -49,6 +49,16 @@ repo.**
   module without a concrete reason tied to a real limitation you've hit —
   "this library would be more standard" isn't sufficient justification on
   its own.
+- **A component change is "verified" only when it (a) compiles on
+  Android + desktop against real Compose deps AND (b) has been run on a
+  real screen with its interactions actually exercised and visually
+  confirmed (screenshots or a human looking at it).** Compile-only
+  verification is explicitly NOT sufficient for this project — the
+  product's entire value is visual. This rule exists because Day 1–2
+  shipped a bottom sheet whose drag-to-dismiss compiled everywhere and
+  was broken the first time a human touched it (2026-07-12): every
+  testbed was compile-only, no app had ever been launched. Don't tag a
+  registry release for a component that hasn't met both bars.
 
 ## Build behavior
 
@@ -104,11 +114,31 @@ repo.**
   consumers fail to compile against it unless they declare their own
   Compose deps. Found in multi-module real-project testing (2026-07-11);
   needs a line in user-facing docs when those exist.
-- `BottomSheet.kt`'s drag-gesture handling is fully wired
-  (`pointerInput` + `detectVerticalDragGestures`, offset applied to the
-  sheet, dp→px threshold conversion) and compile-verified against real
-  Compose Multiplatform deps on Android + desktop targets. Runtime
-  (on-device) behavior not yet exercised.
+- **`BottomSheet.kt` drag-to-dismiss is BROKEN — found in the first
+  human on-device test (2026-07-12)**: the sheet tracks the drag but
+  always springs back on release, never dismisses. Root-cause analysis
+  (pending numeric confirmation via a `JETCOMPOSE-DIAG` println left in
+  the kmp-testbed's installed copy): the default 120dp distance
+  threshold ≈ 330px on the Pixel5 emulator, while the demo sheet only
+  affords ~343px of finger travel before the screen edge, minus ~22px
+  touch slop — the threshold is effectively unreachable, and there is
+  no velocity/fling criterion at all. Planned fix: switch to
+  foundation's `Modifier.draggable` (its `onDragStopped` provides
+  release velocity), dismiss on distance OR downward fling, lower the
+  default distance threshold to something reachable; note
+  `anchoredDraggable` as the proper long-term API. Do not tag any
+  release until the founder has hand-tested the fix and confirmed feel.
+- **Testbed inventory** (all under `Downloads\Projects\Testbeds\`):
+  `jetcompose-kmp-testbed` is the ONLY runnable one (MainActivity +
+  launcher manifest + `@Preview` + desktop entry point, added
+  2026-07-12 after the gap was found). The other three —
+  `jetcompose-testbed-android`, `jetcompose-testbed-catalog`,
+  `jetcompose-testbed-multimodule` — are **compile-only**: they have no
+  Activity or launcher and exist to test config-routing patterns
+  (non-KMP path, version catalog, multi-module source roots). Do not
+  assume they can run; a "successful build" there proves compilation
+  only. All four originally shipped with no Activity at all — that gap
+  is what let the drag bug live undetected.
 
 ## Cutting a CLI release
 
