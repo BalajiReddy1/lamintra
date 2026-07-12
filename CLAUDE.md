@@ -75,9 +75,13 @@ repo.**
   `Provider` overload of `addVariantsFromConfiguration`, which was added
   in Gradle 9.2.1 — older Gradle (e.g. 9.1.0) fails at configuration time
   with a `NoSuchMethodError`-style failure before compiling anything.
-- `registry/` — two fixture components (`bottomsheet/glass`, `button/neon`)
-  used to validate the rewrite engine. Real Compose code, not yet compiled
-  against real Compose Multiplatform dependencies.
+- `registry/` — three components: `bottomsheet/glass` and `button/neon`
+  (Day 1 fixtures, since compile-verified) plus `button/neon_outline`,
+  the first post-fixture shippable component (2026-07-12). **Component
+  style names must be legal Kotlin package segments** — `Rewriter`
+  joins `category`/`style` verbatim into the target package, so
+  kebab-case (`neon-outline`) would generate an illegal package and fail
+  every install; use underscores. Docs/CLI-validation item for later.
 - The registry repo is live at
   `github.com/BalajiReddy1/jetcompose-registry` (public — required, since
   the installer does unauthenticated raw.githubusercontent.com fetches).
@@ -130,6 +134,7 @@ is now purely the founder's call). The release pipeline is
 cd cli-kotlin
 ./gradlew test                     # run RewriterTest.kt
 ./gradlew shadowJar                # build the fat JAR
-java -jar build/libs/jetcompose-0.1.0.jar init
-java -jar build/libs/jetcompose-0.1.0.jar add bottomsheet/glass
+java -jar build/libs/jetcompose-0.2.0.jar init
+java -jar build/libs/jetcompose-0.2.0.jar add bottomsheet/glass
+java -jar build/libs/jetcompose-0.2.0.jar add button/neon_outline
 ```

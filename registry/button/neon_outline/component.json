@@ -1,0 +1,12 @@
+{
+  "name": "button/neon_outline",
+  "category": "button",
+  "style": "neon_outline",
+  "registryPackage": "com.jetcompose.button.neon_outline",
+  "main": "src/NeonOutlineButton.kt",
+  "prefix": "button_neon_outline",
+  "files": [
+    "src/NeonOutlineButton.kt",
+    "src/internal/button_neon_outline/ModifierExtensions.kt"
+  ]
+}
