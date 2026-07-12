@@ -1,0 +1,17 @@
+{
+  "name": "bottomsheet/glass",
+  "category": "bottomsheet",
+  "style": "glass",
+  "registryPackage": "com.jetcompose.bottomsheet.glass",
+  "main": "src/BottomSheet.kt",
+  "prefix": "bottomsheet_glass",
+  "files": [
+    "src/BottomSheet.kt",
+    "src/internal/bottomsheet_glass/DragHandle.kt",
+    "src/internal/bottomsheet_glass/ModifierExtensions.kt"
+  ],
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  }
+}

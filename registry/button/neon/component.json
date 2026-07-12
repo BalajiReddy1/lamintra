@@ -1,0 +1,15 @@
+{
+  "name": "button/neon",
+  "category": "button",
+  "style": "neon",
+  "registryPackage": "com.jetcompose.button.neon",
+  "main": "src/NeonButton.kt",
+  "prefix": "button_neon",
+  "files": [
+    "src/NeonButton.kt",
+    "src/internal/button_neon/ModifierExtensions.kt"
+  ],
+  "dependencies": {
+    "compose-foundation": "1.9.0"
+  }
+}
