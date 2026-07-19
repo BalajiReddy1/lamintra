@@ -114,20 +114,25 @@ repo.**
   consumers fail to compile against it unless they declare their own
   Compose deps. Found in multi-module real-project testing (2026-07-11);
   needs a line in user-facing docs when those exist.
-- **`BottomSheet.kt` drag-to-dismiss is BROKEN — found in the first
-  human on-device test (2026-07-12)**: the sheet tracks the drag but
-  always springs back on release, never dismisses. Root-cause analysis
-  (pending numeric confirmation via a `JETCOMPOSE-DIAG` println left in
-  the kmp-testbed's installed copy): the default 120dp distance
-  threshold ≈ 330px on the Pixel5 emulator, while the demo sheet only
-  affords ~343px of finger travel before the screen edge, minus ~22px
-  touch slop — the threshold is effectively unreachable, and there is
-  no velocity/fling criterion at all. Planned fix: switch to
-  foundation's `Modifier.draggable` (its `onDragStopped` provides
-  release velocity), dismiss on distance OR downward fling, lower the
-  default distance threshold to something reachable; note
-  `anchoredDraggable` as the proper long-term API. Do not tag any
-  release until the founder has hand-tested the fix and confirmed feel.
+- **`BottomSheet.kt` drag-to-dismiss FIXED (registry v0.2.1) and
+  founder-hand-verified on device (2026-07-20).** The bug (found in the
+  first human on-device test, 2026-07-12): dismissal was distance-only
+  against a 120dp default threshold = 330px at 2.75x density, while the
+  demo sheet afforded only ~232px of finger travel to the screen edge —
+  numerically confirmed via on-device diagnostics (slow max-length drag
+  accumulated 231.8px; a fast flick just 56px). Fix: foundation's
+  `Modifier.draggable`, dismissal on EITHER >64dp downward drag (new
+  reachable default) OR a downward fling >125dp/s (new optional
+  `flingVelocityThreshold` param, Material's classic swipeable
+  velocity); spring-back inherits release velocity. `anchoredDraggable`
+  remains the long-term API for multi-anchor sheets. Lesson encoded in
+  the verification hard rule above: this compiled everywhere for days
+  and fell to the first real finger.
+- **`jetcompose-registry` MUST stay public.** The installer does
+  unauthenticated raw.githubusercontent.com GETs — making that repo
+  private silently 404s every `jetcompose add` for every user (this
+  actually happened 2026-07-20 and stalled the v0.2.1 release). The
+  main `jetcompose` repo can be private; the registry cannot.
 - **Testbed inventory** (all under `Downloads\Projects\Testbeds\`):
   `jetcompose-kmp-testbed` is the ONLY runnable one (MainActivity +
   launcher manifest + `@Preview` + desktop entry point, added
@@ -164,7 +169,7 @@ is now purely the founder's call). The release pipeline is
 cd cli-kotlin
 ./gradlew test                     # run RewriterTest.kt
 ./gradlew shadowJar                # build the fat JAR
-java -jar build/libs/jetcompose-0.2.0.jar init
-java -jar build/libs/jetcompose-0.2.0.jar add bottomsheet/glass
-java -jar build/libs/jetcompose-0.2.0.jar add button/neon_outline
+java -jar build/libs/jetcompose-0.2.1.jar init
+java -jar build/libs/jetcompose-0.2.1.jar add bottomsheet/glass
+java -jar build/libs/jetcompose-0.2.1.jar add button/neon_outline
 ```

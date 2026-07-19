@@ -16,7 +16,7 @@ object Installer {
     // transient 404s or stale files right after a registry push. Tagged
     // URLs are immutable — bump the tag here (and re-release the jar)
     // to pick up registry changes.
-    private const val REGISTRY_BASE = "https://raw.githubusercontent.com/BalajiReddy1/jetcompose-registry/v0.2.0"
+    private const val REGISTRY_BASE = "https://raw.githubusercontent.com/BalajiReddy1/jetcompose-registry/v0.2.1"
 
     private val client: HttpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NORMAL)
