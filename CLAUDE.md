@@ -100,12 +100,29 @@ repo.**
   ~5 minutes, which caused a transient 404 and stale-content serving
   during real-project testing. Tag URLs are immutable — registry changes
   require cutting a new tag and bumping `REGISTRY_BASE` (jar re-release).
-- `jetcompose init` validates each entered source root by walking up
-  (depth-bounded: the root + 4 ancestors, never above the project dir)
-  looking for a `build.gradle(.kts)`. No build file nearby → warning +
-  confirm-before-write, not a hard block. Heuristic, not a guarantee:
-  a typo in the source-set segment of a shallow path can still slip
-  through if the module directory itself is valid.
+- `jetcompose init` now **auto-detects the project** (filesystem-only —
+  no Gradle evaluation, consistent with the config-over-parsing
+  decision): finds Gradle modules (build file + src/, ≤2 levels deep),
+  classifies KMP vs Android by source-set layout, prefers whichever of
+  `src/main/java`/`src/main/kotlin` actually holds .kt files (AS
+  templates use `java/`), and reads the root package from the shallowest
+  .kt file's `package` line cross-checked against its directory path.
+  Standard projects: one Enter to confirm. Detection failure or user
+  rejection → the old manual prompts (with the depth-bounded
+  build-file-nearby validation). Driven by real-user testing 2026-07-20:
+  a tester hit the wrong-default → re-init → duplicate-install trap and
+  said flatly he'd never use a tool with this many questions.
+- `jetcompose add` has an **idempotency guard**: before writing, it scans
+  the target module's `src/` tree for an existing copy of the component
+  (matching `<category>/<style>/<mainfile>` suffix) at any other path —
+  found → hard abort naming both paths (duplicate declarations in one
+  module = guaranteed "conflicting overloads", since Gradle compiles
+  both `src/main/java` and `src/main/kotlin`). Same-path re-add remains
+  allowed as an in-place update. Both changes verified against all four
+  testbeds + an AS-template-shaped fixture (incl. replaying the exact
+  duplicate disaster), then **retested by the same real user who hit the
+  original trap — passed (one-Enter init, clean add). Released as CLI
+  v0.3.0** (registry unchanged, still v0.2.1).
 - **Known limitation (docs, not code)**: installing a component into a
   shared library module (e.g. `:feature:ui`) only compiles for consuming
   modules if that module exposes Compose via `api(...)` dependencies —
@@ -169,7 +186,7 @@ is now purely the founder's call). The release pipeline is
 cd cli-kotlin
 ./gradlew test                     # run RewriterTest.kt
 ./gradlew shadowJar                # build the fat JAR
-java -jar build/libs/jetcompose-0.2.1.jar init
-java -jar build/libs/jetcompose-0.2.1.jar add bottomsheet/glass
-java -jar build/libs/jetcompose-0.2.1.jar add button/neon_outline
+java -jar build/libs/jetcompose-0.3.0.jar init
+java -jar build/libs/jetcompose-0.3.0.jar add bottomsheet/glass
+java -jar build/libs/jetcompose-0.3.0.jar add button/neon_outline
 ```

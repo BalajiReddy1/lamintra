@@ -50,9 +50,26 @@ object Installer {
         val manifest = ComponentManifest.parse(manifestText)
 
         val newRoot = Rewriter.computeNewRootPackage(config, manifest.category, manifest.style)
+
+        val target = Rewriter.resolveTargetPath(config, manifest, manifest.main)
+        val existingElsewhere = findExistingCopyElsewhere(projectDir, config, manifest, target.relativePath)
+        if (existingElsewhere != null) {
+            error(
+                "${manifest.name} already exists in this module at:\n" +
+                    "    $existingElsewhere\n" +
+                    "Installing to '${target.relativePath}' as well would create duplicate " +
+                    "declarations in the same module and break the build (both directories " +
+                    "compile). Delete the existing copy first, or re-run 'jetcompose init' " +
+                    "so the configured source root matches where it already lives."
+            )
+        }
+
         log += "Installing ${manifest.name}"
         log += "  registry package : ${manifest.registryPackage}"
         log += "  new root package  : $newRoot"
+        if (File(projectDir, target.relativePath).exists()) {
+            log += "  (component already installed here — updating in place)"
+        }
 
         for (relFile in manifest.files) {
             val originalContent = fetch("$componentName/$relFile")
@@ -64,5 +81,41 @@ object Installer {
         }
 
         return log
+    }
+
+    /**
+     * Guards against the duplicate-install foot-gun: run init, install,
+     * re-run init with a different source root (or package), install again
+     * — and the same component now exists twice in one module, which is a
+     * guaranteed "conflicting overloads" compile error because Gradle
+     * compiles every source root (src/main/java AND src/main/kotlin both
+     * count). Scans the module's src/ tree for this component's
+     * category/style/main-file path landing anywhere other than the
+     * current target.
+     */
+    private fun findExistingCopyElsewhere(
+        projectDir: File,
+        config: JetComposeConfig,
+        manifest: ComponentManifest,
+        targetRelativePath: String
+    ): String? {
+        val sourceRoot = config.activeSourceRoot()
+        val moduleRel = sourceRoot.substringBefore("/src/", missingDelimiterValue = "")
+        if (moduleRel.isEmpty()) return null
+        val srcDir = File(projectDir, "$moduleRel/src")
+        if (!srcDir.isDirectory) return null
+
+        val mainFileName = manifest.main.substringAfterLast('/')
+        val suffix = "${manifest.category}/${manifest.style}/$mainFileName"
+        val targetCanonical = File(projectDir, targetRelativePath).canonicalFile
+
+        for (file in srcDir.walkTopDown().onEnter { it.name != "build" }) {
+            if (!file.isFile || file.name != mainFileName) continue
+            val rel = file.relativeTo(projectDir).path.replace('\\', '/')
+            if (rel.endsWith(suffix) && file.canonicalFile != targetCanonical) {
+                return rel
+            }
+        }
+        return null
     }
 }
