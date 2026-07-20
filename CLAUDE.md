@@ -162,6 +162,28 @@ repo.**
   only. All four originally shipped with no Activity at all — that gap
   is what let the drag bug live undetected.
 
+## Backlog — founder-acknowledged, deliberately deferred until the flow is solid
+
+Priority right now is the end-to-end flow working without surprises, NOT
+polish. These are recorded so they aren't forgotten, in rough order:
+
+1. **Preview-on-install** (ACTIVE next item): installed components show
+   nothing in Android Studio's preview pane — no `@Preview` composable
+   ships with them. Founder hit this twice (2026-07-12 testbed,
+   2026-07-20 real project).
+2. **`bottomsheet/glass` visual redesign** — founder verdict 2026-07-20:
+   functionality fine, looks bad. Polish pass on all components once the
+   flow is proven; product value is visual, so this matters before any
+   public launch even though it's parked now.
+3. Folder-depth complaint from real-dev test (deep
+   `ui/components/<cat>/<style>/internal/<prefix>/` nesting) — cosmetic,
+   revisit alongside the redesign.
+4. CLI validation: reject non-package-legal style names at manifest load.
+5. User-facing docs: README with install instructions, the `api(...)`
+   shared-module note, JDK 17+ requirement.
+6. Website — explicitly AFTER the flow is stable and components look
+   good. Don't start it before then.
+
 ## Cutting a CLI release
 
 The CLI ships as a fat JAR attached to a GitHub Release on the main repo
