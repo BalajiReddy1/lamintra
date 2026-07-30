@@ -16,7 +16,7 @@ object Installer {
     // transient 404s or stale files right after a registry push. Tagged
     // URLs are immutable — bump the tag here (and re-release the jar)
     // to pick up registry changes.
-    private const val REGISTRY_BASE = "https://raw.githubusercontent.com/BalajiReddy1/jetcompose-registry/v0.2.1"
+    private const val REGISTRY_BASE = "https://raw.githubusercontent.com/BalajiReddy1/jetcompose-registry/v0.3.0"
 
     private val client: HttpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NORMAL)
@@ -80,7 +80,69 @@ object Installer {
             log += "  wrote: ${target.relativePath}"
         }
 
+        installPreviewIfSafe(componentName, projectDir, config, manifest, newRoot, log)
+
         return log
+    }
+
+    /**
+     * Installs the component's optional @Preview demo file, but only when
+     * it cannot break the build: the androidx preview annotation needs the
+     * ui-tooling-preview artifact, so the module's build file is
+     * text-scanned (comments stripped — never evaluated) for evidence of
+     * that dependency. Found → install to the android source root
+     * (androidMain for KMP; the annotation doesn't exist in common code).
+     * Not found → skip the file and say how to enable it. A false negative
+     * degrades to a printed hint; a missing dependency never gets a file
+     * that would fail to compile — the zero-compile-error promise wins
+     * over preview convenience.
+     */
+    private fun installPreviewIfSafe(
+        componentName: String,
+        projectDir: File,
+        config: JetComposeConfig,
+        manifest: ComponentManifest,
+        newRoot: String,
+        log: MutableList<String>
+    ) {
+        val previewRel = manifest.preview ?: return
+        val androidRoot = config.sourceRoots.android
+        if (androidRoot == null) {
+            log += "  (preview skipped — no android source root in .jetcompose/config.json)"
+            return
+        }
+        if (!moduleBuildFileShowsPreviewDep(projectDir, config)) {
+            log += "  Preview file skipped: couldn't confirm the ui-tooling-preview"
+            log += "  dependency in this module's build file. To get Android Studio"
+            log += "  previews, add the dependency, e.g.:"
+            log += "      implementation(\"androidx.compose.ui:ui-tooling-preview\")"
+            log += "      debugImplementation(\"androidx.compose.ui:ui-tooling\")"
+            log += "  then re-run: jetcompose add $componentName"
+            return
+        }
+        val content = fetch("$componentName/$previewRel")
+        val rewritten = Rewriter.rewriteFileContent(content, config, manifest)
+        val fileName = previewRel.substringAfterLast('/')
+        val relativePath = listOf(androidRoot, newRoot.replace('.', '/'), fileName)
+            .joinToString("/")
+            .replace("//", "/")
+        Rewriter.writeInstalledFile(projectDir, relativePath, rewritten)
+        log += "  wrote: $relativePath (Android Studio preview)"
+    }
+
+    private fun moduleBuildFileShowsPreviewDep(projectDir: File, config: JetComposeConfig): Boolean {
+        val sourceRoot = config.activeSourceRoot()
+        val moduleRel = sourceRoot.substringBefore("/src/", missingDelimiterValue = "")
+        if (moduleRel.isEmpty()) return false
+        val buildFile = listOf("build.gradle.kts", "build.gradle")
+            .map { File(projectDir, "$moduleRel/$it") }
+            .firstOrNull { it.isFile } ?: return false
+        val withoutComments = buildFile.readLines().joinToString("\n") { it.substringBefore("//") }
+        // Catches the artifact id (ui-tooling-preview), version-catalog
+        // accessors (androidx.ui.tooling.preview), and Compose Multiplatform
+        // DSL accessors (compose.uiTooling / compose.preview).
+        return listOf("ui-tooling", "ui.tooling", "uiTooling", "compose.preview")
+            .any { withoutComments.contains(it) }
     }
 
     /**

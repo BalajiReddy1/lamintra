@@ -9,6 +9,7 @@
     "src/NeonButton.kt",
     "src/internal/button_neon/ModifierExtensions.kt"
   ],
+  "preview": "src/NeonButtonPreview.kt",
   "dependencies": {
     "compose-foundation": "1.9.0"
   }

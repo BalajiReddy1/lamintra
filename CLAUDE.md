@@ -167,10 +167,17 @@ repo.**
 Priority right now is the end-to-end flow working without surprises, NOT
 polish. These are recorded so they aren't forgotten, in rough order:
 
-1. **Preview-on-install** (ACTIVE next item): installed components show
-   nothing in Android Studio's preview pane — no `@Preview` composable
-   ships with them. Founder hit this twice (2026-07-12 testbed,
-   2026-07-20 real project).
+1. **Preview-on-install — BUILT, awaiting founder's Android Studio
+   confirmation before CLI 0.3.1 release.** Every component now ships a
+   `@Preview` demo file (optional `preview` manifest field, registry
+   v0.3.0). The CLI routes it to the ANDROID source root (androidMain
+   for KMP — the androidx annotation doesn't exist in common code) and
+   installs it ONLY if the module build file text (comment-stripped,
+   never evaluated) shows a ui-tooling dependency; otherwise it skips
+   the file and prints the dependency hint. False negatives degrade to
+   the hint; a build-breaking install is impossible. Verified: skip
+   path, non-KMP install path, KMP androidMain path, both targets
+   compile.
 2. **`bottomsheet/glass` visual redesign** — founder verdict 2026-07-20:
    functionality fine, looks bad. Polish pass on all components once the
    flow is proven; product value is visual, so this matters before any

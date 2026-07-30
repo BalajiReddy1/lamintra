@@ -8,5 +8,6 @@
   "files": [
     "src/NeonOutlineButton.kt",
     "src/internal/button_neon_outline/ModifierExtensions.kt"
-  ]
+  ],
+  "preview": "src/NeonOutlineButtonPreview.kt"
 }

@@ -10,6 +10,7 @@
     "src/internal/bottomsheet_glass/DragHandle.kt",
     "src/internal/bottomsheet_glass/ModifierExtensions.kt"
   ],
+  "preview": "src/BottomSheetPreview.kt",
   "dependencies": {
     "compose-foundation": "1.9.0",
     "compose-animation": "1.9.0"
