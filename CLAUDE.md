@@ -186,6 +186,50 @@ repo.**
   only. All four originally shipped with no Activity at all — that gap
   is what let the drag bug live undetected.
 
+## Where things stand (read this first in a new session)
+
+**Shipped and working:** CLI **v0.3.2**, registry **v0.3.1**. The whole
+flow is proven end-to-end by real users: one-Enter `init` (filesystem
+auto-detection), `add` with an idempotency guard, correct package
+rewriting, `@Preview` on install, zero manual fixes, builds clean on
+non-KMP + KMP + version-catalog + multi-module projects. Path traversal
+is hardened (12/12 tests). Insets handled for Android 15 edge-to-edge.
+
+**The actual bottleneck is NOT engineering.** Three components exist,
+**zero external users**, no public website, nothing to look at. The kill
+criteria (100 stars / 3 months) haven't started counting because nothing
+is public. Do not let a new session drift back into plumbing — it is
+comfortable and it is not what's blocking.
+
+**Design status — first pass rejected by the founder as "too simple".**
+A Claude Design project exists: **"JetCompose Design System"**
+(`claude.ai/design`, projectId `ecb1d604-a8ff-4b11-9ceb-f06e26e78f57`),
+with Foundations/Tokens + Button + Card. Local sources are in
+`design/design-system/*.html` (standalone previews, true superellipse
+geometry computed via clip-path).
+
+**The diagnosis for why it came out generic — don't repeat this:** the
+"must survive re-theming" constraint was applied to the *whole* system,
+so everything got designed down to utility blandness. That constraint
+only belongs on the **base tier**. Correct model is two tiers:
+- **Base tier** (button, card, input, list): quiet, themeable, boring on
+  purpose — shadcn's buttons are plain too, that's why people adopt them.
+- **Signature tier** (glass sheet and friends): visually striking out of
+  the box. This is the hook — nobody adopts a new library for
+  "well-considered restraint", they adopt it because they saw something
+  that looked incredible.
+Also: an aesthetic of restraint without a bold idea underneath is just
+plain. Braun/Teenage Engineering strip everything else *after* committing
+to a strong idea, not instead of one.
+
+**Agreed next step: build the website.** It is the one surface with no
+theming constraint (so personality is allowed), it is the marketing
+artifact everything else depends on, and it converts this from a project
+into a product. Ship the site with the components that exist, the
+copy-the-command flow, and a live demo; the "hero" signature component
+can land in v2 of the page. `design/PRODUCT_BRIEF.md` holds the
+non-technical product story to design from.
+
 ## Backlog — founder-acknowledged, deliberately deferred until the flow is solid
 
 Priority right now is the end-to-end flow working without surprises, NOT
@@ -221,8 +265,8 @@ polish. These are recorded so they aren't forgotten, in rough order:
 4. CLI validation: reject non-package-legal style names at manifest load.
 5. User-facing docs: README with install instructions, the `api(...)`
    shared-module note, JDK 17+ requirement.
-6. Website — explicitly AFTER the flow is stable and components look
-   good. Don't start it before then.
+6. Website — **this is now the active next step** (see "Where things
+   stand"). The flow is stable; the blocker is that nothing is public.
 
 ## Cutting a CLI release
 
