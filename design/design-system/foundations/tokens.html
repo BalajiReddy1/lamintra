@@ -1,0 +1,185 @@
+<!-- @dsCard group="Foundations" name="Tokens & Shape" subtitle="Squircle geometry, semantic color pairs, spacing, motion" -->
+<style>
+  .jc-root {
+    --ink: #14161a; --ink-2: #5b6270; --line: #e2e5ea; --bg: #fbfbfc;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink); background: var(--bg);
+    padding: 40px; line-height: 1.5;
+  }
+  .jc-root * { box-sizing: border-box; }
+  .jc-h { font-family: ui-serif, "Iowan Old Style", Georgia, serif;
+    font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-2); margin: 0 0 18px; font-weight: 600; }
+  .jc-sec { margin-bottom: 52px; }
+  .jc-note { font-size: 13px; color: var(--ink-2); max-width: 62ch; margin: 0 0 20px; }
+  .jc-row { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-end; }
+  .jc-spec { font-size: 11px; color: var(--ink-2); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .sw { width: 96px; }
+  .sw i { display: block; height: 56px; border: 1px solid var(--line); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 760px; }
+  .panel { padding: 22px; border: 1px solid var(--line); }
+  .panel.dark { background: #101317; border-color: #262b33; color: #eef1f6; }
+  .tok { display: flex; align-items: center; gap: 12px; font-size: 12px; margin-bottom: 10px;
+    font-variant-numeric: tabular-nums; }
+  .tok b { width: 108px; font-weight: 600; font-size: 11px; letter-spacing: .02em; }
+  .tok s { width: 26px; height: 26px; display: block; text-decoration: none; flex: none;
+    border: 1px solid rgba(128,128,128,.28); }
+  .tok code { font-size: 11px; opacity: .62; }
+  .shape-demo { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
+  .shape-demo figure { margin: 0; }
+  .shape-demo .box { width: 132px; height: 132px; background: #14161a; }
+  .arc { border-radius: 30px; }
+  .grid-demo { position: relative; height: 96px; width: 320px;
+    background-image: repeating-linear-gradient(to right, #eceff3 0 1px, transparent 1px 8px);
+    border: 1px solid var(--line); }
+  .grid-demo b { position: absolute; bottom: 0; height: 100%; background: #14161a1a;
+    border-left: 1px solid #14161a55; border-right: 1px solid #14161a55; }
+  .motion { display: flex; gap: 10px; align-items: center; font-size: 12px; margin-bottom: 12px; }
+  .motion u { text-decoration: none; display: block; height: 6px; background: #14161a; }
+  .motion span { width: 130px; font-size: 11px; color: var(--ink-2); }
+</style>
+
+<div class="jc-root">
+
+  <div class="jc-sec">
+    <p class="jc-h">The constraint that defines this system</p>
+    <p class="jc-note">
+      These components are installed into other people's apps, which already have their own
+      colors and typefaces. We cannot own color, and we must not impose a font. Therefore the
+      identity has to live in <b>form</b> — geometry, proportion, spacing and motion.
+      The bar: <b>a JetCompose component should be recognisable in a greyscale screenshot.</b>
+      Everything below is chosen to survive being re-themed by a stranger.
+    </p>
+  </div>
+
+  <div class="jc-sec">
+    <p class="jc-h">1 — Shape: continuous curvature, not circular arcs</p>
+    <p class="jc-note">
+      Every surface uses a superellipse ("squircle", n≈5) rather than a circular-arc
+      <code>border-radius</code>. Circular arcs meet the straight edge abruptly — the curvature
+      jumps from zero to maximum at one point, which the eye reads as slightly cheap. A
+      superellipse eases curvature in continuously. It is the single most recognisable structural
+      tell we have, it is visible with no colour at all, and Material does not use it.
+    </p>
+    <div class="shape-demo">
+      <figure>
+        <div class="box sq" data-r="30"></div>
+        <p class="jc-spec"><b>JetCompose</b> — superellipse, n=5<br>continuous curvature</p>
+      </figure>
+      <figure>
+        <div class="box arc"></div>
+        <p class="jc-spec">Circular arc <code>border-radius: 30px</code><br>curvature discontinuity at the tangent</p>
+      </figure>
+      <figure>
+        <div style="display:flex; gap:14px; align-items:flex-end;">
+          <div class="sq" data-r="4" style="width:56px;height:56px;background:#14161a"></div>
+          <div class="sq" data-r="12" style="width:76px;height:76px;background:#14161a"></div>
+          <div class="sq" data-r="24" style="width:104px;height:104px;background:#14161a"></div>
+        </div>
+        <p class="jc-spec">radius scale — <b>4</b> chips · <b>12</b> controls · <b>24</b> surfaces</p>
+      </figure>
+    </div>
+  </div>
+
+  <div class="jc-sec">
+    <p class="jc-h">2 — Colour: semantic roles, paired for both themes</p>
+    <p class="jc-note">
+      Tokens are named by <b>role</b>, never by appearance, which is what lets a host app swap the
+      whole system. Light is the default and the honest test — dark hides imprecise spacing and
+      weak contrast. Both are designed, not derived. All pairs below meet WCAG AA for their use.
+    </p>
+    <div class="grid2">
+      <div class="panel">
+        <p class="jc-spec" style="margin:0 0 14px"><b>LIGHT</b></p>
+        <div class="tok"><b>surface</b><s style="background:#FFFFFF"></s><code>#FFFFFF</code></div>
+        <div class="tok"><b>surfaceSunken</b><s style="background:#F4F5F7"></s><code>#F4F5F7</code></div>
+        <div class="tok"><b>onSurface</b><s style="background:#14161A"></s><code>#14161A</code></div>
+        <div class="tok"><b>onSurfaceMuted</b><s style="background:#5B6270"></s><code>#5B6270</code></div>
+        <div class="tok"><b>outline</b><s style="background:#E2E5EA"></s><code>#E2E5EA</code></div>
+        <div class="tok"><b>accent</b><s style="background:#1B5CFF"></s><code>#1B5CFF</code></div>
+        <div class="tok"><b>onAccent</b><s style="background:#FFFFFF"></s><code>#FFFFFF</code></div>
+        <div class="tok"><b>danger</b><s style="background:#C6244A"></s><code>#C6244A</code></div>
+      </div>
+      <div class="panel dark">
+        <p class="jc-spec" style="margin:0 0 14px; color:#98a1b0"><b>DARK</b></p>
+        <div class="tok"><b>surface</b><s style="background:#16191E"></s><code>#16191E</code></div>
+        <div class="tok"><b>surfaceSunken</b><s style="background:#0E1114"></s><code>#0E1114</code></div>
+        <div class="tok"><b>onSurface</b><s style="background:#EEF1F6"></s><code>#EEF1F6</code></div>
+        <div class="tok"><b>onSurfaceMuted</b><s style="background:#98A1B0"></s><code>#98A1B0</code></div>
+        <div class="tok"><b>outline</b><s style="background:#2A2F38"></s><code>#2A2F38</code></div>
+        <div class="tok"><b>accent</b><s style="background:#5B8CFF"></s><code>#5B8CFF</code></div>
+        <div class="tok"><b>onAccent</b><s style="background:#0B0E12"></s><code>#0B0E12</code></div>
+        <div class="tok"><b>danger</b><s style="background:#FF6B86"></s><code>#FF6B86</code></div>
+      </div>
+    </div>
+    <p class="jc-note" style="margin-top:18px">
+      Note the accent is <i>not</i> the same hue value in both themes. A saturated blue that reads
+      correctly on white is too heavy on near-black; the dark accent is lightened and desaturated
+      so it carries equal weight. Reusing one value across themes is the most common design-system
+      mistake.
+    </p>
+  </div>
+
+  <div class="jc-sec">
+    <p class="jc-h">3 — Spacing: 4pt grid with optical corrections</p>
+    <p class="jc-note">
+      Steps: 4 · 8 · 12 · 16 · 20 · 24 · 32. The grid is the rule; the corrections are the craft.
+      Text sits <b>20</b> from a control's edge but an icon sits <b>16</b>, because a glyph's
+      bounding box carries its own air and centring it mathematically makes it look pushed out.
+      Icon-to-label gap is <b>8</b> — deliberately tighter than the edge inset so the pair reads as
+      one object.
+    </p>
+    <div class="jc-row">
+      <div>
+        <div class="grid-demo"><b style="left:0; width:80px"></b><b style="left:240px; width:80px"></b></div>
+        <p class="jc-spec">4pt column grid · control insets snap to it</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="jc-sec">
+    <p class="jc-h">4 — Motion: physical, never decorative</p>
+    <p class="jc-note">
+      Motion responds to <b>how fast you moved</b>, not to a fixed clock. Drags settle with the
+      velocity they were released at; dismissals fire on distance <i>or</i> fling. This is felt
+      rather than seen, and it is the thing a user remembers in the hand.
+    </p>
+    <div class="motion"><span>press in</span><u style="width:60px"></u> 120ms</div>
+    <div class="motion"><span>settle / release</span><u style="width:110px"></u> 220ms · inherits release velocity</div>
+    <div class="motion"><span>surface enter</span><u style="width:160px"></u> 320ms decelerate</div>
+    <p class="jc-note" style="margin-top:16px">
+      Press feedback is a <b>0.97 scale</b>, not a colour flash and never a ripple — ripple is
+      Material's signature and we do not borrow it.
+    </p>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    function pts(w, h, r, n, steps) {
+      r = Math.min(r, Math.min(w, h) / 2);
+      var p = [], i, t, e = 2 / n;
+      function push(x, y) { p.push((x / w * 100).toFixed(3) + '% ' + (y / h * 100).toFixed(3) + '%'); }
+      for (i = steps; i >= 0; i--) { t = i / steps * Math.PI / 2;
+        push((w - r) + r * Math.pow(Math.abs(Math.cos(t)), e), r - r * Math.pow(Math.abs(Math.sin(t)), e)); }
+      for (i = 0; i <= steps; i++) { t = i / steps * Math.PI / 2;
+        push((w - r) + r * Math.pow(Math.abs(Math.cos(t)), e), (h - r) + r * Math.pow(Math.abs(Math.sin(t)), e)); }
+      for (i = 0; i <= steps; i++) { t = i / steps * Math.PI / 2;
+        push(r - r * Math.pow(Math.abs(Math.sin(t)), e), (h - r) + r * Math.pow(Math.abs(Math.cos(t)), e)); }
+      for (i = 0; i <= steps; i++) { t = i / steps * Math.PI / 2;
+        push(r - r * Math.pow(Math.abs(Math.cos(t)), e), r - r * Math.pow(Math.abs(Math.sin(t)), e)); }
+      return p.join(',');
+    }
+    function apply() {
+      document.querySelectorAll('.sq').forEach(function (el) {
+        var w = el.offsetWidth, h = el.offsetHeight;
+        if (!w || !h) return;
+        var r = parseFloat(el.dataset.r || 12);
+        el.style.clipPath = 'polygon(' + pts(w, h, r, 5, 16) + ')';
+      });
+    }
+    apply();
+    window.addEventListener('resize', apply);
+  })();
+</script>

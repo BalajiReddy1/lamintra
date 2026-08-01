@@ -1,0 +1,228 @@
+<!-- @dsCard group="Components" name="Button" subtitle="5 variants · 3 sizes · all states · light + dark · theme-agnostic proof" -->
+<style>
+  .jc { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.5;
+        padding: 40px; background: #fbfbfc; color: #14161a; }
+  .jc * { box-sizing: border-box; }
+  .jc-h { font-family: ui-serif, "Iowan Old Style", Georgia, serif; font-size: 13px;
+    letter-spacing: .14em; text-transform: uppercase; color: #5b6270; margin: 0 0 6px; font-weight: 600; }
+  .jc-note { font-size: 13px; color: #5b6270; max-width: 64ch; margin: 0 0 22px; }
+  .sec { margin-bottom: 46px; }
+  .stage { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+  .stage.dark, .panel.dark { background: #0E1114; }
+  .panel { padding: 26px; border: 1px solid #e2e5ea; }
+  .panel.dark { border-color: #262b33; }
+  .cap { font-size: 11px; color: #5b6270; margin: 10px 0 0; font-variant-numeric: tabular-nums; }
+  .panel.dark .cap { color: #98a1b0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 900px; }
+
+  /* ---- Button ---- */
+  .btn { position: relative; display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; border: 0; cursor: pointer; font: inherit; font-weight: 550; letter-spacing: .01em;
+    background: transparent; padding: 0; transition: transform .12s cubic-bezier(.2,0,0,1); }
+  .btn:active { transform: scale(.97); }
+  .btn > .bg { position: absolute; inset: 0; }
+  .btn > .lb { position: relative; display: inline-flex; align-items: center; gap: 8px; }
+  /* sizes: visual height / label inset / icon inset */
+  .md { height: 44px; font-size: 15px; }  .md .lb { padding: 0 20px; }
+  .sm { height: 36px; font-size: 14px; }  .sm .lb { padding: 0 16px; }
+  .lg { height: 52px; font-size: 16px; }  .lg .lb { padding: 0 24px; }
+  .has-icon .lb { padding-left: 16px; }   /* optical: glyphs carry their own air */
+
+  /* variants — light */
+  .v-primary  .bg { background: #1B5CFF; }
+  .v-primary            { color: #fff; }
+  .v-secondary .bg { background: #EAEEF6; }
+  .v-secondary          { color: #16305C; }
+  .v-outline  .bg { background: #E2E5EA; }
+  .v-outline  .bg::after { content: ""; position: absolute; inset: 1px; background: #fff; }
+  .v-outline            { color: #14161a; }
+  .v-ghost              { color: #14161a; }
+  .v-ghost    .bg { background: transparent; }
+  .v-danger   .bg { background: #C6244A; }
+  .v-danger             { color: #fff; }
+  /* the keyline: a 1px top highlight so filled surfaces catch light */
+  .v-primary .bg::before, .v-danger .bg::before { content: ""; position: absolute;
+    inset: 0 0 auto 0; height: 1px; background: rgba(255,255,255,.34); }
+
+  /* variants — dark */
+  .dark .v-primary  .bg { background: #5B8CFF; } .dark .v-primary { color: #0B0E12; }
+  .dark .v-secondary .bg { background: #1E2530; } .dark .v-secondary { color: #C8D6FF; }
+  .dark .v-outline  .bg { background: #2A2F38; }
+  .dark .v-outline  .bg::after { background: #16191E; }
+  .dark .v-outline  { color: #EEF1F6; }
+  .dark .v-ghost    { color: #EEF1F6; }
+  .dark .v-danger   .bg { background: #FF6B86; } .dark .v-danger { color: #240A11; }
+  .dark .v-primary .bg::before, .dark .v-danger .bg::before { background: rgba(255,255,255,.22); }
+
+  .is-disabled { opacity: .38; pointer-events: none; }
+  .is-pressed { transform: scale(.97); }
+
+  /* touch target visualiser */
+  .tt { position: relative; display: inline-flex; }
+  .tt::before { content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    width: calc(100% + 8px); height: 48px; border: 1px dashed #1B5CFF66; }
+
+  .spin { width: 15px; height: 15px; border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 50%; animation: sp .7s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .ico { width: 15px; height: 15px; flex: none; }
+</style>
+
+<div class="jc">
+
+  <p class="jc-h">Button</p>
+  <p class="jc-note">
+    Five variants, three sizes. Shape is a superellipse at radius <b>12</b>; press is a
+    <b>0.97 scale over 120ms</b> — never a ripple, which is Material's signature. Every colour
+    here is a parameter with a token default, so a host app can restyle without touching logic.
+  </p>
+
+  <div class="sec two">
+    <div class="panel">
+      <div class="stage">
+        <button class="btn md v-primary"><span class="bg sq" data-r="12"></span><span class="lb">Continue</span></button>
+        <button class="btn md v-secondary"><span class="bg sq" data-r="12"></span><span class="lb">Continue</span></button>
+        <button class="btn md v-outline"><span class="bg sq" data-r="12"></span><span class="lb">Continue</span></button>
+        <button class="btn md v-ghost"><span class="bg sq" data-r="12"></span><span class="lb">Continue</span></button>
+        <button class="btn md v-danger"><span class="bg sq" data-r="12"></span><span class="lb">Delete</span></button>
+      </div>
+      <p class="cap">LIGHT — primary · secondary · outline · ghost · danger</p>
+    </div>
+    <div class="panel dark">
+      <div class="stage">
+        <button class="btn md v-primary"><span class="bg sq" data-r="12"></span><span class="lb">Continue</span></button>
+        <button class="btn md v-secondary"><span class="bg sq" data-r="12"></span><span class="lb">Continue</span></button>
+        <button class="btn md v-outline"><span class="bg sq" data-r="12"></span><span class="lb">Continue</span></button>
+        <button class="btn md v-ghost"><span class="bg sq" data-r="12"></span><span class="lb">Continue</span></button>
+        <button class="btn md v-danger"><span class="bg sq" data-r="12"></span><span class="lb">Delete</span></button>
+      </div>
+      <p class="cap">DARK — same geometry, re-paired colour roles</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <p class="jc-h">Sizes &amp; the 48dp touch target</p>
+    <p class="jc-note">
+      Visual heights are 36 / 44 / 52. The <span style="color:#1B5CFF">dashed outline</span> is the
+      interactive area: <b>always at least 48dp tall</b>, even when the button is drawn smaller.
+      Most libraries let the small size ship a 36dp target and fail accessibility — the target is
+      part of the design, not an afterthought.
+    </p>
+    <div class="panel">
+      <div class="stage">
+        <span class="tt"><button class="btn sm v-primary"><span class="bg sq" data-r="10"></span><span class="lb">Small</span></button></span>
+        <span class="tt"><button class="btn md v-primary"><span class="bg sq" data-r="12"></span><span class="lb">Medium</span></button></span>
+        <span class="tt"><button class="btn lg v-primary"><span class="bg sq" data-r="14"></span><span class="lb">Large</span></button></span>
+      </div>
+      <p class="cap">36 · 44 · 52 visual — 48 minimum target on all three</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <p class="jc-h">States</p>
+    <div class="two">
+      <div class="panel">
+        <div class="stage">
+          <button class="btn md v-primary"><span class="bg sq" data-r="12"></span><span class="lb">Rest</span></button>
+          <button class="btn md v-primary is-pressed"><span class="bg sq" data-r="12"></span><span class="lb">Pressed</span></button>
+          <button class="btn md v-primary is-disabled"><span class="bg sq" data-r="12"></span><span class="lb">Disabled</span></button>
+          <button class="btn md v-primary" style="width:132px"><span class="bg sq" data-r="12"></span><span class="lb"><span class="spin"></span></span></button>
+        </div>
+        <p class="cap">rest · pressed (0.97) · disabled (38%) · loading</p>
+      </div>
+      <div class="panel">
+        <div class="stage">
+          <button class="btn md v-primary has-icon"><span class="bg sq" data-r="12"></span><span class="lb">
+            <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3v10M3 8h10"/></svg>
+            New item</span></button>
+          <button class="btn md v-outline has-icon"><span class="bg sq" data-r="12"></span><span class="lb">
+            Continue
+            <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8h8M8 4l4 4-4 4"/></svg>
+          </span></button>
+          <button class="btn md v-secondary" style="width:44px"><span class="bg sq" data-r="12"></span><span class="lb" style="padding:0">
+            <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3v10M3 8h10"/></svg>
+          </span></button>
+        </div>
+        <p class="cap">leading icon · trailing icon · icon-only (square, same radius)</p>
+      </div>
+    </div>
+    <p class="jc-note" style="margin-top:16px">
+      Loading reserves the button's resting width so the layout never jumps — a jump on tap is the
+      cheapest-feeling thing an app can do.
+    </p>
+  </div>
+
+  <div class="sec">
+    <p class="jc-h">Proof: the same component in three host themes</p>
+    <p class="jc-note">
+      This is the real test of the system. Identical geometry, spacing and motion — only the token
+      values change, as they would in someone else's app. If the button is still recognisably ours
+      in all three, the identity is structural rather than cosmetic.
+    </p>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px; max-width:900px">
+      <div class="panel" style="background:#FFF8F0; border-color:#EADFCF">
+        <div class="stage">
+          <button class="btn md" style="color:#fff"><span class="bg sq" data-r="12" style="background:#B4541E"></span><span class="lb">Continue</span></button>
+          <button class="btn md" style="color:#5A3A22"><span class="bg sq" data-r="12" style="background:#F0E2D0"></span><span class="lb">Later</span></button>
+        </div>
+        <p class="cap">warm / editorial host</p>
+      </div>
+      <div class="panel" style="background:#F2FBF6; border-color:#CFE7DA">
+        <div class="stage">
+          <button class="btn md" style="color:#fff"><span class="bg sq" data-r="12" style="background:#0E7A52"></span><span class="lb">Continue</span></button>
+          <button class="btn md" style="color:#0B4732"><span class="bg sq" data-r="12" style="background:#D6EDE2"></span><span class="lb">Later</span></button>
+        </div>
+        <p class="cap">fresh / product host</p>
+      </div>
+      <div class="panel dark" style="background:#12101A; border-color:#2A2440">
+        <div class="stage">
+          <button class="btn md" style="color:#150E22"><span class="bg sq" data-r="12" style="background:#B79CFF"></span><span class="lb">Continue</span></button>
+          <button class="btn md" style="color:#DCD2FF"><span class="bg sq" data-r="12" style="background:#241D3A"></span><span class="lb">Later</span></button>
+        </div>
+        <p class="cap">moody / night host</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <p class="jc-h">Compose API shape</p>
+    <p class="jc-note" style="max-width:70ch">
+      <code style="font-size:12px; background:#f1f3f6; padding:2px 6px">
+      JetButton(onClick, modifier = Modifier, variant = Primary, size = Medium, enabled = true,
+      loading = false, leadingIcon = null, trailingIcon = null, colors = JetButtonDefaults.colors(),
+      content: @Composable RowScope.() -&gt; Unit)</code><br><br>
+      <code>modifier</code> is the first optional parameter, state is hoisted to the caller, and the
+      label is a slot rather than a <code>String</code> so callers can compose freely — per the
+      AndroidX component API guidelines. Colours come from a defaults object so a host app can
+      override one role without redefining the component.
+    </p>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    function pts(w, h, r, n, steps) {
+      r = Math.min(r, Math.min(w, h) / 2);
+      var p = [], i, t, e = 2 / n;
+      function push(x, y) { p.push((x / w * 100).toFixed(3) + '% ' + (y / h * 100).toFixed(3) + '%'); }
+      for (i = steps; i >= 0; i--) { t = i / steps * Math.PI / 2;
+        push((w - r) + r * Math.pow(Math.abs(Math.cos(t)), e), r - r * Math.pow(Math.abs(Math.sin(t)), e)); }
+      for (i = 0; i <= steps; i++) { t = i / steps * Math.PI / 2;
+        push((w - r) + r * Math.pow(Math.abs(Math.cos(t)), e), (h - r) + r * Math.pow(Math.abs(Math.sin(t)), e)); }
+      for (i = 0; i <= steps; i++) { t = i / steps * Math.PI / 2;
+        push(r - r * Math.pow(Math.abs(Math.sin(t)), e), (h - r) + r * Math.pow(Math.abs(Math.cos(t)), e)); }
+      for (i = 0; i <= steps; i++) { t = i / steps * Math.PI / 2;
+        push(r - r * Math.pow(Math.abs(Math.cos(t)), e), r - r * Math.pow(Math.abs(Math.sin(t)), e)); }
+      return p.join(',');
+    }
+    function apply() {
+      document.querySelectorAll('.sq').forEach(function (el) {
+        var w = el.offsetWidth, h = el.offsetHeight;
+        if (!w || !h) return;
+        el.style.clipPath = 'polygon(' + pts(w, h, parseFloat(el.dataset.r || 12), 5, 16) + ')';
+      });
+    }
+    apply(); window.addEventListener('resize', apply);
+  })();
+</script>

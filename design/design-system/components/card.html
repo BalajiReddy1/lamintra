@@ -1,0 +1,235 @@
+<!-- @dsCard group="Components" name="Card" subtitle="4 variants · slots · media bleed · concentric radii · light + dark" -->
+<style>
+  .jc { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.5;
+        padding: 40px; background: #fbfbfc; color: #14161a; }
+  .jc * { box-sizing: border-box; }
+  .jc-h { font-family: ui-serif, "Iowan Old Style", Georgia, serif; font-size: 13px;
+    letter-spacing: .14em; text-transform: uppercase; color: #5b6270; margin: 0 0 6px; font-weight: 600; }
+  .jc-note { font-size: 13px; color: #5b6270; max-width: 64ch; margin: 0 0 22px; }
+  .sec { margin-bottom: 46px; }
+  .panel { padding: 28px; border: 1px solid #e2e5ea; }
+  .panel.dark { background: #0E1114; border-color: #262b33; }
+  .cap { font-size: 11px; color: #5b6270; margin: 12px 0 0; font-variant-numeric: tabular-nums; }
+  .panel.dark .cap { color: #98a1b0; }
+  .rail { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 980px; }
+
+  /* ---- Card ---- */
+  .card { position: relative; width: 268px; }
+  .card > .bg { position: absolute; inset: 0; background: #fff; }
+  .card > .in { position: relative; padding: 20px; }
+  .t { font-size: 15px; font-weight: 600; margin: 0 0 4px; letter-spacing: -.005em; }
+  .d { font-size: 13px; color: #5b6270; margin: 0; }
+
+  /* variants */
+  .c-outline > .bg { background: #E2E5EA; }
+  .c-outline > .bg::after { content:""; position:absolute; inset:1px; background:#fff; }
+  .c-elevated > .bg { background: #fff; box-shadow: 0 1px 2px rgba(20,22,26,.06), 0 8px 24px -8px rgba(20,22,26,.14); }
+  .c-elevated > .bg::before { content:""; position:absolute; inset:0 0 auto 0; height:1px;
+    background: rgba(255,255,255,.9); }
+  .c-sunken > .bg { background: #F4F5F7; }
+  .c-interactive { cursor: pointer; transition: transform .12s cubic-bezier(.2,0,0,1); }
+  .c-interactive:active { transform: scale(.985); }
+
+  .dark .card > .bg { background: #16191E; }
+  .dark .c-outline > .bg { background: #2A2F38; }
+  .dark .c-outline > .bg::after { background: #16191E; }
+  .dark .c-elevated > .bg { background: #1A1E24; box-shadow: 0 8px 28px -10px rgba(0,0,0,.7); }
+  .dark .c-elevated > .bg::before { background: rgba(255,255,255,.08); }
+  .dark .c-sunken > .bg { background: #0E1114; }
+  .dark .t { color: #EEF1F6; } .dark .d { color: #98A1B0; }
+
+  /* media bleeds to the edge and is clipped by the same superellipse */
+  .media { height: 118px; margin: 0; position: relative; overflow: hidden; }
+  .media i { position: absolute; inset: 0; display: block;
+    background: linear-gradient(135deg,#1B5CFF,#7A3BFF 55%,#FF5CA8); }
+  .dark .media i { background: linear-gradient(135deg,#5B8CFF,#9E7BFF 55%,#FF8FC0); }
+
+  .row { display: flex; gap: 8px; margin-top: 16px; }
+  .b { position: relative; display: inline-flex; align-items: center; justify-content: center;
+    height: 36px; font: inherit; font-size: 13px; font-weight: 550; border: 0; background: transparent;
+    cursor: pointer; padding: 0; }
+  .b > .bb { position: absolute; inset: 0; }
+  .b > span { position: relative; padding: 0 14px; }
+  .b-fill > .bb { background: #1B5CFF; } .b-fill { color: #fff; }
+  .b-quiet > .bb { background: #EAEEF6; } .b-quiet { color: #16305C; }
+  .dark .b-fill > .bb { background: #5B8CFF; } .dark .b-fill { color: #0B0E12; }
+  .dark .b-quiet > .bb { background: #1E2530; } .dark .b-quiet { color: #C8D6FF; }
+
+  .concentric { display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap; }
+  .demo-box { position: relative; width: 200px; height: 132px; }
+  .demo-box .o { position: absolute; inset: 0; background: #14161a; }
+  .demo-box .i2 { position: absolute; inset: 16px; background: #7A8698; }
+  .bad .i2 { border-radius: 24px; } .bad .o { border-radius: 24px; }
+</style>
+
+<div class="jc">
+
+  <p class="jc-h">Card</p>
+  <p class="jc-note">
+    A surface that groups related content. Radius <b>24</b> — the largest step in the scale, where
+    the superellipse is most visible. Padding is <b>20</b> on all sides; media bleeds to the edge
+    and is clipped by the card's own shape, which is the clearest demonstration of the geometry
+    we've committed to.
+  </p>
+
+  <div class="sec two">
+    <div class="panel">
+      <div class="rail">
+        <div class="card c-outline">
+          <div class="bg sq" data-r="24"></div>
+          <div class="in"><p class="t">Outlined</p><p class="d">A hairline boundary. The default — quiet enough to repeat down a list without the page getting noisy.</p></div>
+        </div>
+        <div class="card c-elevated">
+          <div class="bg sq" data-r="24"></div>
+          <div class="in"><p class="t">Elevated</p><p class="d">A soft shadow plus a 1px top keyline, so the surface catches light instead of just casting a blur.</p></div>
+        </div>
+      </div>
+      <p class="cap">LIGHT — outlined · elevated</p>
+    </div>
+    <div class="panel dark">
+      <div class="rail">
+        <div class="card c-outline">
+          <div class="bg sq" data-r="24"></div>
+          <div class="in"><p class="t">Outlined</p><p class="d">A hairline boundary. The default — quiet enough to repeat down a list without the page getting noisy.</p></div>
+        </div>
+        <div class="card c-elevated">
+          <div class="bg sq" data-r="24"></div>
+          <div class="in"><p class="t">Elevated</p><p class="d">In dark, elevation reads as a lighter surface first and a shadow second — shadows alone are nearly invisible on near-black.</p></div>
+        </div>
+      </div>
+      <p class="cap">DARK — elevation becomes lightness, not just shadow</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <p class="jc-h">Slots — media, body, actions</p>
+    <p class="jc-note">
+      Content is composed from slots rather than fixed <code>title</code>/<code>subtitle</code>
+      parameters, so a caller can put anything in a card without us anticipating it. Media sits
+      flush to the edges; body and actions keep the 20 inset.
+    </p>
+    <div class="two">
+      <div class="panel">
+        <div class="rail">
+          <div class="card c-elevated">
+            <div class="bg sq" data-r="24"></div>
+            <div class="in" style="padding:0">
+              <div class="media sq-top" data-r="24"><i></i></div>
+              <div style="padding:20px">
+                <p class="t">Media card</p>
+                <p class="d">The image is clipped by the card's superellipse, not a circular arc — the corner is where the difference shows.</p>
+                <div class="row">
+                  <button class="b b-fill"><span class="bb sq" data-r="10"></span><span>Open</span></button>
+                  <button class="b b-quiet"><span class="bb sq" data-r="10"></span><span>Share</span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card c-sunken">
+            <div class="bg sq" data-r="24"></div>
+            <div class="in">
+              <p class="t">Sunken</p>
+              <p class="d">Recedes instead of lifting. For secondary content nested inside another surface.</p>
+              <div class="row">
+                <button class="b b-quiet"><span class="bb sq" data-r="10"></span><span>Details</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">media bleed · action row · sunken variant</p>
+      </div>
+      <div class="panel dark">
+        <div class="rail">
+          <div class="card c-elevated c-interactive">
+            <div class="bg sq" data-r="24"></div>
+            <div class="in" style="padding:0">
+              <div class="media sq-top" data-r="24"><i></i></div>
+              <div style="padding:20px">
+                <p class="t">Interactive</p>
+                <p class="d">The whole surface is pressable. Press is <b>0.985</b>, not the button's 0.97 — a large surface scaling as hard as a small one looks rubbery.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">pressable card — scale tuned to surface size</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <p class="jc-h">Concentric radii — the rule most systems get wrong</p>
+    <p class="jc-note">
+      When one rounded shape sits inside another, the inner radius must equal the outer radius
+      minus the padding (<b>24 − 16 = 8</b>). Reuse the same radius for both and the curves stop
+      being parallel; the gap visibly pinches at the corners. It is a small rule that quietly
+      separates considered work from assembled work.
+    </p>
+    <div class="panel">
+      <div class="concentric">
+        <figure style="margin:0">
+          <div class="demo-box">
+            <div class="o sq" data-r="24"></div>
+            <div class="i2 sq" data-r="8"></div>
+          </div>
+          <p class="cap"><b>Correct</b> — outer 24, inner 8, gap stays even</p>
+        </figure>
+        <figure style="margin:0">
+          <div class="demo-box bad">
+            <div class="o"></div>
+            <div class="i2"></div>
+          </div>
+          <p class="cap">Wrong — both 24, corners pinch</p>
+        </figure>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <p class="jc-h">Compose API shape</p>
+    <p class="jc-note" style="max-width:70ch">
+      <code style="font-size:12px; background:#f1f3f6; padding:2px 6px">
+      JetCard(modifier = Modifier, variant = Outlined, onClick = null,
+      colors = JetCardDefaults.colors(), contentPadding = 20.dp,
+      content: @Composable ColumnScope.() -&gt; Unit)</code><br><br>
+      <code>onClick</code> is nullable: null gives a plain surface, non-null makes the whole card
+      pressable with the correct 48dp-minimum semantics and press feedback. One component rather
+      than <code>Card</code> + <code>ClickableCard</code>, because the difference is behaviour, not
+      identity.
+    </p>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    function pts(w, h, r, n, steps, topOnly) {
+      r = Math.min(r, Math.min(w, h) / 2);
+      var p = [], i, t, e = 2 / n;
+      function push(x, y) { p.push((x / w * 100).toFixed(3) + '% ' + (y / h * 100).toFixed(3) + '%'); }
+      for (i = steps; i >= 0; i--) { t = i / steps * Math.PI / 2;
+        push((w - r) + r * Math.pow(Math.abs(Math.cos(t)), e), r - r * Math.pow(Math.abs(Math.sin(t)), e)); }
+      if (topOnly) { push(w, h); push(0, h); }
+      else {
+        for (i = 0; i <= steps; i++) { t = i / steps * Math.PI / 2;
+          push((w - r) + r * Math.pow(Math.abs(Math.cos(t)), e), (h - r) + r * Math.pow(Math.abs(Math.sin(t)), e)); }
+        for (i = 0; i <= steps; i++) { t = i / steps * Math.PI / 2;
+          push(r - r * Math.pow(Math.abs(Math.sin(t)), e), (h - r) + r * Math.pow(Math.abs(Math.cos(t)), e)); }
+      }
+      for (i = 0; i <= steps; i++) { t = i / steps * Math.PI / 2;
+        push(r - r * Math.pow(Math.abs(Math.cos(t)), e), r - r * Math.pow(Math.abs(Math.sin(t)), e)); }
+      return p.join(',');
+    }
+    function apply() {
+      document.querySelectorAll('.sq').forEach(function (el) {
+        var w = el.offsetWidth, h = el.offsetHeight; if (!w || !h) return;
+        el.style.clipPath = 'polygon(' + pts(w, h, parseFloat(el.dataset.r || 12), 5, 16, false) + ')';
+      });
+      document.querySelectorAll('.sq-top').forEach(function (el) {
+        var w = el.offsetWidth, h = el.offsetHeight; if (!w || !h) return;
+        el.style.clipPath = 'polygon(' + pts(w, h, parseFloat(el.dataset.r || 24), 5, 16, true) + ')';
+      });
+    }
+    apply(); window.addEventListener('resize', apply);
+  })();
+</script>
