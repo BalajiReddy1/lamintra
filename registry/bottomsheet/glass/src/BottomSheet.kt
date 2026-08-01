@@ -1,24 +1,39 @@
 package com.jetcompose.bottomsheet.glass
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -31,27 +46,34 @@ import com.jetcompose.bottomsheet.glass.internal.bottomsheet_glass.DragHandle
 import com.jetcompose.bottomsheet.glass.internal.bottomsheet_glass.glassSurface
 
 /**
- * A glassmorphism-styled bottom sheet built entirely on compose.foundation.
- * No Material 3 dependency — colors, corner radius, and blur are fully
- * theme-driven so it adapts to the host app's own design system.
+ * An "Obsidian Glass" bottom sheet built entirely on compose.foundation —
+ * no Material dependency. A full-screen overlay: dimmed scrim (tap to
+ * dismiss) behind a floating glass card that slides up from the bottom
+ * edge, with drag-to-dismiss. Visual values follow design/TOKENS.md.
  *
- * Drag-to-dismiss uses foundation's [draggable], whose `onDragStopped`
- * reports release velocity. The sheet dismisses on EITHER a downward drag
- * past [dismissThreshold] OR a downward fling faster than
- * [flingVelocityThreshold] — matching how real bottom sheets feel, and
- * ensuring a quick flick dismisses even when there isn't room to drag the
- * full threshold distance (a low sheet near the screen edge affords little
- * finger travel). For a multi-anchor sheet (peek / half / full), the proper
- * long-term API is foundation's `anchoredDraggable` + `AnchoredDraggableState`;
- * this single-anchor dismiss doesn't need that machinery yet.
+ * Dismissal fires on EITHER a downward drag past [dismissThreshold] OR a
+ * downward fling faster than [flingVelocityThreshold]; sub-threshold
+ * releases settle back inheriting the release velocity. For multi-anchor
+ * sheets (peek / half / full) the proper long-term API is foundation's
+ * `anchoredDraggable`; this single-anchor dismiss doesn't need it.
  *
  * @param visible whether the sheet is currently shown
- * @param onDismiss called when the sheet is dragged/flung down enough to dismiss
- * @param tint the base glass tint color (alpha is applied internally)
- * @param cornerRadius corner radius of the sheet's top edge
+ * @param onDismiss called when the scrim is tapped or the sheet is
+ *        dragged/flung down enough to dismiss
+ * @param tint the glass tint color (alpha gradient applied internally)
+ * @param cornerRadius corner radius of the floating card
  * @param dismissThreshold downward drag distance after which release dismisses
  * @param flingVelocityThreshold downward release speed (dp/second) that
- *        dismisses regardless of distance dragged
+ *        dismisses regardless of distance
+ * @param scrimColor overlay color behind the sheet
+ * @param contentWindowInsets insets the sheet card keeps clear of. Defaults
+ *        to the bottom and horizontal edges of [WindowInsets.safeDrawing],
+ *        which covers the gesture/navigation bar, display cutouts in
+ *        landscape, and the on-screen keyboard — required on Android 15+,
+ *        where edge-to-edge is enforced and cannot be opted out of. Resolves
+ *        to zero on older/non-edge-to-edge setups, so the default is safe
+ *        everywhere. Pass `WindowInsets(0)` if a parent already consumed
+ *        these insets, to avoid double padding.
  * @param content the sheet's body content
  */
 @Composable
@@ -59,19 +81,18 @@ fun GlassBottomSheet(
     visible: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    tint: Color = Color.White,
+    tint: Color = Color(0xFF9BB8FF),
     cornerRadius: Dp = 24.dp,
     dismissThreshold: Dp = 64.dp,
     flingVelocityThreshold: Dp = 125.dp,
+    scrimColor: Color = Color(0x99060A12),
+    contentWindowInsets: WindowInsets = WindowInsets.safeDrawing
+        .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
     content: @Composable () -> Unit
 ) {
-    if (!visible) return
-
     val density = LocalDensity.current
     var offsetY by remember { mutableStateOf(0f) }
 
-    // Thresholds are density-independent (dp); convert once to the px space
-    // that drag deltas and release velocity are reported in.
     val dismissDistancePx = with(density) { dismissThreshold.toPx() }
     val flingVelocityPx = with(density) { flingVelocityThreshold.toPx() }
 
@@ -84,40 +105,77 @@ fun GlassBottomSheet(
         offsetY = (offsetY + delta).coerceAtLeast(0f)
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .offset { IntOffset(0, offsetY.roundToInt()) }
-            .zIndex(10f)
-            .glassSurface(tint = tint, cornerRadius = cornerRadius)
-            .padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 24.dp)
+    // Outer layer fades the scrim; the nested layer slides the card. Both
+    // watch the same flag, so exit plays the fade and the slide together.
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(durationMillis = 220)),
+        exit = fadeOut(animationSpec = tween(durationMillis = 260)),
+        modifier = modifier.zIndex(10f)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(color = Color.Transparent, shape = RoundedCornerShape(cornerRadius))
-                .draggable(
-                    state = dragState,
-                    orientation = Orientation.Vertical,
-                    onDragStopped = { velocity ->
-                        // Dismiss on distance OR downward fling; otherwise settle back.
-                        // velocity is px/second, positive downward.
-                        if (offsetY > dismissDistancePx || velocity > flingVelocityPx) {
-                            onDismiss()
-                        } else {
-                            animate(
-                                initialValue = offsetY,
-                                targetValue = 0f,
-                                initialVelocity = velocity,
-                                animationSpec = tween(durationMillis = 220)
-                            ) { value, _ -> offsetY = value }
-                        }
-                    }
-                )
-        ) {
-            DragHandle(modifier = Modifier.padding(vertical = 12.dp))
-            content()
+        Box(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(scrimColor)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onDismiss
+                    )
+            )
+            AnimatedVisibility(
+                visible = visible,
+                enter = slideInVertically(
+                    animationSpec = tween(durationMillis = 320, easing = LinearOutSlowInEasing)
+                ) { fullHeight -> fullHeight },
+                exit = slideOutVertically(
+                    animationSpec = tween(durationMillis = 220, easing = FastOutLinearInEasing)
+                ) { fullHeight -> fullHeight },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                Column(
+                    modifier = Modifier
+                        // System insets first: the scrim above stays full-bleed
+                        // (dimming everything, including behind the system bars)
+                        // while the card itself is held clear of the navigation
+                        // bar, cutouts, and the keyboard.
+                        .windowInsetsPadding(contentWindowInsets)
+                        .padding(horizontal = 12.dp)
+                        .padding(bottom = 12.dp)
+                        .widthIn(max = 640.dp)
+                        .fillMaxWidth()
+                        .offset { IntOffset(0, offsetY.roundToInt()) }
+                        .glassSurface(tint = tint, cornerRadius = cornerRadius)
+                        .draggable(
+                            state = dragState,
+                            orientation = Orientation.Vertical,
+                            onDragStopped = { velocity ->
+                                // Dismiss on distance OR downward fling; otherwise
+                                // settle back. velocity is px/second, positive down.
+                                if (offsetY > dismissDistancePx || velocity > flingVelocityPx) {
+                                    onDismiss()
+                                } else {
+                                    animate(
+                                        initialValue = offsetY,
+                                        targetValue = 0f,
+                                        initialVelocity = velocity,
+                                        animationSpec = tween(durationMillis = 220)
+                                    ) { value, _ -> offsetY = value }
+                                }
+                            }
+                        )
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 24.dp)
+                ) {
+                    DragHandle(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 10.dp, bottom = 14.dp)
+                    )
+                    content()
+                }
+            }
         }
     }
 }

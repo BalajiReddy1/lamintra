@@ -16,11 +16,11 @@ import androidx.compose.ui.unit.dp
  * source root because the @Preview annotation is Android-tooling-only.
  * Safe to delete.
  */
-@Preview(name = "NeonOutlineButton", showBackground = true, backgroundColor = 0xFF0E1116, widthDp = 240, heightDp = 120)
+@Preview(name = "NeonOutlineButton", showBackground = true, backgroundColor = 0xFF0B0E14, widthDp = 240, heightDp = 120)
 @Composable
 private fun NeonOutlineButtonPreview() {
     Box(
-        modifier = Modifier.fillMaxSize().background(Color(0xFF0E1116)).padding(24.dp),
+        modifier = Modifier.fillMaxSize().background(Color(0xFF0B0E14)).padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         NeonOutlineButton(text = "NEON", onClick = {})

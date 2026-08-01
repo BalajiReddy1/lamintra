@@ -150,6 +150,30 @@ repo.**
   private silently 404s every `jetcompose add` for every user (this
   actually happened 2026-07-20 and stalled the v0.2.1 release). The
   main `jetcompose` repo can be private; the registry cannot.
+- **Window insets are a component responsibility (added 2026-08-01).**
+  `GlassBottomSheet` now takes `contentWindowInsets`, defaulting to
+  `WindowInsets.safeDrawing.only(Horizontal + Bottom)`, applied to the
+  card only — the scrim stays full-bleed so it dims behind the system
+  bars. Without this the card renders **under the gesture navigation
+  bar on Android 15+**, where edge-to-edge is enforced and cannot be
+  opted out of. These are `compose.foundation.layout` APIs (no
+  Material, works in commonMain/desktop) and resolve to zero on
+  older/non-edge-to-edge setups, so one code path is correct from
+  Android 5 through 15+. **Every new component that touches a screen
+  edge must handle insets and expose them as a parameter.**
+- **Emulator inventory**: `Pixel_35` (API 35) is the one that matters —
+  edge-to-edge enforcement, gesture nav, 440dpi. `Pixel_4_33` (API 33)
+  is kept for backward-compat checks. The API-33-only setup is what
+  hid the inset bug for weeks: **verify layout/inset work on Pixel_35**.
+  The testbed's `MainActivity` calls `enableEdgeToEdge()` so inset bugs
+  surface on every API level rather than only on modern devices.
+- **Testing gotcha — `adb shell input swipe` duration matters.** Under
+  ~100ms the injected gesture produces too few MOVE events and Compose
+  never recognizes a drag at all (`onDragStopped` never fires, so it
+  looks exactly like a broken component). Use **150–300ms** to simulate
+  a real flick. Measured on Pixel_35 at 200ms: offsetY 176px vs 176px
+  threshold, velocity 1006 px/s vs 344 px/s threshold — both criteria
+  fire correctly. Don't diagnose gesture bugs from sub-100ms swipes.
 - **Testbed inventory** (all under `Downloads\Projects\Testbeds\`):
   `jetcompose-kmp-testbed` is the ONLY runnable one (MainActivity +
   launcher manifest + `@Preview` + desktop entry point, added
@@ -178,10 +202,19 @@ polish. These are recorded so they aren't forgotten, in rough order:
    the hint; a build-breaking install is impossible. Verified: skip
    path, non-KMP install path, KMP androidMain path, both targets
    compile.
-2. **`bottomsheet/glass` visual redesign** — founder verdict 2026-07-20:
-   functionality fine, looks bad. Polish pass on all components once the
-   flow is proven; product value is visual, so this matters before any
-   public launch even though it's parked now.
+2. **`bottomsheet/glass` visual redesign — DONE, awaiting founder's
+   design approval before release.** Design language is now written down
+   in `design/TOKENS.md` ("Obsidian Glass": canvas `#0B0E14`, glass tint
+   `#9BB8FF`, one neon accent `#00E5FF`, 4pt spacing, 4/12/24dp radii,
+   120/220/320ms motion) — that file is the authoring-time source of
+   truth and every component must draw from it. Components still inline
+   the values so each stays self-contained after install; a shared
+   installed token package remains the deferred shared-utilities-tier
+   decision. Sheet redesign: full-screen overlay with tap-to-dismiss
+   scrim, floating card (12dp margins, 24dp radius, 640dp max width),
+   gradient glass fill + light-catching hairline drawn in `drawBehind`,
+   slide-up/slide-down enter/exit. Verified on emulator: nudge springs
+   back, fast flick / slow drag / scrim tap all dismiss.
 3. Folder-depth complaint from real-dev test (deep
    `ui/components/<cat>/<style>/internal/<prefix>/` nesting) — cosmetic,
    revisit alongside the redesign.

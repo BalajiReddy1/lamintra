@@ -117,10 +117,41 @@ object Rewriter {
         return rewriteRootPackage(originalContent, manifest.registryPackage, newRoot)
     }
 
-    /** Writes [content] to [relativePath] under [projectDir], creating parent dirs as needed. */
+    /**
+     * Writes [content] to [relativePath] under [projectDir], creating parent
+     * dirs as needed.
+     *
+     * [relativePath] is derived from registry-supplied manifest fields
+     * (`category`, `style`, `prefix`, `files`), so it is untrusted input: a
+     * manifest containing `..` segments or an absolute path would otherwise
+     * write anywhere on the user's disk. The resolved target is therefore
+     * required to stay inside [projectDir]. This matters most for the
+     * planned third-party/private registries, where manifests come from
+     * someone other than us — but it costs nothing to enforce now.
+     */
     fun writeInstalledFile(projectDir: File, relativePath: String, content: String) {
-        val target = File(projectDir, relativePath)
+        val target = resolveSafeTarget(projectDir, relativePath)
         target.parentFile.mkdirs()
         target.writeText(content)
+    }
+
+    /**
+     * Resolves [relativePath] against [projectDir] and fails if it escapes.
+     * Canonicalizes both sides first so `..`, symlinks, and mixed separators
+     * can't smuggle a path past a plain string check.
+     */
+    internal fun resolveSafeTarget(projectDir: File, relativePath: String): File {
+        require(!File(relativePath).isAbsolute) {
+            "Refusing to install \"$relativePath\": absolute paths are not allowed."
+        }
+        val root = projectDir.canonicalFile
+        val target = File(root, relativePath).canonicalFile
+        val rootPath = root.path + File.separator
+        require(target.path.startsWith(rootPath)) {
+            "Refusing to install \"$relativePath\": it resolves outside the project " +
+                "directory (${target.path}). This usually means a malformed or " +
+                "untrusted component manifest."
+        }
+        return target
     }
 }

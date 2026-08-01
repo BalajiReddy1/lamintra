@@ -1,6 +1,8 @@
 package com.jetcompose.cli
 
 import org.junit.jupiter.api.Test
+import java.io.File
+import kotlin.io.path.createTempDirectory
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
@@ -126,5 +128,48 @@ class RewriterTest {
             "com.testapp.myapp.presentation.bottomsheet.glass",
             target.fullPackage
         )
+    }
+
+    @Test
+    fun `a normal path resolves inside the project`() {
+        val projectDir = createTempDirectory("jetcompose-safe").toFile()
+        val target = Rewriter.resolveSafeTarget(
+            projectDir, "composeApp/src/commonMain/kotlin/com/x/Button.kt"
+        )
+        assertTrue(
+            target.canonicalPath.startsWith(projectDir.canonicalPath),
+            "A normal relative path must resolve inside the project directory"
+        )
+    }
+
+    @Test
+    fun `a traversing path is refused instead of writing outside the project`() {
+        val projectDir = createTempDirectory("jetcompose-traversal").toFile()
+        val thrown = runCatching {
+            Rewriter.resolveSafeTarget(projectDir, "../../../../evil.kt")
+        }
+        assertTrue(
+            thrown.isFailure,
+            "A manifest path escaping the project directory must be refused"
+        )
+    }
+
+    @Test
+    fun `an absolute path is refused`() {
+        val projectDir = createTempDirectory("jetcompose-absolute").toFile()
+        val absolute = File(createTempDirectory("jetcompose-elsewhere").toFile(), "evil.kt").absolutePath
+        val thrown = runCatching { Rewriter.resolveSafeTarget(projectDir, absolute) }
+        assertTrue(thrown.isFailure, "An absolute manifest path must be refused")
+    }
+
+    @Test
+    fun `a sibling directory sharing the project name prefix is refused`() {
+        // "…/proj" must not be treated as containing "…/proj-evil" — the
+        // guard compares path boundaries, not raw string prefixes.
+        val base = createTempDirectory("jetcompose-prefix").toFile()
+        val projectDir = File(base, "proj").apply { mkdirs() }
+        File(base, "proj-evil").mkdirs()
+        val thrown = runCatching { Rewriter.resolveSafeTarget(projectDir, "../proj-evil/x.kt") }
+        assertTrue(thrown.isFailure, "A sibling dir sharing the name prefix must be refused")
     }
 }
