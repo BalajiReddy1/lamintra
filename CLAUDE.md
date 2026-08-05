@@ -400,10 +400,17 @@ non-technical product story to design from.
   - **This changes today's hard-dark defaults**, so the three existing
     components need re-verifying in both schemes. Cheapest to do now, at
     ~zero external users.
-  - **Blocking gate:** `isSystemInDarkTheme()` behaviour is unconfirmed on
-    wasm and iOS. If it returns a constant on wasm, every component on the
-    website renders in the wrong scheme — on the surface built to sell
-    them. Verify before building on this.
+  - **Blocking gate CLEARED 2026-08-05.** `isSystemInDarkTheme()` tracks
+    the host on every target measured: desktop on Windows (OS dark) → true,
+    desktop on Ubuntu CI (no preference) → false, wasm A/B/A under emulated
+    schemes → true/false/true, iOS simulator (default light) → false.
+    `.auto()` is safe as the default everywhere. Full table in
+    `design/TOKENS.md`. Android was NOT re-measured — it is the API's home
+    platform, so that is inference rather than measurement. One real gap
+    remains: live scheme-switching on wasm *without reload* is unproven,
+    but the result is confounded by a stalled `requestAnimationFrame` in a
+    non-compositing viewport, and startup-correctness is what `.auto()`
+    needs.
 
 ### Still open, in rough order
 

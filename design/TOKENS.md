@@ -249,11 +249,36 @@ The three existing components must be re-verified in both schemes.
 
 ### Gates before any of this is built on
 
-1. **Verify `isSystemInDarkTheme()` on all four targets.** It is
-   `compose.foundation`, so it is Material-safe, but its behaviour on
-   wasm and iOS is unconfirmed. This matters most for **wasm**: if it
-   returns a constant there, every component on the website renders in
-   the wrong scheme — on the one surface built to sell them.
+**Gate 1 — `isSystemInDarkTheme()` behaviour. PASSED 2026-08-05.**
+It tracks the host environment rather than returning a constant, measured
+rather than argued:
+
+| Target | Host state | Reported | Correct? |
+|---|---|---|---|
+| Desktop (Windows) | OS dark (`AppsUseLightTheme=0`) | `true` | yes |
+| Desktop (Ubuntu CI) | no dark preference | `false` | yes |
+| Wasm (browser) | emulated **dark** | `true` | yes |
+| Wasm (browser) | emulated **light** | `false` | yes |
+| Wasm (browser) | emulated **dark** again | `true` | yes (A/B/A) |
+| iOS simulator | default light appearance | `false` | yes |
+
+The wasm check mirrors what Compose observes *inside composition* out to
+the DOM — reading `prefers-color-scheme` from JS would only prove the
+browser works, not that Compose sees it. **`.auto()` is safe to use as the
+default on every target.**
+
+**Android was not re-measured in this gate.** It is the API's home
+platform and is not in doubt, but that is inference, not measurement.
+
+**Known gap: live reactivity on wasm.** Toggling the scheme *without a
+reload* did not change the observed value. That result is confounded —
+recomposition on wasm is driven by `requestAnimationFrame`, which stalls
+in a non-compositing viewport, so this proves nothing either way.
+Startup-correctness is what `.auto()` actually needs and that is proven.
+Re-test in a visible viewport if live-switching ever matters.
+
+Remaining gates:
+
 2. **Build and look at the light scheme.** The values in the table above
    are derived, not tested.
 3. **Contrast-check light, don't just eyeball it.** The neon accent as a

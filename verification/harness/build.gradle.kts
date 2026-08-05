@@ -35,7 +35,11 @@ val syncRegistrySources by tasks.registering(Sync::class) {
 
 // Surface println from tests so the light/dark gate's reported value is
 // visible in CI logs for each target, not just pass/fail.
-tasks.withType<Test>().configureEach {
+//
+// AbstractTestTask, not Test: Kotlin/Native simulator tests are not `Test`
+// tasks, so a withType<Test> filter silently misses iOS — the value ends up
+// only in the binary results file and never in the readable log.
+tasks.withType<AbstractTestTask>().configureEach {
     testLogging { showStandardStreams = true }
 }
 
