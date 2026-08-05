@@ -1,4 +1,5 @@
 import org.jetbrains.compose.ExperimentalComposeLibrary
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform") version "2.1.21"
@@ -40,6 +41,22 @@ kotlin {
     // platform the project could not previously verify by execution.
     jvm("desktop")
     iosSimulatorArm64()
+
+    // Browser target. The website's whole conversion story is "touch the real
+    // component", and this is the only way to do that without shipping a
+    // re-implementation that would silently drift from the Kotlin. Proving the
+    // components compile and run here is a prerequisite for that plan, not a
+    // detail of it.
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        moduleName = "harness"
+        browser {
+            commonWebpackConfig {
+                outputFileName = "harness.js"
+            }
+        }
+        binaries.executable()
+    }
 
     sourceSets {
         commonMain {

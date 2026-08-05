@@ -360,6 +360,27 @@ non-technical product story to design from.
   interaction, not that the glow and glass look right. That needs an Xcode
   app bundle plus `simctl io screenshot`.
 
+- **Wasm feasibility spike — PROVED 2026-08-05.** The website needs to show
+  the *real* components, not an HTML re-implementation that would silently
+  drift from the Kotlin. `verification/harness` now has a `wasmJs` target
+  (`VerificationScreen` is shared by desktop, iOS and browser). Findings:
+  - **It compiles.** All three components build for wasmJs unchanged —
+    including `WindowInsets.safeDrawing`, which was the API most likely to
+    be platform-limited. `compose.foundation`-only really does reach the
+    browser.
+  - **Payload is ~11 MB**: `skiko.wasm` **8.0 MB** (the Skia renderer,
+    a fixed cost paid once regardless of component count), our code 1.5 MB,
+    plus a 352 KB JS shim. This is the number the website design has to
+    plan around — it is not something to discover later.
+  - Loads with zero console errors, the wasm fetches 200, Compose mounts and
+    acquires a WebGL context. **Painted pixels and interactivity in the
+    browser are NOT yet confirmed** — the check ran in a headless pane where
+    `visibilityState` is `hidden`, so Skiko never sizes its surface. Serve
+    `harness/build/dist/wasmJs/productionExecutable` and look, before
+    building anything on top of this.
+  - Not wired into CI (a wasm build is ~5 min). Worth adding as a
+    compile-only guard if the website depends on it.
+
 ### Still open, in rough order
 
 1. Folder-depth complaint from real-dev test (deep
