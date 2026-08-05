@@ -1,157 +1,142 @@
-# JetCompose — Day 1 Engineering Report
+# JetCompose
 
-## Sandbox constraints (stated as fact, not caveat-hedging)
+Copy-paste UI components for Jetpack Compose and Kotlin Multiplatform —
+a shadcn/ui-style registry for Android and iOS.
 
-This build environment has:
-- ✅ Java 21 **JRE** (`java` works)
-- ❌ No JDK — `javac` does not exist, confirmed by direct search of the filesystem
-- ❌ No `kotlinc`
-- ❌ No network access — confirmed by a direct request to `repo.maven.apache.org`,
-  which was rejected by the sandbox's egress allowlist
-- ✅ Node.js and Python 3 are present with zero install needed
+Unlike a web `.tsx` file, a copy-pasted Kotlin file breaks the build
+immediately: its `package` declaration is bound at compile time to its
+physical location under the module's source root. JetCompose is a CLI
+that rewrites packages, imports and file paths so an installed component
+compiles with zero manual fixes, plus the registry those components live
+in.
 
-**What this means:** the production Kotlin CLI in `cli-kotlin/` has **not been
-compiled in this sandbox**. It cannot be — there's no compiler here. What
-follows is exactly what was and wasn't verified today, with no blurring
-between the two.
+Components use `compose.foundation` only — no Material 3, by design.
 
----
+> **Status: pre-launch, not yet publicly consumable.** The CLI jar is
+> built by CI and attached to releases on this repo, which is currently
+> **private**, so there is no public download and no install command to
+> hand to an outside user yet. The registry repo *is* public (it must be —
+> the installer does unauthenticated fetches). See
+> [Not yet public](#not-yet-public).
 
-## What was actually built and executed today (real, not simulated)
+## Current state
 
-### 1. The rewrite engine — validated in Node.js first, then ported to Kotlin
+| | Version | Verified |
+|---|---|---|
+| CLI | **0.3.3** | 12/12 `RewriterTest.kt` tests pass (2026-08-05) |
+| Registry | **0.3.2** | All 3 manifests fetch 200 from the pinned tag; jar installs from it end-to-end |
 
-The single highest-risk piece of this whole project, identified and
-re-confirmed across many rounds of planning, is the package/import rewrite
-logic. Since no Kotlin/Java compiler is available here, the algorithm was
-implemented in Node.js (available with zero install), executed for real
-against realistic fixtures, and only ported to Kotlin *after* it passed.
+Three components: `bottomsheet/glass`, `button/neon`,
+`button/neon_outline`.
 
-Test fixtures built (real files, not descriptions of files):
-- `registry/bottomsheet/glass/` — a full glassmorphism bottom sheet
-  component: `BottomSheet.kt` + two internal dependencies (`DragHandle.kt`,
-  `ModifierExtensions.kt`), using only `compose.foundation`, no Material 3.
-- `registry/button/neon/` — a second, unrelated component that
-  **deliberately ships its own file also named `ModifierExtensions.kt`**,
-  specifically to stress-test namespace collision handling.
-- `fake-target-project/.jetcompose/config.json` — a simulated real user
-  project, deliberately configured with a **non-default** `componentPath`
-  (`features/shared/widgets`) and KMP enabled, so the test exercises
-  configurability rather than only the happy-path default.
+The end-to-end flow is proven against four testbeds and by two external
+testers: one-Enter `init` via filesystem auto-detection, `add` with a
+duplicate-install guard, correct boundary-safe package rewriting,
+`@Preview` installed on supported projects, and clean builds on non-KMP,
+KMP, version-catalog and multi-module projects.
 
-Verification suite run (`cli-prototype/run-verification-suite.js` +
-`verify-path-matches-package.js`) — **17 of 17 assertions passed**,
-independently re-checked against the actual files written to disk
-(not just the script's own self-reported log):
+## Layout
 
-- Package declarations correctly rewritten to the target namespace
-- Cross-file internal imports correctly rewritten (`BottomSheet.kt`'s
-  imports of `DragHandle` and `glassSurface` both updated)
-- Unrelated imports (`androidx.compose.*`, `kotlinx.coroutines.*`) left
-  **untouched**
-- **Boundary-safety proven**: a decoy import
-  (`com.jetcompose.bottomsheet.glassy...`, note the trailing "y") was
-  correctly left alone — a naive global string-replace would have
-  corrupted it. Same for a decoy ending in a digit (`glass2`).
-- **Collision test passed**: the two same-named `ModifierExtensions.kt`
-  files from unrelated components landed at different paths with
-  different package declarations, both existing simultaneously with no
-  overwrite.
-- **Path/package agreement proven for all 5 installed files**: Kotlin
-  requires a file's physical location to exactly mirror its package
-  declaration, or it won't compile, independent of anything else being
-  correct. This was checked programmatically, file by file, not eyeballed.
+```
+cli-kotlin/     Production Kotlin CLI (zero runtime dependencies)
+registry/       Component sources; mirrored to the public registry repo
+design/         PRODUCT_BRIEF.md, TOKENS.md, design-system/ HTML previews
+cli-prototype/  Day-1 JS validation harness for the rewrite algorithm
+DAY1-REPORT.md  Historical Day-1 verification record
+CLAUDE.md       Working rules, full current state, backlog
+```
 
-One real bug was found and fixed during this process (a `process.cwd()`
-misuse in the initial path-resolution draft that would have produced wrong
-paths) — caught in review before the first test run, not left for you to
-discover later.
+## Requirements
 
-### 2. Production Kotlin CLI — written, not yet compiled
+- **JDK 17 or newer.** The CLI targets JVM 17 (`jvmToolchain(17)`), not
+  21 — Gradle itself requires 17+, so it is a floor every Android/KMP
+  developer already meets, and a 21-target jar fails with
+  `UnsupportedClassVersionError` on JDK 17 machines.
+- **Gradle 9.2.1+** to build the CLI. Shadow 9.5.1 calls the `Provider`
+  overload of `addVariantsFromConfiguration`, added in 9.2.1; older
+  Gradle fails at configuration time before compiling anything. The
+  wrapper here is pinned to 9.3.1.
 
-`cli-kotlin/src/main/kotlin/com/jetcompose/cli/`:
-- `MiniJson.kt` — zero-dependency JSON parser (deliberate: avoids pulling
-  in `kotlinx.serialization` just to parse two small, flat schemas)
-- `Config.kt`, `Manifest.kt` — data models + loaders
-- `Rewriter.kt` — **direct port** of the validated JS logic, same function
-  names, same boundary-safe regex approach, same shared
-  `computeNewRootPackage` used by both content-rewriting and path
-  resolution so they can't drift apart
-- `Installer.kt` — fetches from a GitHub-raw-hosted registry using
-  `java.net.http.HttpClient` (built into the JDK since Java 11 — no extra
-  HTTP library dependency needed)
-- `InitCommand.kt`, `Main.kt` — the `init` and `add` subcommands
+## Building and testing
 
-`cli-kotlin/src/test/kotlin/.../RewriterTest.kt` — a JUnit 5 port of the
-same assertions proven in Node today. **This is your very first move
-tomorrow**: run `./gradlew test` and confirm these pass in the real target
-language, on real Kotlin, with a real compiler. If they don't pass
-immediately, the JS-to-Kotlin port has a translation bug, not a logic bug —
-much faster to find than debugging both algorithm and syntax at once.
+```bash
+cd cli-kotlin && ./gradlew test
+```
 
-Sanity checks that don't require a compiler were run against all Kotlin
-files (brace/paren balance, consistent package declarations) — everything
-checks out structurally, but **this is not a substitute for actually
-compiling it.** Treat the Kotlin source as "very likely correct, unverified
-by execution" until you run it.
+```bash
+cd cli-kotlin && ./gradlew shadowJar
+```
 
-### 3. Gradle build file — using verified-current plugin coordinates
+That produces `cli-kotlin/build/libs/jetcompose-0.3.3.jar`.
 
-`cli-kotlin/build.gradle.kts` uses `com.gradleup.shadow` for the fat-JAR
-build, not the older `com.github.johnrengelman.shadow` ID. This was
-confirmed via live web search today: maintainership transferred to the
-GradleUp organization, and the plugin ID changed accordingly. Using the
-outdated ID still technically works through a compatibility shim, but
-would have been a stale-training-data mistake to hand you silently.
-**Double-check the pinned version number** against
-https://plugins.gradle.org/plugin/com.gradleup.shadow before your first
-build — plugin versions move faster than this document can track.
+## Using the CLI
 
----
+Run once per project, then once per component:
 
-## What is NOT yet verified — be precise about this
+```bash
+java -jar jetcompose-0.3.3.jar init
+```
 
-- The Kotlin CLI has never been compiled. First real compile happens on
-  your machine.
-- The Compose component files (`BottomSheet.kt`, `NeonButton.kt`, etc.)
-  have never been compiled against real Compose Multiplatform
-  dependencies — that requires Maven access this sandbox doesn't have.
-  They were written carefully against known-stable `compose.foundation`
-  APIs, but "written correctly" and "compiles" are different claims and
-  only the second one matters.
-- `BottomSheet.kt`'s actual drag-gesture wiring
-  (`detectVerticalDragGestures`) was stubbed with a comment rather than
-  fully wired, flagged explicitly in the file itself — this was cut for
-  fixture brevity today since it doesn't touch the rewrite logic being
-  validated, not hidden.
-- `Installer.kt` points at a placeholder registry URL
-  (`github.com/jetcompose/registry`) that doesn't exist yet — you'll
-  create the real repo and update this constant.
-- No real Gradle project has been touched by this CLI yet — only the
-  simulated fake-target-project fixture.
+```bash
+java -jar jetcompose-0.3.3.jar add bottomsheet/glass
+```
 
----
+`init` auto-detects the project from the filesystem alone (no Gradle
+evaluation): it finds Gradle modules, classifies KMP vs Android by
+source-set layout, and reads the root package from your sources. Standard
+projects need one Enter to confirm; anything unusual falls back to manual
+prompts. It writes `.jetcompose/config.json`, which every `add` reads.
 
-## Day 2 checklist — in order
+## Registry
 
-1. **Compile it for real.** Set up a real JDK (21+) and Kotlin toolchain
-   on your machine (Android Studio bundles both — you likely already have
-   what you need). `cd cli-kotlin && ./gradlew test`. If `RewriterTest.kt`
-   passes, the port is faithful and the core logic is now doubly-proven.
-2. **Create the actual GitHub repo** for the registry, push the contents
-   of `registry/`, and update `Installer.kt`'s `REGISTRY_BASE` constant to
-   point at it.
-3. **Build the fat JAR**: `./gradlew shadowJar`, confirm it produces a
-   runnable `jetcompose-0.1.0.jar`.
-4. **Create one real KMP project** (or use an existing one) and run the
-   actual CLI against it — `java -jar jetcompose.jar init`, then
-   `java -jar jetcompose.jar add bottomsheet/glass`. This is the first
-   time the whole pipeline touches a real Gradle/Compose project.
-5. **Fix the drag-gesture stub** in `BottomSheet.kt` — wire up
-   `detectVerticalDragGestures` for real.
-6. **Only after that works**, move to the Week 4 real-world-testing phase
-   already scoped in the earlier planning conversation: test against
-   3–5 different real projects, not just your own.
+Components are served from
+[`jetcompose-registry`](https://github.com/BalajiReddy1/jetcompose-registry)
+over `raw.githubusercontent.com`, **pinned to a release tag rather than a
+branch**. Branch URLs are cached for ~5 minutes, which caused transient
+404s and stale content during real testing; tag URLs are immutable.
 
-Nothing here should be treated as "done" until step 1 and step 4 both
-happen for real. Today proved the algorithm. Tomorrow proves the build.
+Two consequences worth knowing:
+
+- Registry changes require cutting a new registry tag *and* bumping
+  `REGISTRY_BASE` in `Installer.kt`, which means re-releasing the jar.
+  The two repos have independent tag lines.
+- **The registry repo must stay public.** The installer fetches
+  unauthenticated; making it private silently 404s every `add` for every
+  user. This has happened once already.
+
+## Known limitations
+
+- **Shared library modules need `api(...)`.** Installing a component into
+  a module like `:feature:ui` only compiles for consuming modules if that
+  module exposes Compose via `api(...)` rather than `implementation(...)`
+  — the component's public signature exposes Compose types (`Modifier`,
+  `Color`, `Dp`, `@Composable`).
+- **Style names must be legal Kotlin package segments.** The rewriter
+  joins `category`/`style` verbatim into the target package, so
+  `neon-outline` would generate an illegal package and fail every
+  install. Use underscores. This is not yet validated at manifest load.
+- **Installed components nest deeply**
+  (`ui/components/<category>/<style>/internal/<prefix>/`). Cosmetic, and
+  raised by a real tester.
+
+## Not yet public
+
+Deliberately recorded so it is not mistaken for an oversight:
+
+- This repo is private, so its GitHub Releases — and therefore the CLI
+  jar — are not downloadable by anyone outside. Going public is the
+  founder's call; the history was reset to purge an internal strategy
+  doc, so there is no blocker other than that decision.
+- The registry repo is public but has no README or landing content.
+- There is no website yet, and no user-facing install documentation
+  written for an outside developer. This README is an engineering
+  document, not a launch page.
+
+## Contributing / working on this
+
+Read `CLAUDE.md` first. It carries the hard rules — including that a
+component counts as verified only when it both compiles on Android and
+desktop *and* has been run on a real screen with its interactions
+exercised. Compile-only verification is explicitly not sufficient here;
+that rule exists because a bottom sheet whose drag-to-dismiss compiled
+everywhere broke on the first human touch.
