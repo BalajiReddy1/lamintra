@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Candidate C vs the Material default — real screen</title>
+<style>
+  :root{
+    --page:#0E1116; --page-ink:#EDEFF3; --page-dim:#8A93A5;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    /* Held IDENTICAL on both sides on purpose: the variable under test is form,
+       not palette. Material ships an accent; ours takes one as a parameter. */
+    --accent:#4C7DF0;
+    --accent-ink:#FFFFFF;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--page-ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:21px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px}
+  .sub{color:var(--page-dim);font-size:13.5px;line-height:1.65;margin:0 0 20px;max-width:76ch}
+  .sub b{color:var(--page-ink);font-weight:500}
+
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 26px}
+  .seg{display:inline-flex;background:rgba(255,255,255,.06);border-radius:8px;padding:3px;
+       border:1px solid rgba(255,255,255,.08)}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--page-dim);
+              font:500 12px/1 var(--sans);padding:7px 13px;border-radius:6px;cursor:pointer;
+              letter-spacing:.02em}
+  .seg button.on{background:rgba(255,255,255,.12);color:var(--page-ink)}
+  .hint{font-family:var(--mono);font-size:11px;color:var(--page-dim)}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  @media(max-width:880px){.cols{grid-template-columns:1fr}}
+  .col h3{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+          margin:0 0 3px;color:var(--page-ink)}
+  .col p.note{font-size:12px;color:var(--page-dim);margin:0 0 14px;line-height:1.55;height:32px}
+
+  /* device */
+  .device{border-radius:34px;padding:10px;background:#1B1F27;
+          border:1px solid rgba(255,255,255,.09)}
+  .screen{border-radius:26px;overflow:hidden;background:var(--surface);height:700px;
+          position:relative}
+  .stage.gray{filter:grayscale(1)}
+
+  /* schemes — both sides read from the same two variables */
+  .screen.dark { --surface:#0F1216; --ink:#F2F5FA; }
+  .screen.light{ --surface:#FBFBFD; --ink:#12151A; }
+
+  .scr{padding:26px 18px 20px;height:100%;overflow:hidden}
+  .title{font-size:26px;font-weight:600;letter-spacing:-.02em;color:var(--ink);margin:0 0 22px}
+  .sect{font-size:11px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+        color:var(--ink);opacity:.45;margin:0 0 9px;padding-left:2px}
+  .gap{height:20px}
+  .lab{font-size:14.5px;color:var(--ink);letter-spacing:.005em}
+  .val{font-size:13.5px;color:var(--ink);opacity:.5}
+  .rowline{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .fieldlab{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+            color:var(--ink);opacity:.45;margin:0 0 7px;padding-left:2px}
+
+  /* ============ MATERIAL 3 (baseline, rendered fairly) ============ */
+  .m .card{background:color-mix(in srgb,var(--ink) 7%,var(--surface));border-radius:12px;
+           padding:4px 0;margin:0}
+  .m .row{padding:15px 16px}
+  .m .divider{height:1px;background:color-mix(in srgb,var(--ink) 12%,transparent);
+              margin-left:16px}
+  .m .field{background:color-mix(in srgb,var(--ink) 7%,var(--surface));
+            border-radius:4px 4px 0 0;padding:9px 16px 8px;
+            border-bottom:2px solid var(--accent)}
+  .m .field .ph{font-size:11.5px;color:var(--accent);letter-spacing:.01em}
+  .m .field .tx{font-size:15px;color:var(--ink);margin-top:2px}
+  .m .btn{height:40px;border-radius:20px;display:flex;align-items:center;
+          justify-content:center;font-size:14px;font-weight:500;letter-spacing:.01em}
+  .m .btn.filled{background:var(--accent);color:var(--accent-ink)}
+  .m .btn.tonal{background:color-mix(in srgb,var(--accent) 20%,var(--surface));color:var(--accent)}
+  .m .btn.text{color:var(--accent);background:transparent}
+  .m .sw{width:52px;height:32px;border-radius:16px;position:relative;flex:none;
+         transition:background .18s}
+  .m .sw.on{background:var(--accent)}
+  .m .sw.off{background:color-mix(in srgb,var(--ink) 14%,var(--surface));
+             border:2px solid color-mix(in srgb,var(--ink) 30%,transparent)}
+  .m .sw i{position:absolute;border-radius:50%;transition:all .18s;display:block}
+  .m .sw.on i{width:24px;height:24px;background:#fff;top:4px;left:24px}
+  .m .sw.off i{width:16px;height:16px;background:color-mix(in srgb,var(--ink) 40%,var(--surface));
+               top:6px;left:6px}
+
+  /* ============ CANDIDATE C — defined by LAYER ============ */
+  /* Only INTERACTIVE things get a base plane. Static surfaces stay flat and are
+     divided by hairlines. That restraint is what keeps it a language and not an
+     embossing effect applied to everything. */
+  .c .sq{position:relative}
+  .c .sq > svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;
+               pointer-events:none}
+  .c .sq > .in{position:relative}
+
+  .c .card{padding:2px 0}
+  .c .row{padding:15px 16px}
+  .c .divider{height:1px;background:color-mix(in srgb,var(--ink) 10%,transparent);
+              margin-left:16px}
+  .c .field .in{padding:11px 15px}
+  .c .field .tx{font-size:15px;color:var(--ink)}
+  .c .btn{height:46px}
+  .c .btn .in{height:46px;display:flex;align-items:center;justify-content:center;
+              font-size:13.5px;font-weight:500;letter-spacing:.09em;color:var(--ink)}
+  .c .btn.primary .in{color:var(--accent-ink)}
+  .c .btn.ghost .in{color:var(--ink);opacity:.75}
+  .c .btn.danger .in{color:#E5484D;letter-spacing:.09em;font-size:13px}
+  .c .press{cursor:pointer}
+  .c .press .face{transition:transform .12s cubic-bezier(.2,0,0,1)}
+  .c .press:active .face{transform:translateY(3px)}
+  .c .sw{width:52px;height:30px;flex:none;position:relative;cursor:pointer}
+  .c .sw .knob{transition:transform .16s cubic-bezier(.2,0,0,1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Candidate C (layer) vs the Material default</h1>
+  <p class="sub">
+    The same settings screen, twice. Left is what Google gives you for free, rendered with real
+    M3 baseline values — filled tonal surfaces, 20dp pill buttons, underlined text field, M3
+    switch. <b>Deliberately not a strawman:</b> a rigged comparison would be worthless.
+    Both sides use the <b>identical accent colour</b>, so the only variable is form.
+  </p>
+  <p class="sub">
+    The bar from the brief: installed into an app whose colours and fonts we never chose,
+    does it still look better than the default? Toggle grayscale to check the form is doing
+    the work and not the palette. Press and hold any button on the right.
+  </p>
+
+  <div class="bar">
+    <div class="seg" id="scheme">
+      <button data-v="dark" class="on">Dark</button>
+      <button data-v="light">Light</button>
+    </div>
+    <div class="seg" id="gray">
+      <button data-v="off" class="on">Colour</button>
+      <button data-v="on">Grayscale</button>
+    </div>
+    <span class="hint">accent held constant on both sides</span>
+  </div>
+
+  <div class="cols stage" id="stage">
+    <div class="col">
+      <h3>Material 3 — the free default</h3>
+      <p class="note">Competent, familiar, and identical to several million other apps.</p>
+      <div class="device"><div class="screen dark m" id="mScreen"></div></div>
+    </div>
+    <div class="col">
+      <h3>Candidate C — defined by layer</h3>
+      <p class="note">Face + base plane. Depth from honest offset geometry, never a blurred shadow.</p>
+      <div class="device"><div class="screen dark c" id="cScreen"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---- true superellipse, sampled exactly as a custom Compose Shape would ---- */
+function superPath(w,h,n=4.2,steps=88){
+  const a=w/2,b=h/2,p=[];
+  for(let i=0;i<=steps;i++){
+    const t=i/steps*2*Math.PI,ct=Math.cos(t),st=Math.sin(t);
+    p.push((a+a*Math.sign(ct)*Math.abs(ct)**(2/n)).toFixed(2)+','+
+           (b+b*Math.sign(st)*Math.abs(st)**(2/n)).toFixed(2));
+  }
+  return 'M'+p.join('L')+'Z';
+}
+
+/* A layered element: base plane offset beneath, face plane on top.
+   `fill` lets the primary button carry the host accent. */
+function layer(w,h,{off=3,baseA=.26,faceA=.10,edgeA=.24,fill=null}={}){
+  const d=superPath(w,h);
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <path d="${d}" fill="${fill||'var(--ink)'}" fill-opacity="${fill?.45:baseA}"
+          transform="translate(0 ${off})"/>
+    <g class="face">
+      <path d="${d}" fill="${fill||'var(--ink)'}" fill-opacity="${fill?1:faceA}"/>
+      <path d="${d}" fill="none" stroke="var(--ink)" stroke-opacity="${fill?0:edgeA}"
+            stroke-width="1"/>
+    </g></svg>`;
+}
+/* Flat surface: static, so no base plane — just a hairline contour. */
+function flat(w,h,{fillA=.05,edgeA=.11}={}){
+  const d=superPath(w,h);
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <path d="${d}" fill="var(--ink)" fill-opacity="${fillA}"/>
+    <path d="${d}" fill="none" stroke="var(--ink)" stroke-opacity="${edgeA}" stroke-width="1"/>
+  </svg>`;
+}
+function sw(on){
+  const w=52,h=30,d=superPath(w,h),k=superPath(24,24);
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <path d="${d}" fill="var(--ink)" fill-opacity="${on?0:.13}"
+          transform="translate(0 2)"/>
+    <path d="${d}" fill="${on?'var(--accent)':'var(--ink)'}" fill-opacity="${on?1:.07}"/>
+    <path d="${d}" fill="none" stroke="var(--ink)" stroke-opacity="${on?0:.2}" stroke-width="1"/>
+    <g class="knob" transform="translate(${on?25:3} 3)">
+      <path d="${k}" fill="var(--ink)" fill-opacity=".30" transform="translate(0 2)"/>
+      <path d="${k}" fill="${on?'#FFFFFF':'var(--ink)'}" fill-opacity="${on?1:.55}"/>
+    </g></svg>`;
+}
+
+const W = 324; // content width inside the phone
+
+/* ---------------- Material screen ---------------- */
+document.getElementById('mScreen').innerHTML = `
+<div class="scr">
+  <h2 class="title">Settings</h2>
+
+  <p class="sect">Account</p>
+  <div class="field">
+    <div class="ph">Display name</div><div class="tx">Balaji</div>
+  </div>
+  <div class="gap"></div>
+
+  <div class="card">
+    <div class="row rowline"><span class="lab">Email</span><span class="val">balaji@mail.com</span></div>
+    <div class="divider"></div>
+    <div class="row rowline"><span class="lab">Plan</span><span class="val">Free</span></div>
+  </div>
+  <div class="gap"></div>
+
+  <p class="sect">Preferences</p>
+  <div class="card">
+    <div class="row rowline"><span class="lab">Notifications</span>
+      <span class="sw on"><i></i></span></div>
+    <div class="divider"></div>
+    <div class="row rowline"><span class="lab">Haptic feedback</span>
+      <span class="sw off"><i></i></span></div>
+  </div>
+  <div class="gap"></div>
+
+  <div class="btn filled">Save changes</div>
+  <div style="height:10px"></div>
+  <div class="btn tonal">Cancel</div>
+  <div style="height:6px"></div>
+  <div class="btn text">Delete account</div>
+</div>`;
+
+/* ---------------- Candidate C screen ---------------- */
+document.getElementById('cScreen').innerHTML = `
+<div class="scr">
+  <h2 class="title">Settings</h2>
+
+  <p class="fieldlab">Display name</p>
+  <div class="sq field">${layer(W,44,{off:2,baseA:.18,faceA:.05,edgeA:.16})}
+    <div class="in"><span class="tx">Balaji</span></div></div>
+  <div class="gap"></div>
+
+  <p class="sect">Account</p>
+  <div class="sq card">${flat(W,98)}
+    <div class="in">
+      <div class="row rowline"><span class="lab">Email</span><span class="val">balaji@mail.com</span></div>
+      <div class="divider"></div>
+      <div class="row rowline"><span class="lab">Plan</span><span class="val">Free</span></div>
+    </div></div>
+  <div class="gap"></div>
+
+  <p class="sect">Preferences</p>
+  <div class="sq card">${flat(W,98)}
+    <div class="in">
+      <div class="row rowline"><span class="lab">Notifications</span>
+        <span class="sw">${sw(true)}</span></div>
+      <div class="divider"></div>
+      <div class="row rowline"><span class="lab">Haptic feedback</span>
+        <span class="sw">${sw(false)}</span></div>
+    </div></div>
+  <div class="gap"></div>
+
+  <div class="sq btn primary press">${layer(W,46,{fill:'var(--accent)'})}
+    <div class="in">SAVE CHANGES</div></div>
+  <div style="height:12px"></div>
+  <div class="sq btn ghost press">${layer(W,46,{off:3,baseA:.20,faceA:.06,edgeA:.22})}
+    <div class="in">CANCEL</div></div>
+  <div style="height:14px"></div>
+  <div class="btn danger" style="height:auto">
+    <div class="in" style="height:auto">DELETE ACCOUNT</div></div>
+</div>`;
+
+/* ---------------- controls ---------------- */
+function seg(id, fn){
+  const el=document.getElementById(id);
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...el.children].forEach(c=>c.classList.toggle('on',c===b));
+    fn(b.dataset.v);
+  });
+}
+seg('scheme',v=>document.querySelectorAll('.screen').forEach(s=>{
+  s.classList.toggle('dark',v==='dark'); s.classList.toggle('light',v==='light');
+}));
+seg('gray',v=>document.getElementById('stage').classList.toggle('gray',v==='on'));
+</script>
+</body>
+</html>
