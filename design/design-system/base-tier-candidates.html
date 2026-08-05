@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Base-tier design language — three candidates</title>
+<style>
+  :root{
+    --page:#0B0E14; --page-ink:#F2F5FA; --page-dim:#8A93A5; --accent:#00E5FF;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--page-ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:48px 24px 96px}
+  h1{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px}
+  .sub{color:var(--page-dim);font-size:14px;line-height:1.6;margin:0 0 8px;max-width:70ch}
+  .rule{height:1px;background:rgba(255,255,255,.08);margin:32px 0}
+
+  .cand{margin:0 0 12px}
+  .cand h2{font-size:15px;font-weight:600;margin:0 0 4px;letter-spacing:.02em}
+  .cand h2 .tag{font-family:var(--mono);font-size:11px;color:var(--accent);
+                margin-right:10px;letter-spacing:.08em}
+  .idea{color:var(--page-dim);font-size:13.5px;line-height:1.65;margin:0 0 6px;max-width:76ch}
+  .idea b{color:var(--page-ink);font-weight:500}
+  .how{font-family:var(--mono);font-size:11.5px;color:var(--page-dim);
+       line-height:1.7;margin:0 0 18px}
+  .how span{color:var(--page-ink)}
+
+  /* three viewing conditions side by side */
+  .panels{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:900px){.panels{grid-template-columns:1fr}}
+  .panel{border-radius:10px;padding:22px 20px 24px;border:1px solid rgba(255,255,255,.07);
+         background:var(--bg)}
+  .panel .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+              text-transform:uppercase;margin:0 0 16px;opacity:.55;color:var(--ink)}
+  .panel.dark { --ink:#F2F5FA; --bg:#0B0E14; }
+  .panel.light{ --ink:#10141C; --bg:#FFFFFF; }
+  .panel.gray { --ink:#F2F5FA; --bg:#0B0E14; filter:grayscale(1) }
+
+  .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+  .stack{display:flex;flex-direction:column;gap:12px}
+  .cap{font-family:var(--mono);font-size:10px;letter-spacing:.08em;opacity:.45;
+       color:var(--ink);margin-top:6px;text-align:center}
+
+  /* ---- specimen shell: SVG does the drawing, exactly as drawBehind would ---- */
+  .spec{position:relative;display:inline-flex;align-items:center;justify-content:center;
+        user-select:none}
+  .spec svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;
+            pointer-events:none}
+  .spec .t{position:relative;font-size:13px;font-weight:500;letter-spacing:.08em;
+           color:var(--ink);white-space:nowrap}
+  .btn{width:150px;height:44px}
+  .inp{width:212px;height:44px}
+  .crd{width:212px;height:96px;align-items:flex-start;justify-content:flex-start;padding:16px}
+  .crd .t{font-size:13px;letter-spacing:.02em;opacity:.9}
+
+  .spec.live{cursor:pointer;transition:transform .12s cubic-bezier(.2,0,0,1)}
+  .spec.dis{cursor:not-allowed}
+  .spec.dis .t{opacity:.38}
+
+  /* A — EDGE: press tightens; nothing fills */
+  .A.live:active{transform:scale(.978)}
+  /* B — RECESS: press pushes the label down into the well */
+  .B.live:active .t{transform:translateY(1px)}
+  /* C — LAYER: press drops the face onto its base */
+  .C.live:active .face{transform:translateY(3px)}
+  .C .face{transition:transform .12s cubic-bezier(.2,0,0,1)}
+
+  .foot{color:var(--page-dim);font-size:12.5px;line-height:1.7;margin-top:14px;max-width:78ch}
+  .foot code{font-family:var(--mono);font-size:11.5px;color:var(--page-ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Base-tier design language — three candidates</h1>
+  <p class="sub">
+    Each candidate answers one question differently: <b style="color:#F2F5FA">what makes a
+    component visible at all?</b> That is the identity lever our tokens never specified.
+    Every candidate is drawn using only what <code style="font-family:var(--mono)">compose.foundation</code>
+    can draw — gradients, strokes, paths, transforms. No blur, no platform shadow.
+    And every one is derived from just two host-supplied colours, <b>ink</b> and <b>surface</b>,
+    at varying alpha — which is how we know it survives someone else's theme.
+  </p>
+  <p class="sub">
+    Read the <b>GRAYSCALE</b> column first. That is the brief's acceptance test: if a component
+    is still recognisable with all colour removed, the language is real form. If it dissolves,
+    it was decoration.
+  </p>
+
+  <div class="rule"></div>
+
+  <!-- ================= A ================= -->
+  <div class="cand">
+    <h2><span class="tag">A</span>Defined by EDGE</h2>
+    <p class="idea">
+      Nothing is filled. Every component is a single precise contour, and the contour is
+      <b>lit from above</b> — brighter along the top, fading toward the bottom — which is the
+      glass sheet's own lighting model with the fill removed. The family resemblance is
+      structural, not decorative.
+    </p>
+    <p class="how">
+      rest <span>1.25dp gradient contour, no fill</span> &nbsp;·&nbsp;
+      pressed <span>contour brightens + scale 0.978</span> &nbsp;·&nbsp;
+      disabled <span>contour alpha ×0.35</span>
+    </p>
+  </div>
+  <div class="panels" data-cand="A">
+    <div class="panel dark"><p class="lbl">Dark</p><div class="body"></div></div>
+    <div class="panel light"><p class="lbl">Light</p><div class="body"></div></div>
+    <div class="panel gray"><p class="lbl">Grayscale — the test</p><div class="body"></div></div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- ================= B ================= -->
+  <div class="cand">
+    <h2><span class="tag">B</span>Defined by RECESS</h2>
+    <p class="idea">
+      Components are <b>carved into</b> the surface rather than sitting on it. Lighting is
+      inverted against the glass sheet — shadow along the top lip, light catching the bottom —
+      because that is what a real machined recess does. Teenage Engineering, not Material.
+    </p>
+    <p class="how">
+      rest <span>inset gradient well + inverted lip</span> &nbsp;·&nbsp;
+      pressed <span>well deepens, label sinks 1dp</span> &nbsp;·&nbsp;
+      disabled <span>well flattens toward the surface</span>
+    </p>
+  </div>
+  <div class="panels" data-cand="B">
+    <div class="panel dark"><p class="lbl">Dark</p><div class="body"></div></div>
+    <div class="panel light"><p class="lbl">Light</p><div class="body"></div></div>
+    <div class="panel gray"><p class="lbl">Grayscale — the test</p><div class="body"></div></div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- ================= C ================= -->
+  <div class="cand">
+    <h2><span class="tag">C</span>Defined by LAYER</h2>
+    <p class="idea">
+      Every component is <b>two planes</b> — a face, and a base peeking out beneath it. Depth
+      comes from honest offset geometry, never from a blurred shadow, so it renders identically
+      on every target. Pressing drops the face onto its base, like a real key bottoming out.
+    </p>
+    <p class="how">
+      rest <span>face + 3dp offset base plane</span> &nbsp;·&nbsp;
+      pressed <span>face travels 3dp, meets base</span> &nbsp;·&nbsp;
+      disabled <span>offset collapses to 1dp</span>
+    </p>
+  </div>
+  <div class="panels" data-cand="C">
+    <div class="panel dark"><p class="lbl">Dark</p><div class="body"></div></div>
+    <div class="panel light"><p class="lbl">Light</p><div class="body"></div></div>
+    <div class="panel gray"><p class="lbl">Grayscale — the test</p><div class="body"></div></div>
+  </div>
+
+  <div class="rule"></div>
+  <p class="foot">
+    <b style="color:#F2F5FA">Live specimens.</b> The first button in each panel is interactive —
+    press and hold to feel the motion, which is the part a screenshot cannot carry. All three
+    use the same 120&nbsp;ms <code>cubic-bezier(.2,0,0,1)</code> already in
+    <code>TOKENS.md</code> as <code>motionFast</code>, so you are comparing the idea, not the timing.
+  </p>
+  <p class="foot">
+    <b style="color:#F2F5FA">Shape.</b> All specimens use a true superellipse (n=4.2), carried
+    over from the earlier pass — it survived, the weak part was the absence of an idea beneath it.
+    In Compose this is a custom <code>Shape</code> backed by a <code>Path</code>; it is not a
+    rounded rectangle, and the difference is most visible at the corners of the cards.
+  </p>
+</div>
+
+<script>
+/* True superellipse: |x/a|^n + |y/b|^n = 1. Sampled to a path, exactly the way a
+   custom Compose Shape would build one — no CSS border-radius anywhere. */
+function superPath(w, h, n = 4.2, steps = 96) {
+  const a = w / 2, b = h / 2, pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = (i / steps) * 2 * Math.PI;
+    const ct = Math.cos(t), st = Math.sin(t);
+    const x = a * Math.sign(ct) * Math.pow(Math.abs(ct), 2 / n);
+    const y = b * Math.sign(st) * Math.pow(Math.abs(st), 2 / n);
+    pts.push((a + x).toFixed(2) + ',' + (b + y).toFixed(2));
+  }
+  return 'M' + pts.join('L') + 'Z';
+}
+
+function svg(w, h, inner) {
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${inner}</svg>`;
+}
+
+/* Each candidate draws the same geometry a different way. `k` keys the gradients
+   per instance so they never collide. state: rest | press | dis */
+function art(cand, w, h, state, k) {
+  const d = superPath(w, h);
+  const dis = state === 'dis', press = state === 'press';
+
+  if (cand === 'A') {
+    const top = dis ? .22 : press ? .95 : .62;
+    const bot = dis ? .07 : press ? .38 : .20;
+    return svg(w, h, `
+      <defs><linearGradient id="a${k}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--ink)" stop-opacity="${top}"/>
+        <stop offset=".55" stop-color="var(--ink)" stop-opacity="${(top+bot)/2}"/>
+        <stop offset="1" stop-color="var(--ink)" stop-opacity="${bot}"/>
+      </linearGradient></defs>
+      <path d="${d}" fill="none" stroke="url(#a${k})" stroke-width="1.25"/>`);
+  }
+
+  if (cand === 'B') {
+    const deep = dis ? .04 : press ? .16 : .10;
+    const lip  = dis ? .05 : press ? .22 : .16;
+    return svg(w, h, `
+      <defs>
+        <linearGradient id="bf${k}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--ink)" stop-opacity="${deep}"/>
+          <stop offset=".62" stop-color="var(--ink)" stop-opacity="${deep*.35}"/>
+          <stop offset="1" stop-color="var(--ink)" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="bl${k}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--ink)" stop-opacity="${lip}"/>
+          <stop offset=".5" stop-color="var(--ink)" stop-opacity="0"/>
+          <stop offset="1" stop-color="var(--ink)" stop-opacity="${lip*.55}"/>
+        </linearGradient>
+        <clipPath id="bc${k}"><path d="${d}"/></clipPath>
+      </defs>
+      <path d="${d}" fill="url(#bf${k})"/>
+      <g clip-path="url(#bc${k})">
+        <path d="${d}" fill="none" stroke="url(#bl${k})" stroke-width="2.5"/>
+      </g>`);
+  }
+
+  /* C — two planes; the base is the depth, no blur involved */
+  const off  = dis ? 1 : press ? 0 : 3;
+  const baseA = dis ? .10 : .30;
+  const faceA = dis ? .05 : .12;
+  const edgeA = dis ? .10 : .28;
+  return svg(w, h, `
+    <path d="${d}" fill="var(--ink)" fill-opacity="${baseA}"
+          transform="translate(0 ${off})"/>
+    <g class="face">
+      <path d="${d}" fill="var(--ink)" fill-opacity="${faceA}"/>
+      <path d="${d}" fill="none" stroke="var(--ink)" stroke-opacity="${edgeA}" stroke-width="1"/>
+    </g>`);
+}
+
+let uid = 0;
+function spec(cand, kind, state, label, live) {
+  const dims = { btn: [150, 44], inp: [212, 44], crd: [212, 96] }[kind];
+  const cls = `spec ${kind} ${cand}` + (live ? ' live' : '') + (state === 'dis' ? ' dis' : '');
+  return `<div class="${cls}">${art(cand, dims[0], dims[1], state, uid++)}` +
+         `<span class="t">${label}</span></div>`;
+}
+
+document.querySelectorAll('.panels').forEach(group => {
+  const cand = group.dataset.cand;
+  group.querySelectorAll('.body').forEach(body => {
+    body.innerHTML =
+      `<div class="row">
+         <div><div>${spec(cand,'btn','rest','PRESS ME',true)}</div><p class="cap">rest / live</p></div>
+         <div><div>${spec(cand,'btn','press','PRESSED',false)}</div><p class="cap">pressed</p></div>
+       </div>
+       <div class="row">
+         <div><div>${spec(cand,'btn','dis','DISABLED',false)}</div><p class="cap">disabled</p></div>
+       </div>
+       <div class="stack">
+         <div>${spec(cand,'inp','rest','Email address',false)}<p class="cap">input</p></div>
+         <div>${spec(cand,'crd','rest','Card surface',false)}<p class="cap">card</p></div>
+       </div>`;
+  });
+});
+</script>
+</body>
+</html>
