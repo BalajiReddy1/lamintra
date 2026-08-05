@@ -33,6 +33,12 @@ val syncRegistrySources by tasks.registering(Sync::class) {
     }
 }
 
+// Surface println from tests so the light/dark gate's reported value is
+// visible in CI logs for each target, not just pass/fail.
+tasks.withType<Test>().configureEach {
+    testLogging { showStandardStreams = true }
+}
+
 kotlin {
     jvmToolchain(17)
 

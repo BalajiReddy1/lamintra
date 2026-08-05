@@ -1,6 +1,7 @@
 package com.jetcompose.verification
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +54,19 @@ fun VerificationScreen() {
                     color = Color(0xFF8A93A5),
                     fontSize = 13.sp,
                     letterSpacing = 2.sp
+                )
+            )
+
+            // Diagnostic for the light/dark gate. The colour-scheme decision
+            // makes `.auto()` the default for every component, so this API has
+            // to actually track the host environment on all four targets — a
+            // constant here would mean every component on the website renders
+            // in the wrong scheme.
+            BasicText(
+                text = "isSystemInDarkTheme() = ${isSystemInDarkTheme()}",
+                style = TextStyle(
+                    color = Color(0xFF00E5FF),
+                    fontSize = 14.sp
                 )
             )
             NeonOutlineButton(
