@@ -173,18 +173,26 @@
 </div>
 
 <script>
-/* True superellipse: |x/a|^n + |y/b|^n = 1. Sampled to a path, exactly the way a
-   custom Compose Shape would build one — no CSS border-radius anywhere. */
-function superPath(w, h, n = 4.2, steps = 96) {
-  const a = w / 2, b = h / 2, pts = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = (i / steps) * 2 * Math.PI;
-    const ct = Math.cos(t), st = Math.sin(t);
-    const x = a * Math.sign(ct) * Math.pow(Math.abs(ct), 2 / n);
-    const y = b * Math.sign(st) * Math.pow(Math.abs(st), 2 / n);
-    pts.push((a + x).toFixed(2) + ',' + (b + y).toFixed(2));
-  }
-  return 'M' + pts.join('L') + 'Z';
+/* Squircle: a rounded RECTANGLE with superelliptical corners at a FIXED radius.
+   The first version of this file inscribed a superellipse in the whole box
+   (a=w/2, b=h/2), so corner radius scaled with element height and every
+   specimen collapsed into a lozenge — which made all three candidates
+   unjudgeable. This is what a custom Compose Shape would build with a Path. */
+function superPath(w, h, r, n = 4.2, seg = 14) {
+  r = Math.min(r, w / 2, h / 2);
+  const q = (cx, cy, sx, sy) => {
+    const o = [];
+    for (let i = 0; i <= seg; i++) {
+      const t = (i / seg) * (Math.PI / 2);
+      o.push((cx + sx * r * Math.abs(Math.sin(t)) ** (2 / n)).toFixed(2) + ',' +
+             (cy + sy * r * Math.abs(Math.cos(t)) ** (2 / n)).toFixed(2));
+    }
+    return o;
+  };
+  return 'M' + r.toFixed(2) + ',0L' + (w - r).toFixed(2) + ',0L' + q(w - r, r, 1, -1).join('L') +
+    'L' + w.toFixed(2) + ',' + (h - r).toFixed(2) + 'L' + q(w - r, h - r, 1, 1).join('L') +
+    'L' + r.toFixed(2) + ',' + h.toFixed(2) + 'L' + q(r, h - r, -1, 1).join('L') +
+    'L0,' + r.toFixed(2) + 'L' + q(r, r, -1, -1).join('L') + 'Z';
 }
 
 function svg(w, h, inner) {
@@ -193,8 +201,8 @@ function svg(w, h, inner) {
 
 /* Each candidate draws the same geometry a different way. `k` keys the gradients
    per instance so they never collide. state: rest | press | dis */
-function art(cand, w, h, state, k) {
-  const d = superPath(w, h);
+function art(cand, w, h, state, k, r) {
+  const d = superPath(w, h, r);
   const dis = state === 'dis', press = state === 'press';
 
   if (cand === 'A') {
@@ -248,9 +256,9 @@ function art(cand, w, h, state, k) {
 
 let uid = 0;
 function spec(cand, kind, state, label, live) {
-  const dims = { btn: [150, 44], inp: [212, 44], crd: [212, 96] }[kind];
+  const dims = { btn: [150, 44, 12], inp: [212, 44, 12], crd: [212, 96, 16] }[kind];
   const cls = `spec ${kind} ${cand}` + (live ? ' live' : '') + (state === 'dis' ? ' dis' : '');
-  return `<div class="${cls}">${art(cand, dims[0], dims[1], state, uid++)}` +
+  return `<div class="${cls}">${art(cand, dims[0], dims[1], state, uid++, dims[2])}` +
          `<span class="t">${label}</span></div>`;
 }
 

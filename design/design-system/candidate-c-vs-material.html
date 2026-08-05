@@ -85,6 +85,36 @@
   .m .sw.off i{width:16px;height:16px;background:color-mix(in srgb,var(--ink) 40%,var(--surface));
                top:6px;left:6px}
 
+  /* ---- depth, expressed per scheme ---- */
+  .c .p-base{fill:var(--ink);fill-opacity:.24}
+  .c .p-face{fill:var(--ink);fill-opacity:.10}
+  .c .p-edge{fill:none;stroke:var(--ink);stroke-opacity:.22;stroke-width:1}
+  .c .p-cardfill{fill:var(--ink);fill-opacity:.045}
+  .c .p-cardedge{fill:none;stroke:var(--ink);stroke-opacity:.10;stroke-width:1}
+  .c .s-track{fill:var(--ink);fill-opacity:.09}
+  .c .s-trackedge{fill:none;stroke:var(--ink);stroke-opacity:.16;stroke-width:1}
+  .c .s-knobbase{fill:var(--ink);fill-opacity:.26}
+  .c .s-knob{fill:var(--ink);fill-opacity:.62}
+  .c .art.on .s-track{fill:var(--accent);fill-opacity:1}
+  .c .art.on .s-trackedge{stroke-opacity:0}
+  .c .art.on .s-knob{fill:#fff;fill-opacity:1}
+  .c .art.on .s-knobbase{fill:#000;fill-opacity:.18}
+  .c .art.primary .p-base{fill:var(--accent);fill-opacity:.42}
+  .c .art.primary .p-face{fill:var(--accent);fill-opacity:1}
+  .c .art.primary .p-edge{stroke-opacity:0}
+
+  /* On LIGHT the same rules would read as dirty grey slabs, so elevation is
+     re-expressed: the face stays surface-coloured and depth comes from the cast
+     base plus a finer hairline. Same structural idea, correct physics. */
+  .screen.light.c .p-base{fill-opacity:.15}
+  .screen.light.c .p-face{fill:var(--surface);fill-opacity:1}
+  .screen.light.c .p-edge{stroke-opacity:.13}
+  .screen.light.c .p-cardfill{fill:var(--surface);fill-opacity:1}
+  .screen.light.c .p-cardedge{stroke-opacity:.12}
+  .screen.light.c .s-track{fill-opacity:.06}
+  .screen.light.c .s-knob{fill:var(--surface);fill-opacity:1}
+  .screen.light.c .s-knobbase{fill-opacity:.20}
+
   /* ============ CANDIDATE C — defined by LAYER ============ */
   /* Only INTERACTIVE things get a base plane. Static surfaces stay flat and are
      divided by hairlines. That restraint is what keeps it a language and not an
@@ -155,127 +185,60 @@
 </div>
 
 <script>
-/* ---- true superellipse, sampled exactly as a custom Compose Shape would ---- */
-function superPath(w,h,n=4.2,steps=88){
-  const a=w/2,b=h/2,p=[];
-  for(let i=0;i<=steps;i++){
-    const t=i/steps*2*Math.PI,ct=Math.cos(t),st=Math.sin(t);
-    p.push((a+a*Math.sign(ct)*Math.abs(ct)**(2/n)).toFixed(2)+','+
-           (b+b*Math.sign(st)*Math.abs(st)**(2/n)).toFixed(2));
-  }
-  return 'M'+p.join('L')+'Z';
+/* ---- squircle: a rounded RECTANGLE whose corners are superelliptical arcs of a
+   FIXED radius. The previous version inscribed a superellipse in the whole box
+   (a=w/2, b=h/2), so the corner radius scaled with element height and every
+   surface collapsed into a lozenge. This is what a custom Compose Shape would
+   build with a Path. ---- */
+function squirclePath(w, h, r, n = 4.2, seg = 14) {
+  r = Math.min(r, w / 2, h / 2);
+  const q = (cx, cy, sx, sy) => {
+    const pts = [];
+    for (let i = 0; i <= seg; i++) {
+      const t = (i / seg) * (Math.PI / 2);
+      pts.push(
+        (cx + sx * r * Math.abs(Math.sin(t)) ** (2 / n)).toFixed(2) + ',' +
+        (cy + sy * r * Math.abs(Math.cos(t)) ** (2 / n)).toFixed(2)
+      );
+    }
+    return pts;
+  };
+  return 'M' + r.toFixed(2) + ',0' +
+    'L' + (w - r).toFixed(2) + ',0' + 'L' + q(w - r, r, 1, -1).join('L') +
+    'L' + w.toFixed(2) + ',' + (h - r).toFixed(2) + 'L' + q(w - r, h - r, 1, 1).join('L') +
+    'L' + r.toFixed(2) + ',' + h.toFixed(2) + 'L' + q(r, h - r, -1, 1).join('L') +
+    'L0,' + r.toFixed(2) + 'L' + q(r, r, -1, -1).join('L') + 'Z';
 }
 
-/* A layered element: base plane offset beneath, face plane on top.
-   `fill` lets the primary button carry the host accent. */
-function layer(w,h,{off=3,baseA=.26,faceA=.10,edgeA=.24,fill=null}={}){
-  const d=superPath(w,h);
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-    <path d="${d}" fill="${fill||'var(--ink)'}" fill-opacity="${fill?.45:baseA}"
-          transform="translate(0 ${off})"/>
+/* Layered: base plane offset beneath, face on top. Fills are class-driven so the
+   two schemes can express elevation differently — see the CSS. On dark a raised
+   face is a LIGHTER fill; on light that same rule produces a dirty grey slab, so
+   there the face stays surface-coloured and depth comes from the cast base. */
+function layer(w, h, r, { off = 3, primary = false } = {}) {
+  const d = squirclePath(w, h, r), k = primary ? ' primary' : '';
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="art${k}">
+    <path class="p-base" d="${d}" transform="translate(0 ${off})"/>
     <g class="face">
-      <path d="${d}" fill="${fill||'var(--ink)'}" fill-opacity="${fill?1:faceA}"/>
-      <path d="${d}" fill="none" stroke="var(--ink)" stroke-opacity="${fill?0:edgeA}"
-            stroke-width="1"/>
+      <path class="p-face" d="${d}"/>
+      <path class="p-edge" d="${d}"/>
     </g></svg>`;
 }
-/* Flat surface: static, so no base plane — just a hairline contour. */
-function flat(w,h,{fillA=.05,edgeA=.11}={}){
-  const d=superPath(w,h);
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-    <path d="${d}" fill="var(--ink)" fill-opacity="${fillA}"/>
-    <path d="${d}" fill="none" stroke="var(--ink)" stroke-opacity="${edgeA}" stroke-width="1"/>
-  </svg>`;
+/* Static surface: no base plane. Layering everything turns the idea into
+   indiscriminate embossing; only interactive things get depth. */
+function flat(w, h, r) {
+  const d = squirclePath(w, h, r);
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="art">
+    <path class="p-cardfill" d="${d}"/><path class="p-cardedge" d="${d}"/></svg>`;
 }
-function sw(on){
-  const w=52,h=30,d=superPath(w,h),k=superPath(24,24);
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-    <path d="${d}" fill="var(--ink)" fill-opacity="${on?0:.13}"
-          transform="translate(0 2)"/>
-    <path d="${d}" fill="${on?'var(--accent)':'var(--ink)'}" fill-opacity="${on?1:.07}"/>
-    <path d="${d}" fill="none" stroke="var(--ink)" stroke-opacity="${on?0:.2}" stroke-width="1"/>
-    <g class="knob" transform="translate(${on?25:3} 3)">
-      <path d="${k}" fill="var(--ink)" fill-opacity=".30" transform="translate(0 2)"/>
-      <path d="${k}" fill="${on?'#FFFFFF':'var(--ink)'}" fill-opacity="${on?1:.55}"/>
+function sw(on) {
+  const w = 52, h = 30, d = squirclePath(w, h, h / 2), k = squirclePath(24, 24, 12);
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="art${on ? ' on' : ''}">
+    <path class="s-track" d="${d}"/><path class="s-trackedge" d="${d}"/>
+    <g class="knob" transform="translate(${on ? 25 : 3} 3)">
+      <path class="s-knobbase" d="${k}" transform="translate(0 2)"/>
+      <path class="s-knob" d="${k}"/>
     </g></svg>`;
 }
-
-const W = 324; // content width inside the phone
-
-/* ---------------- Material screen ---------------- */
-document.getElementById('mScreen').innerHTML = `
-<div class="scr">
-  <h2 class="title">Settings</h2>
-
-  <p class="sect">Account</p>
-  <div class="field">
-    <div class="ph">Display name</div><div class="tx">Balaji</div>
-  </div>
-  <div class="gap"></div>
-
-  <div class="card">
-    <div class="row rowline"><span class="lab">Email</span><span class="val">balaji@mail.com</span></div>
-    <div class="divider"></div>
-    <div class="row rowline"><span class="lab">Plan</span><span class="val">Free</span></div>
-  </div>
-  <div class="gap"></div>
-
-  <p class="sect">Preferences</p>
-  <div class="card">
-    <div class="row rowline"><span class="lab">Notifications</span>
-      <span class="sw on"><i></i></span></div>
-    <div class="divider"></div>
-    <div class="row rowline"><span class="lab">Haptic feedback</span>
-      <span class="sw off"><i></i></span></div>
-  </div>
-  <div class="gap"></div>
-
-  <div class="btn filled">Save changes</div>
-  <div style="height:10px"></div>
-  <div class="btn tonal">Cancel</div>
-  <div style="height:6px"></div>
-  <div class="btn text">Delete account</div>
-</div>`;
-
-/* ---------------- Candidate C screen ---------------- */
-document.getElementById('cScreen').innerHTML = `
-<div class="scr">
-  <h2 class="title">Settings</h2>
-
-  <p class="fieldlab">Display name</p>
-  <div class="sq field">${layer(W,44,{off:2,baseA:.18,faceA:.05,edgeA:.16})}
-    <div class="in"><span class="tx">Balaji</span></div></div>
-  <div class="gap"></div>
-
-  <p class="sect">Account</p>
-  <div class="sq card">${flat(W,98)}
-    <div class="in">
-      <div class="row rowline"><span class="lab">Email</span><span class="val">balaji@mail.com</span></div>
-      <div class="divider"></div>
-      <div class="row rowline"><span class="lab">Plan</span><span class="val">Free</span></div>
-    </div></div>
-  <div class="gap"></div>
-
-  <p class="sect">Preferences</p>
-  <div class="sq card">${flat(W,98)}
-    <div class="in">
-      <div class="row rowline"><span class="lab">Notifications</span>
-        <span class="sw">${sw(true)}</span></div>
-      <div class="divider"></div>
-      <div class="row rowline"><span class="lab">Haptic feedback</span>
-        <span class="sw">${sw(false)}</span></div>
-    </div></div>
-  <div class="gap"></div>
-
-  <div class="sq btn primary press">${layer(W,46,{fill:'var(--accent)'})}
-    <div class="in">SAVE CHANGES</div></div>
-  <div style="height:12px"></div>
-  <div class="sq btn ghost press">${layer(W,46,{off:3,baseA:.20,faceA:.06,edgeA:.22})}
-    <div class="in">CANCEL</div></div>
-  <div style="height:14px"></div>
-  <div class="btn danger" style="height:auto">
-    <div class="in" style="height:auto">DELETE ACCOUNT</div></div>
-</div>`;
 
 /* ---------------- controls ---------------- */
 function seg(id, fn){
