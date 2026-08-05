@@ -196,21 +196,19 @@ rewriting, `@Preview` on install, zero manual fixes, builds clean on
 non-KMP + KMP + version-catalog + multi-module projects. Path traversal
 is hardened (12/12 tests). Insets handled for Android 15 edge-to-edge.
 
-**"Shipped" would overstate it, though — nothing is publicly obtainable
-(verified 2026-08-04).** The main repo is private, so its Releases API
-404s and **there is no downloadable jar for anyone outside**. The
-registry repo is public and serving correctly (all three manifests
-fetch 200 from the v0.3.2 tag) but has no README or landing content.
-This matters for sequencing: the website's whole conversion flow is
-"copy the command and run it", and today that command terminates in a
-404. **Making the jar publicly downloadable is a hard prerequisite for
-the website, not a follow-up** — see open backlog item 1.
+**Publicly obtainable as of 2026-08-05.** The main repo is now public.
+Verified unauthenticated: repo page, Releases API and the v0.3.3 release
+page all 200, and `jetcompose-0.3.3.jar` downloads (1,774,619 bytes) and
+runs. The registry repo is public and serving all three manifests from
+the v0.3.2 tag. The copy-the-command flow now terminates in a real
+artifact instead of a 404 — this was the hard gate on the website, and
+it is cleared.
 
 **The actual bottleneck is NOT engineering.** Three components exist,
-**zero external users**, no public website, nothing to look at. The kill
-criteria (100 stars / 3 months) haven't started counting because nothing
-is public. Do not let a new session drift back into plumbing — it is
-comfortable and it is not what's blocking.
+**zero external users**, no public website, nothing to look at. The
+adoption clock only starts now that the thing is obtainable. Do not let
+a new session drift back into plumbing — it is comfortable and it is
+not what's blocking.
 
 **Design status — first pass rejected by the founder as "too simple".**
 A Claude Design project exists: **"JetCompose Design System"**
@@ -328,17 +326,22 @@ non-technical product story to design from.
   claim rests on the technique being pure Compose draw primitives —
   sound reasoning, but not execution.
 
+- **Main repo made public — 2026-08-05.** The CLI jar is now downloadable
+  by anyone. Verified unauthenticated: repo page, Releases API and the
+  v0.3.3 release page all 200; `jetcompose-0.3.3.jar` downloads and runs.
+  This was the hard gate on the website. **Note:** the repo's git history
+  is now public too, and it contains one line of internal strategy (the
+  kill-criteria numbers) in an older CLAUDE.md revision. The working tree
+  is scrubbed; removing it from history would need a rewrite + force-push,
+  which is a founder decision and probably not worth it for one goal
+  metric on a repo with no forks yet.
+
 ### Still open, in rough order
 
-1. **Make the CLI jar publicly obtainable.** Hard prerequisite for the
-   website — see "Where things stand". Either make the main repo public
-   (founder's call) or publish the jar somewhere that doesn't require
-   it. Nothing about the website's copy-the-command flow works until an
-   outside developer can actually download and run the jar.
-2. Folder-depth complaint from real-dev test (deep
+1. Folder-depth complaint from real-dev test (deep
    `ui/components/<cat>/<style>/internal/<prefix>/` nesting) — cosmetic.
-3. CLI validation: reject non-package-legal style names at manifest load.
-4. **Launch-facing docs.** `README.md` was rewritten 2026-08-04 into an
+2. CLI validation: reject non-package-legal style names at manifest load.
+3. **Launch-facing docs.** `README.md` was rewritten 2026-08-04 into an
    accurate engineering README (current versions, JDK 17+, Gradle 9.2.1+,
    the `api(...)` shared-module note, registry pinning, and an explicit
    "not yet public" section). The Day-1 report it replaced is preserved
@@ -346,7 +349,7 @@ non-technical product story to design from.
    is the *outside-developer* install documentation — blocked on both
    item 1 and the pending product-name decision, since it bakes in the
    command name and a download URL.
-5. Website — **the agreed next step** (see "Where things stand"). Both
+4. Website — **the agreed next step** (see "Where things stand"). Both
    things that gated it are now done: the design-doc reconciliation, and
    the component drift (all three components now meet the quality bar
    and are released, so they are fit to put on a showcase page). The one

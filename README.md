@@ -12,12 +12,10 @@ in.
 
 Components use `compose.foundation` only — no Material 3, by design.
 
-> **Status: pre-launch, not yet publicly consumable.** The CLI jar is
-> built by CI and attached to releases on this repo, which is currently
-> **private**, so there is no public download and no install command to
-> hand to an outside user yet. The registry repo *is* public (it must be —
-> the installer does unauthenticated fetches). See
-> [Not yet public](#not-yet-public).
+> **Status: early. Working, but v0 and unproven at scale.** The CLI and
+> the registry both work end-to-end and the jar is downloadable below.
+> There are three components, no website yet, and the project name is
+> under review — so expect the command name to change.
 
 ## Current state
 
@@ -69,6 +67,15 @@ cd cli-kotlin && ./gradlew shadowJar
 
 That produces `cli-kotlin/build/libs/jetcompose-0.3.3.jar`.
 
+## Install
+
+Requires a JVM 17+ (you already have one if you run Gradle). Download the
+jar from the [latest release](https://github.com/BalajiReddy1/jetcompose/releases/latest):
+
+```bash
+curl -LO https://github.com/BalajiReddy1/jetcompose/releases/download/v0.3.3/jetcompose-0.3.3.jar
+```
+
 ## Using the CLI
 
 Run once per project, then once per component:
@@ -119,18 +126,20 @@ Two consequences worth knowing:
   (`ui/components/<category>/<style>/internal/<prefix>/`). Cosmetic, and
   raised by a real tester.
 
-## Not yet public
+## What's not done yet
 
-Deliberately recorded so it is not mistaken for an oversight:
+Recorded so none of it is mistaken for an oversight:
 
-- This repo is private, so its GitHub Releases — and therefore the CLI
-  jar — are not downloadable by anyone outside. Going public is the
-  founder's call; the history was reset to purge an internal strategy
-  doc, so there is no blocker other than that decision.
-- The registry repo is public but has no README or landing content.
-- There is no website yet, and no user-facing install documentation
-  written for an outside developer. This README is an engineering
-  document, not a launch page.
+- **The name is under review.** `jetcompose` is close to Google's
+  "Jetpack Compose" and evokes JetBrains, so it is being reconsidered.
+  The command name and download URL will likely change.
+- **No website.** The registry repo also has no README or landing
+  content.
+- **iOS is not verified by execution.** Components are written against
+  `compose.foundation` with no platform-specific drawing APIs, and are
+  verified on Android and desktop — but nobody has yet run them on an
+  iOS simulator.
+- **Three components.** This is a v0 registry, not a component library.
 
 ## Contributing / working on this
 
