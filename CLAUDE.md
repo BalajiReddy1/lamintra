@@ -381,6 +381,30 @@ non-technical product story to design from.
   - Not wired into CI (a wasm build is ~5 min). Worth adding as a
     compile-only guard if the website depends on it.
 
+- **Light/dark mechanism — DECIDED 2026-08-05.** Per-component colours
+  object (`<Component>Colors` with `.dark()` / `.light()` / `.auto()`),
+  defaulting to `.auto()`, which follows the system. Full reasoning and the
+  caveats are in `design/TOKENS.md`; the short version:
+  - A shared `JetComposeTokens.kt` would be better DX at 20 components and
+    is closer to how shadcn really works — but per-component → shared is a
+    forward migration that preserves every call site, while the reverse is
+    not, and the shared route needs CLI machinery (install-once,
+    idempotent, tracked) that would serialise all 20 components behind it.
+    **Deferred with a trigger: revisit at wave 2 (~12 components).**
+  - **The factories are the migration seam.** A shared layer later changes
+    only what `.auto()` reads. If factory names drift between components
+    that migration stops being mechanical — keep them identical.
+  - Default follows the system because when it is wrong it is wrong
+    *loudly* (a dark card on a light app is glaring, one param to fix),
+    and because require-explicit contradicts the zero-config promise.
+  - **This changes today's hard-dark defaults**, so the three existing
+    components need re-verifying in both schemes. Cheapest to do now, at
+    ~zero external users.
+  - **Blocking gate:** `isSystemInDarkTheme()` behaviour is unconfirmed on
+    wasm and iOS. If it returns a constant on wasm, every component on the
+    website renders in the wrong scheme — on the surface built to sell
+    them. Verify before building on this.
+
 ### Still open, in rough order
 
 1. Folder-depth complaint from real-dev test (deep

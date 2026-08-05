@@ -178,11 +178,87 @@ The physics change, so the recipe changes rather than inverting:
 | `handle` | `#0B0E14` @ 22% | Same affordance, inverted contrast. |
 | elevation | soft shadow below the card | On dark, depth comes from the light-catching edge; on light it must come from a cast shadow. |
 
-**Open design question, unresolved:** should a component detect the host
-scheme itself, or take a `colors` object the host passes? Detection means
-a `isSystemInDarkTheme()`-style dependency; a passed object is more
-explicit and more work for the developer. Decide before building any
-light-mode variant.
+## Colour scheme — DECIDED 2026-08-05
+
+**Mechanism: a per-component colours object. Default: follows the system.**
+
+Every component that draws a surface takes a `colors` parameter:
+
+```
+<Component>Colors        // e.g. GlassSheetColors, NeonButtonColors
+    .dark()              // explicit
+    .light()             // explicit
+    .auto()              // reads isSystemInDarkTheme(); the default
+```
+
+The object holds **only** the colours that component actually draws, and
+every component uses these same three factory names. Consistency here is
+not cosmetic — see the migration note below.
+
+### Why per-component rather than one shared theme file
+
+A shared `JetComposeTokens.kt` would be better DX at 20 components, and
+it is closer to how shadcn actually works (its components depend on
+Tailwind config plus CSS variables — they are not self-contained either).
+It was still rejected *for now*, on four grounds:
+
+1. **Reversibility is asymmetric.** Per-component → shared is a forward
+   migration that preserves every call site. The reverse is a regression
+   nobody would perform. This choice keeps both doors open.
+2. **The shared option serialises everything.** It needs CLI machinery
+   that does not exist — install-once, idempotent, tracked, never
+   clobbering user edits. All 20 components would queue behind it.
+3. **The pain is asymmetric.** Passing many colour objects is a
+   power-user problem; most users install 2–5 components. Self-containment
+   helps everyone on day one.
+4. **We would be guessing.** At wave 2, with ~12 real components, we will
+   know whether duplication actually hurts.
+
+**The cost is real:** duplication across 20 components, and a poor
+theming story for someone who installs many. Revisit at wave 2 — this is
+a deferral with a trigger, not a permanent answer.
+
+### The migration seam
+
+**The factories are the seam, and this is the whole reason the convention
+is fixed.** A future shared token layer changes what `.auto()` reads —
+installed tokens instead of inlined literals — without touching a single
+call site or any component's public signature. If the factory names drift
+between components, that migration stops being mechanical. Do not let
+them drift.
+
+### Why the default follows the system
+
+- **Dark by default** loses on first impression: a light-mode app gets a
+  near-black card and looks broken out of the box.
+- **Require-explicit** contradicts the zero-config promise; a real tester
+  already rejected an earlier build for asking too many questions.
+- **Follow-the-system** is correct for the majority of apps, and when it
+  is wrong it is wrong *loudly* — a dark card on a light app is glaring
+  and takes one parameter to fix. Failure modes that announce themselves
+  beat subtle ones.
+
+**Known caveat, must be documented for users:** `isSystemInDarkTheme()`
+reads the *device* setting, not the *app's* theme. An app that forces its
+own scheme regardless of the system will get the wrong default and must
+pass `.light()` or `.dark()` explicitly.
+
+**This changes current behaviour** — today's defaults are hard-dark. With
+roughly zero external users this is the cheapest moment it will ever be.
+The three existing components must be re-verified in both schemes.
+
+### Gates before any of this is built on
+
+1. **Verify `isSystemInDarkTheme()` on all four targets.** It is
+   `compose.foundation`, so it is Material-safe, but its behaviour on
+   wasm and iOS is unconfirmed. This matters most for **wasm**: if it
+   returns a constant there, every component on the website renders in
+   the wrong scheme — on the one surface built to sell them.
+2. **Build and look at the light scheme.** The values in the table above
+   are derived, not tested.
+3. **Contrast-check light, don't just eyeball it.** The neon accent as a
+   label colour already failed on light once (drift item 9).
+4. **Previews must show both schemes**, not switch between them.
 
 ---
 
