@@ -285,10 +285,18 @@ edge-to-edge, and the testbed calls `enableEdgeToEdge()`.
 | Sheet insets, API 35 gesture nav | card clear of the nav bar; scrim stays full-bleed |
 | CLI `RewriterTest` | 12/12, unaffected |
 
-**iOS is NOT verified** — no macOS/Xcode here. The portability claim
-rests on the technique (pure Compose draw primitives, no platform API),
-which is sound reasoning but not execution. Treat iOS as unverified
-until someone runs it.
+**iOS is verified by execution as of 2026-08-05**, via the
+`Verify components` workflow: 6/6 interaction tests run on a real
+`iosSimulatorArm64` simulator on a hosted macOS runner, including
+dismiss-on-drag and spring-back-on-nudge. The suite was mutation-checked
+(breaking `enabled` on `NeonButton` failed exactly the test that guards
+it), so it is sensitive rather than vacuous.
+
+**What iOS verification still does not cover: appearance.** The tests
+prove the components compose and that interactions behave, not that the
+glow or glass *look* right on iOS. Visual confirmation there needs an
+Xcode app bundle and `simctl io screenshot`; Android and desktop have
+been confirmed visually, iOS has not.
 
 **Still unfixed, because it is not drift** — the component *names*
 `button/neon` and `button/neon_outline` still put the brief's named

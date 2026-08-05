@@ -322,9 +322,7 @@ non-technical product story to design from.
   fixture project to confirm it fetches v0.3.2 and installs the fixed
   code with correct package rewriting.
 
-  **iOS remains unverified** (no macOS available). The cross-platform
-  claim rests on the technique being pure Compose draw primitives —
-  sound reasoning, but not execution.
+  **iOS is now verified by execution** — see the entry below.
 
 - **Main repo made public — 2026-08-05.** The CLI jar is now downloadable
   by anyone. Verified unauthenticated: repo page, Releases API and the
@@ -335,6 +333,32 @@ non-technical product story to design from.
   is scrubbed; removing it from history would need a rewrite + force-push,
   which is a founder decision and probably not worth it for one goal
   metric on a repo with no forks yet.
+
+- **iOS verification in CI — DONE 2026-08-05.** `verification/` is a
+  standalone Gradle build (deliberately separate from `cli-kotlin/`, so the
+  Compose toolchain can never affect the CLI's zero-dependency build). It
+  stages the registry sources into a generated source root at the paths
+  their own packages require — no rewriting, since the harness consumes
+  them directly — and excludes `*Preview.kt` (Android-only tooling).
+  `.github/workflows/verify-components.yml` runs the interaction tests on a
+  real `iosSimulatorArm64` simulator on `macos-latest`, plus the same tests
+  on the JVM so an iOS failure is distinguishable from a broken test.
+  **6/6 green on the simulator**, including dismiss-on-drag and
+  spring-back-on-nudge — the historical bug class.
+
+  Two things worth knowing:
+  - The first run failed with "the JVM garbage collector is thrashing"
+    before any test ran. That looked like an iOS failure and was purely
+    out-of-memory: Kotlin/Native needs far more heap than the JVM build,
+    and the build had no `gradle.properties`. Fixed there.
+  - The harness also targets desktop **so the tests can be validated
+    locally before spending macOS CI minutes** — keep that target.
+  - The suite is mutation-checked: breaking `enabled` on `NeonButton`
+    failed exactly the test that guards it.
+
+  **Still not covered on iOS: appearance.** The tests prove composition and
+  interaction, not that the glow and glass look right. That needs an Xcode
+  app bundle plus `simctl io screenshot`.
 
 ### Still open, in rough order
 
