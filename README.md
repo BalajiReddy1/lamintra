@@ -135,10 +135,11 @@ Recorded so none of it is mistaken for an oversight:
   The command name and download URL will likely change.
 - **No website.** The registry repo also has no README or landing
   content.
-- **iOS is not verified by execution.** Components are written against
-  `compose.foundation` with no platform-specific drawing APIs, and are
-  verified on Android and desktop — but nobody has yet run them on an
-  iOS simulator.
+- **iOS appearance is not verified.** Interaction tests run on a real iOS
+  simulator in CI (`Verify components`), so composition and behaviour are
+  covered on all three targets. But nobody has yet *looked* at the
+  components on iOS — visual confirmation exists for Android and desktop
+  only.
 - **Three components.** This is a v0 registry, not a component library.
 
 ## Contributing / working on this
