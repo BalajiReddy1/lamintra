@@ -1,0 +1,78 @@
+name: Verify components
+
+# Runs the component interaction tests on a real iOS simulator.
+#
+# This exists because iOS was the one target the project could never verify by
+# execution — there is no Mac on the development machine, so iOS correctness
+# rested on the argument that the components use no platform-specific APIs.
+# That argument is sound but it is not evidence, and this project has already
+# shipped a component that compiled on every target and broke on first touch.
+# A hosted macOS runner only needs to exist at the moment of verification, so
+# CI closes the gap without anyone buying hardware.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "registry/**"
+      - "verification/**"
+      - ".github/workflows/verify-components.yml"
+  pull_request:
+    paths:
+      - "registry/**"
+      - "verification/**"
+      - ".github/workflows/verify-components.yml"
+  workflow_dispatch:
+
+jobs:
+  ios:
+    name: iOS simulator
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Show available simulator runtimes
+        run: xcrun simctl list runtimes
+
+      # Kotlin/Native boots a simulator for iosSimulatorArm64Test itself.
+      - name: Run interaction tests on the iOS simulator
+        working-directory: verification
+        run: ./gradlew :harness:iosSimulatorArm64Test --no-daemon --stacktrace
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: verification/harness/build/test-results/**
+          if-no-files-found: warn
+
+  desktop:
+    name: Desktop (JVM)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Same tests, JVM target — cheap cross-check that a failure on iOS is
+      # actually iOS-specific rather than a broken test.
+      - name: Run interaction tests on the JVM
+        working-directory: verification
+        run: ./gradlew :harness:desktopTest --no-daemon --stacktrace
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-test-results
+          path: verification/harness/build/test-results/**
+          if-no-files-found: warn
