@@ -74,8 +74,9 @@ repo.**
 ## Current state (update this section as work progresses)
 
 - `cli-kotlin/` — production CLI source, ported from a validated JS
-  prototype. **Compiles and all 8 `RewriterTest.kt` tests pass** (verified
-  2026-07-11 on Gradle 9.3.1).
+  prototype. **Compiles and all 12 `RewriterTest.kt` tests pass**
+  (8 rewrite + 4 path-traversal; re-run and confirmed 12/12, 0 failures,
+  2026-08-04 on Gradle 9.3.1).
 - JVM target is **17, not 21** (`jvmToolchain(17)`): Gradle itself
   requires JVM 17+, so 17 is a floor every Android/KMP developer already
   meets, and a 21-target jar failed with `UnsupportedClassVersionError`
@@ -188,12 +189,22 @@ repo.**
 
 ## Where things stand (read this first in a new session)
 
-**Shipped and working:** CLI **v0.3.2**, registry **v0.3.1**. The whole
+**Built and working:** CLI **v0.3.3**, registry **v0.3.2**. The whole
 flow is proven end-to-end by real users: one-Enter `init` (filesystem
 auto-detection), `add` with an idempotency guard, correct package
 rewriting, `@Preview` on install, zero manual fixes, builds clean on
 non-KMP + KMP + version-catalog + multi-module projects. Path traversal
 is hardened (12/12 tests). Insets handled for Android 15 edge-to-edge.
+
+**"Shipped" would overstate it, though — nothing is publicly obtainable
+(verified 2026-08-04).** The main repo is private, so its Releases API
+404s and **there is no downloadable jar for anyone outside**. The
+registry repo is public and serving correctly (all three manifests
+fetch 200 from the v0.3.2 tag) but has no README or landing content.
+This matters for sequencing: the website's whole conversion flow is
+"copy the command and run it", and today that command terminates in a
+404. **Making the jar publicly downloadable is a hard prerequisite for
+the website, not a follow-up** — see open backlog item 1.
 
 **The actual bottleneck is NOT engineering.** Three components exist,
 **zero external users**, no public website, nothing to look at. The kill
@@ -222,6 +233,13 @@ Also: an aesthetic of restraint without a bold idea underneath is just
 plain. Braun/Teenage Engineering strip everything else *after* committing
 to a strong idea, not instead of one.
 
+**This diagnosis is now written into the design docs themselves
+(2026-08-05), so read them rather than working from this summary.**
+`design/PRODUCT_BRIEF.md` holds intent and is upstream; `design/TOKENS.md`
+holds values. The two-tier model, the brand-vs-component token split, and
+the light/dark requirement all live there now. See the completed backlog
+entry for what changed and why.
+
 **Agreed next step: build the website.** It is the one surface with no
 theming constraint (so personality is allowed), it is the marketing
 artifact everything else depends on, and it converts this from a project
@@ -230,43 +248,111 @@ copy-the-command flow, and a live demo; the "hero" signature component
 can land in v2 of the page. `design/PRODUCT_BRIEF.md` holds the
 non-technical product story to design from.
 
-## Backlog — founder-acknowledged, deliberately deferred until the flow is solid
+## Backlog
 
-Priority right now is the end-to-end flow working without surprises, NOT
-polish. These are recorded so they aren't forgotten, in rough order:
+### Completed since this list was written (kept for the record)
 
-1. **Preview-on-install — BUILT, awaiting founder's Android Studio
-   confirmation before CLI 0.3.1 release.** Every component now ships a
-   `@Preview` demo file (optional `preview` manifest field, registry
-   v0.3.0). The CLI routes it to the ANDROID source root (androidMain
-   for KMP — the androidx annotation doesn't exist in common code) and
-   installs it ONLY if the module build file text (comment-stripped,
-   never evaluated) shows a ui-tooling dependency; otherwise it skips
-   the file and prints the dependency hint. False negatives degrade to
-   the hint; a build-breaking install is impossible. Verified: skip
-   path, non-KMP install path, KMP androidMain path, both targets
-   compile.
-2. **`bottomsheet/glass` visual redesign — DONE, awaiting founder's
-   design approval before release.** Design language is now written down
-   in `design/TOKENS.md` ("Obsidian Glass": canvas `#0B0E14`, glass tint
-   `#9BB8FF`, one neon accent `#00E5FF`, 4pt spacing, 4/12/24dp radii,
-   120/220/320ms motion) — that file is the authoring-time source of
-   truth and every component must draw from it. Components still inline
-   the values so each stays self-contained after install; a shared
-   installed token package remains the deferred shared-utilities-tier
-   decision. Sheet redesign: full-screen overlay with tap-to-dismiss
-   scrim, floating card (12dp margins, 24dp radius, 640dp max width),
-   gradient glass fill + light-catching hairline drawn in `drawBehind`,
-   slide-up/slide-down enter/exit. Verified on emulator: nudge springs
-   back, fast flick / slow drag / scrim tap all dismiss.
-3. Folder-depth complaint from real-dev test (deep
-   `ui/components/<cat>/<style>/internal/<prefix>/` nesting) — cosmetic,
-   revisit alongside the redesign.
-4. CLI validation: reject non-package-legal style names at manifest load.
-5. User-facing docs: README with install instructions, the `api(...)`
-   shared-module note, JDK 17+ requirement.
-6. Website — **this is now the active next step** (see "Where things
-   stand"). The flow is stable; the blocker is that nothing is public.
+- **Preview-on-install — SHIPPED in CLI v0.3.1** (registry v0.3.0).
+  Every component ships a `@Preview` demo file (optional `preview`
+  manifest field). The CLI routes it to the ANDROID source root
+  (androidMain for KMP — the androidx annotation doesn't exist in common
+  code) and installs it ONLY if the module build file text
+  (comment-stripped, never evaluated) shows a ui-tooling dependency;
+  otherwise it skips the file and prints the dependency hint. False
+  negatives degrade to the hint; a build-breaking install is impossible.
+  Verified: skip path, non-KMP install path, KMP androidMain path, both
+  targets compile.
+- **`bottomsheet/glass` visual redesign — SHIPPED in registry v0.3.1**,
+  since superseded by v0.3.2 (drift fixes). Design language is written
+  down in `design/TOKENS.md` (4pt spacing, 4/12/24dp radii, 120/220/320ms
+  motion; the colour section was restructured on 2026-08-05 — see the
+  reconciliation entry below). Components still
+  inline the values so each stays self-contained after install; a shared
+  installed token package remains the deferred shared-utilities-tier
+  decision. Sheet redesign: full-screen overlay with tap-to-dismiss
+  scrim, floating card (12dp margins, 24dp radius, 640dp max width),
+  gradient glass fill + light-catching hairline drawn in `drawBehind`,
+  slide-up/slide-down enter/exit. Verified on emulator: nudge springs
+  back, fast flick / slow drag / scrim tap all dismiss.
+  **Open question, never resolved in writing:** this entry previously
+  said "awaiting founder's design approval before release" — it was
+  released anyway. Whether approval was given or the step was skipped is
+  unrecorded.
+
+- **Brief/tokens reconciliation — DONE 2026-08-05.** Precedence is now
+  explicit: `PRODUCT_BRIEF.md` (intent) is upstream of `TOKENS.md`
+  (values); if they disagree the brief wins. The contradictions were
+  resolved by two splits, both now written into both files:
+  - **Surface split.** Brand tokens (`canvas`, `accent`, `textPrimary`,
+    `textSecondary`) belong to the website/previews and **may never be
+    referenced by installed component code** — no component used them
+    anyway, and per the brief none can, since the host app owns its
+    background and text. Component tokens are all parameter *defaults*.
+  - **Tier split.** Base tier quiet and themeable; signature tier bold.
+    The key clarification: the signature tier is freed from *restraint*,
+    not from *adaptability* — it still installs into a stranger's app,
+    so nothing may be dark-only.
+
+  The grayscale test decided the neon question on its own: glass is
+  luminance and survives grayscale (form, keep it); neon is hue and
+  collapses (decoration, demote it). Also added: a typography section
+  (the old file had none, so components were setting type unchecked), a
+  light-scheme colour table marked **UNVERIFIED — must not ship until
+  run on a real screen**, and a rewritten quality bar. The brief's
+  anti-reference was split into its functional objection
+  (component-scoped) and its differentiation objection (applies to the
+  website too). One thing it surfaced is still NOT done: the
+  component-naming decision at the end of `TOKENS.md`.
+
+- **Component drift fixed and RELEASED — registry v0.3.2 / CLI v0.3.3,
+  2026-08-05.** All 11 token deviations fixed; full table and
+  verification log at the end of `design/TOKENS.md`. The substantive
+  ones: `NeonButton`'s glow was `Modifier.shadow(ambientColor/spotColor)`
+  — Android-only, rendering nothing comparable on desktop or iOS in a
+  product sold on one codebase for both — rebuilt as layered
+  widening/fading strokes; `NeonButton` had no pressed or disabled state
+  at all; and the glass hairline and drag handle hard-coded
+  `Color.White`, the mechanical reason the sheet was dark-only, now
+  `hairlineColor`/`handleColor` params with unchanged defaults so dark
+  rendering is pixel-identical.
+
+  Verified to the hard rule before release: compiled Android + desktop,
+  run on Pixel_35 (API 35, edge-to-edge) with disabled-tap-ignored,
+  spring-back, distance-dismiss, velocity-dismiss, scrim-dismiss and
+  insets all exercised; desktop window confirmed the rebuilt glow
+  renders off-Android; then the built jar was run end-to-end against a
+  fixture project to confirm it fetches v0.3.2 and installs the fixed
+  code with correct package rewriting.
+
+  **iOS remains unverified** (no macOS available). The cross-platform
+  claim rests on the technique being pure Compose draw primitives —
+  sound reasoning, but not execution.
+
+### Still open, in rough order
+
+1. **Make the CLI jar publicly obtainable.** Hard prerequisite for the
+   website — see "Where things stand". Either make the main repo public
+   (founder's call) or publish the jar somewhere that doesn't require
+   it. Nothing about the website's copy-the-command flow works until an
+   outside developer can actually download and run the jar.
+2. Folder-depth complaint from real-dev test (deep
+   `ui/components/<cat>/<style>/internal/<prefix>/` nesting) — cosmetic.
+3. CLI validation: reject non-package-legal style names at manifest load.
+4. **Launch-facing docs.** `README.md` was rewritten 2026-08-04 into an
+   accurate engineering README (current versions, JDK 17+, Gradle 9.2.1+,
+   the `api(...)` shared-module note, registry pinning, and an explicit
+   "not yet public" section). The Day-1 report it replaced is preserved
+   as `DAY1-REPORT.md` with a header marking it historical. What remains
+   is the *outside-developer* install documentation — blocked on both
+   item 1 and the pending product-name decision, since it bakes in the
+   command name and a download URL.
+5. Website — **the agreed next step** (see "Where things stand"). Both
+   things that gated it are now done: the design-doc reconciliation, and
+   the component drift (all three components now meet the quality bar
+   and are released, so they are fit to put on a showcase page). The one
+   remaining hard gate is item 1 — the copy-the-command flow needs a jar
+   an outsider can actually download. The product-name decision is also
+   still pending and is upstream of any public surface.
 
 ## Cutting a CLI release
 
@@ -292,7 +378,7 @@ is now purely the founder's call). The release pipeline is
 cd cli-kotlin
 ./gradlew test                     # run RewriterTest.kt
 ./gradlew shadowJar                # build the fat JAR
-java -jar build/libs/jetcompose-0.3.0.jar init
-java -jar build/libs/jetcompose-0.3.0.jar add bottomsheet/glass
-java -jar build/libs/jetcompose-0.3.0.jar add button/neon_outline
+java -jar build/libs/jetcompose-0.3.3.jar init
+java -jar build/libs/jetcompose-0.3.3.jar add bottomsheet/glass
+java -jar build/libs/jetcompose-0.3.3.jar add button/neon_outline
 ```

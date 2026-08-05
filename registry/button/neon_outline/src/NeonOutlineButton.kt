@@ -28,8 +28,15 @@ import com.jetcompose.button.neon_outline.internal.button_neon_outline.neonOutli
  *
  * @param text the button label
  * @param onClick called on tap when [enabled]
- * @param color the neon color used for both outline and label
+ * @param color the neon color used for the outline
+ * @param contentColor the label colour; defaults to [color]. Separate from
+ *        [color] because the outline sits on the component's own glow while
+ *        the label sits on the host app's background — at the default
+ *        `#00E5FF` those are the same on dark and very different on light,
+ *        where the label needs its own darker value to stay legible.
  * @param cornerRadius corner radius of the outline
+ * @param textStyle label style. Never sets `fontFamily`, so the host app's
+ *        typeface is used; replace it wholesale to restyle the label.
  * @param enabled when false, the button dims and ignores taps
  */
 @Composable
@@ -38,7 +45,13 @@ fun NeonOutlineButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     color: Color = Color(0xFF00E5FF),
+    contentColor: Color = color,
     cornerRadius: Dp = 12.dp,
+    textStyle: TextStyle = TextStyle(
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Medium,
+        letterSpacing = 1.sp
+    ),
     enabled: Boolean = true
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -54,11 +67,8 @@ fun NeonOutlineButton(
 
     BasicText(
         text = text,
-        style = TextStyle(
-            color = color.copy(alpha = if (enabled) 1f else 0.4f),
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 1.sp
+        style = textStyle.copy(
+            color = contentColor.copy(alpha = if (enabled) 1f else 0.4f)
         ),
         modifier = modifier
             .neonOutline(color = color, cornerRadius = cornerRadius, glowAlpha = glowAlpha)

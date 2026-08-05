@@ -66,6 +66,11 @@ import com.jetcompose.bottomsheet.glass.internal.bottomsheet_glass.glassSurface
  * @param flingVelocityThreshold downward release speed (dp/second) that
  *        dismisses regardless of distance
  * @param scrimColor overlay color behind the sheet
+ * @param hairlineColor colour of the light-catching edge around the card.
+ *        The component applies the alpha ramp. Defaults to white, which is
+ *        correct over a dark background; pass a dark colour for a light
+ *        host scheme.
+ * @param handleColor colour of the drag handle, including its alpha.
  * @param contentWindowInsets insets the sheet card keeps clear of. Defaults
  *        to the bottom and horizontal edges of [WindowInsets.safeDrawing],
  *        which covers the gesture/navigation bar, display cutouts in
@@ -86,6 +91,8 @@ fun GlassBottomSheet(
     dismissThreshold: Dp = 64.dp,
     flingVelocityThreshold: Dp = 125.dp,
     scrimColor: Color = Color(0x99060A12),
+    hairlineColor: Color = Color.White,
+    handleColor: Color = Color.White.copy(alpha = 0.28f),
     contentWindowInsets: WindowInsets = WindowInsets.safeDrawing
         .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
     content: @Composable () -> Unit
@@ -110,7 +117,7 @@ fun GlassBottomSheet(
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn(animationSpec = tween(durationMillis = 220)),
-        exit = fadeOut(animationSpec = tween(durationMillis = 260)),
+        exit = fadeOut(animationSpec = tween(durationMillis = 220)),
         modifier = modifier.zIndex(10f)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -146,7 +153,11 @@ fun GlassBottomSheet(
                         .widthIn(max = 640.dp)
                         .fillMaxWidth()
                         .offset { IntOffset(0, offsetY.roundToInt()) }
-                        .glassSurface(tint = tint, cornerRadius = cornerRadius)
+                        .glassSurface(
+                            tint = tint,
+                            cornerRadius = cornerRadius,
+                            hairlineColor = hairlineColor
+                        )
                         .draggable(
                             state = dragState,
                             orientation = Orientation.Vertical,
@@ -169,9 +180,12 @@ fun GlassBottomSheet(
                         .padding(bottom = 24.dp)
                 ) {
                     DragHandle(
+                        color = handleColor,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(top = 10.dp, bottom = 14.dp)
+                            // 12/12 rather than 10/14: same 28dp total block
+                            // height as before, but both values on the 4pt grid.
+                            .padding(top = 12.dp, bottom = 12.dp)
                     )
                     content()
                 }

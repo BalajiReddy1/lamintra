@@ -37,7 +37,7 @@ application {
 tasks.shadowJar {
     archiveBaseName.set("jetcompose")
     archiveClassifier.set("")
-    archiveVersion.set("0.3.2")
+    archiveVersion.set("0.3.3")
 }
 
 tasks.test {
