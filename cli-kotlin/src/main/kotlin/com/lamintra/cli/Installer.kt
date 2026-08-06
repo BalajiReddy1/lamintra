@@ -16,13 +16,7 @@ object Installer {
     // transient 404s or stale files right after a registry push. Tagged
     // URLs are immutable — bump the tag here (and re-release the jar)
     // to pick up registry changes.
-    // NOTE: still points at the pre-rename repo and tag. The published v0.3.2
-    // tag is internally consistent (its manifests and sources both say
-    // com.jetcompose), so the CLI keeps working — the rewriter replaces
-    // whatever registryPackage the manifest declares. Update this ONLY in
-    // lockstep with renaming the registry repo and cutting a new tag,
-    // otherwise every `add` 404s.
-    private const val REGISTRY_BASE = "https://raw.githubusercontent.com/BalajiReddy1/jetcompose-registry/v0.3.2"
+    private const val REGISTRY_BASE = "https://raw.githubusercontent.com/BalajiReddy1/lamintra-registry/v0.4.0"
 
     private val client: HttpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NORMAL)

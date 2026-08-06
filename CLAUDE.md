@@ -61,20 +61,21 @@ Version bumped 0.3.3 → 0.4.0, since a renamed CLI cannot ship as a patch.
   initialised before the rename keep working. New configs write
   `.lamintra/`.
 
-**Remaining, and it must be done as ONE coordinated release** — doing any
-step alone breaks `add` for everyone:
-1. Rename both GitHub repos (`jetcompose` → `lamintra`,
-   `jetcompose-registry` → `lamintra-registry`). GitHub redirects old URLs,
-   but do not rely on that for `raw.githubusercontent.com`.
-2. Push the renamed registry sources; cut registry tag **v0.4.0**.
-3. Bump `REGISTRY_BASE` to the new repo + tag.
-4. Tag `v0.4.0` on the main repo → CI publishes `lamintra-0.4.0.jar`.
-5. Update the README download URLs and the status callout.
+**Rename SHIPPED 2026-08-05.** Both repos renamed (`lamintra`,
+`lamintra-registry`), registry tag **v0.4.0** cut with `com.lamintra.*`
+packages, `REGISTRY_BASE` bumped to it, CLI released as **v0.4.0**.
 
-Installed components are unaffected at every step — the rewriter replaces
-the registry package with the host's, so no user's source ever contained
-our name. Verified: a fresh install leaks neither `lamintra` nor
-`jetcompose` into the target project.
+Verified after the fact: all three manifests fetch 200 from the new tag, and
+the built jar installs all three components into a fixture project with
+packages correctly rewritten to the host and neither `lamintra` nor
+`jetcompose` leaking into the user's source.
+
+**One finding worth keeping:** `raw.githubusercontent.com` keeps serving the
+*old* repo path after a rename — it returns 200 directly, without even a
+redirect, because the CDN resolves by repo ID. So the previously published
+v0.3.3 jar did not break, and there was no downtime window. Do not rely on
+this for anything load-bearing, but it means a repo rename is far less
+dangerous than it looks.
 
 ## Hard rules — do not relitigate these without being asked
 

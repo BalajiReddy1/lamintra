@@ -14,16 +14,14 @@ Components use `compose.foundation` only — no Material 3, by design.
 
 > **Status: early. Working, but v0 and unproven at scale.** The CLI and
 > the registry both work end-to-end and the jar is downloadable below.
-> There are three components and no website yet. The project was recently
-> renamed to Lamintra; the published release below still carries the old
-> `jetcompose` asset name until the next release is cut.
+> There are three components and no website yet.
 
 ## Current state
 
 | | Version | Verified |
 |---|---|---|
-| CLI | **0.3.3** | 12/12 `RewriterTest.kt` tests pass (2026-08-05) |
-| Registry | **0.3.2** | All 3 manifests fetch 200 from the pinned tag; jar installs from it end-to-end |
+| CLI | **0.4.0** | 12/12 `RewriterTest.kt` tests pass (2026-08-05) |
+| Registry | **0.4.0** | All 3 manifests fetch 200 from the pinned tag; jar installs from it end-to-end |
 
 Three components: `bottomsheet/glass`, `button/neon`,
 `button/neon_outline`.
@@ -66,15 +64,15 @@ cd cli-kotlin && ./gradlew test
 cd cli-kotlin && ./gradlew shadowJar
 ```
 
-That produces `cli-kotlin/build/libs/lamintra-0.3.3.jar`.
+That produces `cli-kotlin/build/libs/lamintra-0.4.0.jar`.
 
 ## Install
 
 Requires a JVM 17+ (you already have one if you run Gradle). Download the
-jar from the [latest release](https://github.com/BalajiReddy1/jetcompose/releases/latest):
+jar from the [latest release](https://github.com/BalajiReddy1/lamintra/releases/latest):
 
 ```bash
-curl -LO https://github.com/BalajiReddy1/jetcompose/releases/download/v0.3.3/jetcompose-0.3.3.jar
+curl -LO https://github.com/BalajiReddy1/lamintra/releases/download/v0.4.0/lamintra-0.4.0.jar
 ```
 
 ## Using the CLI
@@ -82,11 +80,11 @@ curl -LO https://github.com/BalajiReddy1/jetcompose/releases/download/v0.3.3/jet
 Run once per project, then once per component:
 
 ```bash
-java -jar jetcompose-0.3.3.jar init
+java -jar lamintra-0.4.0.jar init
 ```
 
 ```bash
-java -jar jetcompose-0.3.3.jar add bottomsheet/glass
+java -jar lamintra-0.4.0.jar add bottomsheet/glass
 ```
 
 `init` auto-detects the project from the filesystem alone (no Gradle
@@ -98,7 +96,7 @@ prompts. It writes `.lamintra/config.json`, which every `add` reads.
 ## Registry
 
 Components are served from
-[`jetcompose-registry`](https://github.com/BalajiReddy1/jetcompose-registry)
+[`lamintra-registry`](https://github.com/BalajiReddy1/lamintra-registry)
 over `raw.githubusercontent.com`, **pinned to a release tag rather than a
 branch**. Branch URLs are cached for ~5 minutes, which caused transient
 404s and stale content during real testing; tag URLs are immutable.
@@ -131,11 +129,6 @@ Two consequences worth knowing:
 
 Recorded so none of it is mistaken for an oversight:
 
-- **The rename is not fully shipped.** The project is now Lamintra (the
-  previous name sat too close to Google's "Jetpack Compose" and to
-  JetBrains). The source is renamed, but the GitHub repos, the published
-  jar and the registry tag still carry the old name until the next
-  coordinated release.
 - **No website.** The registry repo also has no README or landing
   content.
 - **iOS appearance is not verified.** Interaction tests run on a real iOS
