@@ -9,14 +9,14 @@ import java.net.http.HttpResponse
 object Installer {
     // GitHub raw content base. Using raw.githubusercontent.com means no
     // GitHub API rate limits for unauthenticated reads at this scale, and
-    // no extra client library — it's a plain HTTPS GET.
+    // no extra client library - it's a plain HTTPS GET.
     //
     // Pinned to a release tag, NOT `main`: raw.githubusercontent.com
     // caches branch URLs for ~5 minutes, so fetching `main` can serve
     // transient 404s or stale files right after a registry push. Tagged
-    // URLs are immutable — bump the tag here (and re-release the jar)
+    // URLs are immutable - bump the tag here (and re-release the jar)
     // to pick up registry changes.
-    private const val REGISTRY_BASE = "https://raw.githubusercontent.com/BalajiReddy1/lamintra-registry/v0.4.0"
+    private const val REGISTRY_BASE = "https://raw.githubusercontent.com/BalajiReddy1/lamintra-registry/v0.5.2"
 
     private val client: HttpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NORMAL)
@@ -31,7 +31,7 @@ object Installer {
         if (response.statusCode() != 200) {
             error(
                 "Failed to fetch $relativeUrl (HTTP ${response.statusCode()}). " +
-                    "Check the component name is correct, e.g. 'bottomsheet/glass'."
+                    "Check the component name is correct, e.g. 'button' or 'text-field'."
             )
         }
         return response.body()
@@ -49,7 +49,7 @@ object Installer {
         val manifestText = fetch("$componentName/component.json")
         val manifest = ComponentManifest.parse(manifestText)
 
-        val newRoot = Rewriter.computeNewRootPackage(config, manifest.category, manifest.style)
+        val newRoot = Rewriter.computeNewRootPackage(config, manifest.packageSegment)
 
         val target = Rewriter.resolveTargetPath(config, manifest, manifest.main)
         val existingElsewhere = findExistingCopyElsewhere(projectDir, config, manifest, target.relativePath)
@@ -68,7 +68,7 @@ object Installer {
         log += "  registry package : ${manifest.registryPackage}"
         log += "  new root package  : $newRoot"
         if (File(projectDir, target.relativePath).exists()) {
-            log += "  (component already installed here — updating in place)"
+            log += "  (component already installed here - updating in place)"
         }
 
         for (relFile in manifest.files) {
@@ -89,12 +89,12 @@ object Installer {
      * Installs the component's optional @Preview demo file, but only when
      * it cannot break the build: the androidx preview annotation needs the
      * ui-tooling-preview artifact, so the module's build file is
-     * text-scanned (comments stripped — never evaluated) for evidence of
-     * that dependency. Found → install to the android source root
+     * text-scanned (comments stripped - never evaluated) for evidence of
+     * that dependency. Found -> install to the android source root
      * (androidMain for KMP; the annotation doesn't exist in common code).
-     * Not found → skip the file and say how to enable it. A false negative
+     * Not found -> skip the file and say how to enable it. A false negative
      * degrades to a printed hint; a missing dependency never gets a file
-     * that would fail to compile — the zero-compile-error promise wins
+     * that would fail to compile - the zero-compile-error promise wins
      * over preview convenience.
      */
     private fun installPreviewIfSafe(
@@ -108,7 +108,7 @@ object Installer {
         val previewRel = manifest.preview ?: return
         val androidRoot = config.sourceRoots.android
         if (androidRoot == null) {
-            log += "  (preview skipped — no android source root in .lamintra/config.json)"
+            log += "  (preview skipped - no android source root in .lamintra/config.json)"
             return
         }
         if (!moduleBuildFileShowsPreviewDep(projectDir, config)) {
@@ -148,11 +148,11 @@ object Installer {
     /**
      * Guards against the duplicate-install foot-gun: run init, install,
      * re-run init with a different source root (or package), install again
-     * — and the same component now exists twice in one module, which is a
+     * - and the same component now exists twice in one module, which is a
      * guaranteed "conflicting overloads" compile error because Gradle
      * compiles every source root (src/main/java AND src/main/kotlin both
      * count). Scans the module's src/ tree for this component's
-     * category/style/main-file path landing anywhere other than the
+     * package-segment/main-file path landing anywhere other than the
      * current target.
      */
     private fun findExistingCopyElsewhere(
@@ -168,7 +168,7 @@ object Installer {
         if (!srcDir.isDirectory) return null
 
         val mainFileName = manifest.main.substringAfterLast('/')
-        val suffix = "${manifest.category}/${manifest.style}/$mainFileName"
+        val suffix = "${manifest.packageSegment}/$mainFileName"
         val targetCanonical = File(projectDir, targetRelativePath).canonicalFile
 
         for (file in srcDir.walkTopDown().onEnter { it.name != "build" }) {

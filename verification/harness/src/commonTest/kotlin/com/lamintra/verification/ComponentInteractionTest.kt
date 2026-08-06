@@ -8,59 +8,27 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
-import com.lamintra.bottomsheet.glass.GlassBottomSheet
-import com.lamintra.button.neon.NeonButton
-import com.lamintra.button.neon_outline.NeonOutlineButton
+import com.lamintra.glass_sheet.GlassBottomSheet
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Interaction tests that run on a real iOS simulator via
- * `iosSimulatorArm64Test`, and on the JVM via `desktopTest`.
+ * Interaction tests for the signature tier, run on a real iOS simulator via
+ * `iosSimulatorArm64Test` and on the JVM via `desktopTest`.
  *
  * These exist because compile-only verification is explicitly not sufficient
- * for this project: a bottom sheet whose drag-to-dismiss compiled on every
- * target was broken the first time a human touched it. iOS was the one
- * platform that had never been verified by execution at all, only by
- * reasoning about the APIs used.
+ * for this project: this sheet's drag-to-dismiss compiled on every target and
+ * was broken the first time a human touched it. The two drag cases below are
+ * that exact bug class.
+ *
+ * The neon button tests that used to live here went with the components, which
+ * were retired from the registry once wave 1 replaced them.
  */
 @OptIn(ExperimentalTestApi::class)
 class ComponentInteractionTest {
-
-    @Test
-    fun neonButtonFiresWhenEnabled() = runComposeUiTest {
-        var taps = 0
-        setContent { NeonButton(text = "TAP ME", onClick = { taps++ }) }
-
-        onNodeWithText("TAP ME").performClick()
-
-        assertEquals(1, taps, "an enabled NeonButton should report the tap")
-    }
-
-    @Test
-    fun neonButtonIgnoresTapsWhenDisabled() = runComposeUiTest {
-        var taps = 0
-        setContent { NeonButton(text = "OFF", onClick = { taps++ }, enabled = false) }
-
-        onNodeWithText("OFF").performClick()
-
-        assertEquals(0, taps, "a disabled NeonButton must not report taps")
-    }
-
-    @Test
-    fun neonOutlineButtonIgnoresTapsWhenDisabled() = runComposeUiTest {
-        var taps = 0
-        setContent { NeonOutlineButton(text = "OFF", onClick = { taps++ }, enabled = false) }
-
-        onNodeWithText("OFF").performClick()
-
-        assertEquals(0, taps, "a disabled NeonOutlineButton must not report taps")
-    }
 
     @Test
     fun sheetShowsItsContentWhenVisible() = runComposeUiTest {

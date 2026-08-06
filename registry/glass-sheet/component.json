@@ -1,0 +1,17 @@
+{
+  "name": "glass-sheet",
+  "categories": ["overlay"],
+  "registryPackage": "com.lamintra.glass_sheet",
+  "main": "src/BottomSheet.kt",
+  "prefix": "glass_sheet",
+  "files": [
+    "src/BottomSheet.kt",
+    "src/internal/glass_sheet/DragHandle.kt",
+    "src/internal/glass_sheet/ModifierExtensions.kt"
+  ],
+  "preview": "src/BottomSheetPreview.kt",
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  }
+}

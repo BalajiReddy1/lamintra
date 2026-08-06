@@ -1,0 +1,17 @@
+{
+  "name": "switch",
+  "categories": ["form"],
+  "registryPackage": "com.lamintra.switch",
+  "main": "src/LamintraSwitch.kt",
+  "prefix": "switch",
+  "files": [
+    "src/LamintraSwitch.kt",
+    "src/internal/switch/Squircle.kt",
+    "src/internal/switch/SoftShadow.kt"
+  ],
+  "preview": "src/LamintraSwitchPreview.kt",
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  }
+}

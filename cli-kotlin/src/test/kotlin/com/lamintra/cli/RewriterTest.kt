@@ -20,88 +20,92 @@ class RewriterTest {
         componentPath = "features/shared/widgets"
     )
 
-    private val bottomSheetManifest = ComponentManifest(
-        name = "bottomsheet/glass",
-        category = "bottomsheet",
-        style = "glass",
-        registryPackage = "com.lamintra.bottomsheet.glass",
+    private val glassSheetManifest = ComponentManifest(
+        name = "glass-sheet",
+        categories = listOf("overlay"),
+        registryPackage = "com.lamintra.glass_sheet",
         main = "src/BottomSheet.kt",
-        prefix = "bottomsheet_glass",
+        prefix = "glass_sheet",
         files = listOf(
             "src/BottomSheet.kt",
-            "src/internal/bottomsheet_glass/DragHandle.kt",
-            "src/internal/bottomsheet_glass/ModifierExtensions.kt"
+            "src/internal/glass_sheet/DragHandle.kt",
+            "src/internal/glass_sheet/ModifierExtensions.kt"
         )
     )
 
-    private val neonManifest = ComponentManifest(
-        name = "button/neon",
-        category = "button",
-        style = "neon",
-        registryPackage = "com.lamintra.button.neon",
-        main = "src/NeonButton.kt",
-        prefix = "button_neon",
+    private val buttonManifest = ComponentManifest(
+        name = "button",
+        categories = listOf("button"),
+        registryPackage = "com.lamintra.button",
+        main = "src/LayerButton.kt",
+        prefix = "button",
         files = listOf(
-            "src/NeonButton.kt",
-            "src/internal/button_neon/ModifierExtensions.kt"
+            "src/LayerButton.kt",
+            "src/internal/button/Squircle.kt"
         )
     )
 
     @Test
     fun `package declaration is rewritten to the target namespace`() {
-        val original = "package com.lamintra.bottomsheet.glass\n\nimport androidx.compose.runtime.Composable\n"
-        val rewritten = Rewriter.rewriteFileContent(original, testConfig, bottomSheetManifest)
+        val original = "package com.lamintra.glass_sheet\n\nimport androidx.compose.runtime.Composable\n"
+        val rewritten = Rewriter.rewriteFileContent(original, testConfig, glassSheetManifest)
         assertTrue(
-            rewritten.startsWith("package com.testapp.myapp.features.shared.widgets.bottomsheet.glass"),
+            rewritten.startsWith("package com.testapp.myapp.features.shared.widgets.glass_sheet"),
             "got: ${rewritten.lines().first()}"
         )
     }
 
     @Test
     fun `cross-file internal import is rewritten to the new namespace`() {
-        val original = "package com.lamintra.bottomsheet.glass\n" +
-            "import com.lamintra.bottomsheet.glass.internal.bottomsheet_glass.DragHandle\n"
-        val rewritten = Rewriter.rewriteFileContent(original, testConfig, bottomSheetManifest)
+        val original = "package com.lamintra.glass_sheet\n" +
+            "import com.lamintra.glass_sheet.internal.glass_sheet.DragHandle\n"
+        val rewritten = Rewriter.rewriteFileContent(original, testConfig, glassSheetManifest)
         assertTrue(
             rewritten.contains(
-                "import com.testapp.myapp.features.shared.widgets.bottomsheet.glass.internal.bottomsheet_glass.DragHandle"
+                "import com.testapp.myapp.features.shared.widgets.glass_sheet.internal.glass_sheet.DragHandle"
             )
         )
     }
 
     @Test
     fun `unrelated androidx imports are left untouched`() {
-        val original = "package com.lamintra.bottomsheet.glass\n" +
+        val original = "package com.lamintra.glass_sheet\n" +
             "import androidx.compose.foundation.background\n"
-        val rewritten = Rewriter.rewriteFileContent(original, testConfig, bottomSheetManifest)
+        val rewritten = Rewriter.rewriteFileContent(original, testConfig, glassSheetManifest)
         assertTrue(rewritten.contains("import androidx.compose.foundation.background"))
     }
 
     @Test
     fun `boundary-safe rewrite does not corrupt a decoy package with a longer name`() {
-        val original = "package com.lamintra.bottomsheet.glass\n" +
-            "import com.lamintra.bottomsheet.glassy.SomeUnrelatedThing\n" +
-            "import com.lamintra.bottomsheet.glass2.AnotherUnrelatedThing\n"
-        val rewritten = Rewriter.rewriteFileContent(original, testConfig, bottomSheetManifest)
-        assertTrue(rewritten.contains("import com.lamintra.bottomsheet.glassy.SomeUnrelatedThing"))
-        assertTrue(rewritten.contains("import com.lamintra.bottomsheet.glass2.AnotherUnrelatedThing"))
+        val original = "package com.lamintra.glass_sheet\n" +
+            "import com.lamintra.glass_sheety.SomeUnrelatedThing\n" +
+            "import com.lamintra.glass_sheet2.AnotherUnrelatedThing\n"
+        val rewritten = Rewriter.rewriteFileContent(original, testConfig, glassSheetManifest)
+        assertTrue(rewritten.contains("import com.lamintra.glass_sheety.SomeUnrelatedThing"))
+        assertTrue(rewritten.contains("import com.lamintra.glass_sheet2.AnotherUnrelatedThing"))
     }
 
     @Test
     fun `two components sharing a filename resolve to different paths and packages`() {
-        val bottomSheetTarget = Rewriter.resolveTargetPath(
-            testConfig, bottomSheetManifest, "src/internal/bottomsheet_glass/ModifierExtensions.kt"
+        val sheetTarget = Rewriter.resolveTargetPath(
+            testConfig, glassSheetManifest, "src/internal/glass_sheet/ModifierExtensions.kt"
         )
-        val neonTarget = Rewriter.resolveTargetPath(
-            testConfig, neonManifest, "src/internal/button_neon/ModifierExtensions.kt"
+        val cardManifest = buttonManifest.copy(
+            name = "card",
+            registryPackage = "com.lamintra.card",
+            prefix = "card",
+            files = listOf("src/LayerCard.kt", "src/internal/card/ModifierExtensions.kt")
         )
-        assertNotEquals(bottomSheetTarget.relativePath, neonTarget.relativePath)
-        assertNotEquals(bottomSheetTarget.fullPackage, neonTarget.fullPackage)
+        val cardTarget = Rewriter.resolveTargetPath(
+            testConfig, cardManifest, "src/internal/card/ModifierExtensions.kt"
+        )
+        assertNotEquals(sheetTarget.relativePath, cardTarget.relativePath)
+        assertNotEquals(sheetTarget.fullPackage, cardTarget.fullPackage)
     }
 
     @Test
     fun `resolved file path exactly matches its own declared package`() {
-        val target = Rewriter.resolveTargetPath(testConfig, bottomSheetManifest, "src/BottomSheet.kt")
+        val target = Rewriter.resolveTargetPath(testConfig, glassSheetManifest, "src/BottomSheet.kt")
         val expectedDirSuffix = target.fullPackage.replace(".", "/")
         assertTrue(
             target.relativePath.contains(expectedDirSuffix),
@@ -111,10 +115,10 @@ class RewriterTest {
 
     @Test
     fun `mismatched manifest prefix throws instead of silently installing a broken package`() {
-        val brokenManifest = bottomSheetManifest.copy(prefix = "wrong_prefix")
+        val brokenManifest = glassSheetManifest.copy(prefix = "wrong_prefix")
         val thrown = runCatching {
             Rewriter.resolveTargetPath(
-                testConfig, brokenManifest, "src/internal/bottomsheet_glass/DragHandle.kt"
+                testConfig, brokenManifest, "src/internal/glass_sheet/DragHandle.kt"
             )
         }
         assertTrue(thrown.isFailure, "Expected an exception when prefix doesn't match the folder name")
@@ -123,10 +127,75 @@ class RewriterTest {
     @Test
     fun `componentPath is configurable and actually changes the resolved package`() {
         val customConfig = testConfig.copy(componentPath = "presentation")
-        val target = Rewriter.resolveTargetPath(customConfig, bottomSheetManifest, "src/BottomSheet.kt")
+        val target = Rewriter.resolveTargetPath(customConfig, glassSheetManifest, "src/BottomSheet.kt")
         assertEquals(
-            "com.testapp.myapp.presentation.bottomsheet.glass",
+            "com.testapp.myapp.presentation.glass_sheet",
             target.fullPackage
+        )
+    }
+
+    /**
+     * The hyphen mapping is the single place the web naming convention meets
+     * Kotlin's package rules. A hyphen surviving into a package declaration is
+     * an immediate compile error in the user's project.
+     */
+    @Test
+    fun `a hyphenated component name becomes an underscored package segment`() {
+        val textField = buttonManifest.copy(
+            name = "text-field",
+            registryPackage = "com.lamintra.text_field",
+            prefix = "text_field",
+            main = "src/LayerTextField.kt",
+            files = listOf("src/LayerTextField.kt")
+        )
+        val target = Rewriter.resolveTargetPath(testConfig, textField, "src/LayerTextField.kt")
+        assertEquals(
+            "com.testapp.myapp.features.shared.widgets.text_field",
+            target.fullPackage
+        )
+        assertTrue(
+            !target.relativePath.contains("-"),
+            "no hyphen may survive into an installed path: ${target.relativePath}"
+        )
+    }
+
+    @Test
+    fun `a name that is not package-legal is rejected at manifest load`() {
+        val json = """
+            {
+              "name": "Text Field!",
+              "registryPackage": "com.lamintra.text_field",
+              "main": "src/LayerTextField.kt",
+              "prefix": "text_field",
+              "files": ["src/LayerTextField.kt"]
+            }
+        """.trimIndent()
+        val thrown = runCatching { ComponentManifest.parse(json) }
+        assertTrue(thrown.isFailure, "A non-kebab-case component name must be rejected")
+    }
+
+    @Test
+    fun `a name that collides with a Kotlin keyword is rejected at manifest load`() {
+        val json = """
+            {
+              "name": "object",
+              "registryPackage": "com.lamintra.object",
+              "main": "src/Thing.kt",
+              "prefix": "object",
+              "files": ["src/Thing.kt"]
+            }
+        """.trimIndent()
+        val thrown = runCatching { ComponentManifest.parse(json) }
+        assertTrue(thrown.isFailure, "A name that becomes a reserved keyword must be rejected")
+    }
+
+    @Test
+    fun `categories are optional metadata and do not affect the installed package`() {
+        val withCategories = buttonManifest.copy(categories = listOf("button", "form"))
+        val without = buttonManifest.copy(categories = emptyList())
+        assertEquals(
+            Rewriter.resolveTargetPath(testConfig, withCategories, "src/LayerButton.kt").fullPackage,
+            Rewriter.resolveTargetPath(testConfig, without, "src/LayerButton.kt").fullPackage
         )
     }
 
@@ -164,7 +233,7 @@ class RewriterTest {
 
     @Test
     fun `a sibling directory sharing the project name prefix is refused`() {
-        // "…/proj" must not be treated as containing "…/proj-evil" — the
+        // ".../proj" must not be treated as containing ".../proj-evil" - the
         // guard compares path boundaries, not raw string prefixes.
         val base = createTempDirectory("lamintra-prefix").toFile()
         val projectDir = File(base, "proj").apply { mkdirs() }

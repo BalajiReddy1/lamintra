@@ -33,9 +33,9 @@ object InitCommand {
                 printDone()
                 return
             }
-            println("No problem — answer a few questions instead.\n")
+            println("No problem - answer a few questions instead.\n")
         } else {
-            println("Couldn't auto-detect the project layout — answer a few questions.\n")
+            println("Couldn't auto-detect the project layout - answer a few questions.\n")
         }
         runManual(projectDir)
     }
@@ -43,7 +43,7 @@ object InitCommand {
     // ------------------------------------------------------------------
     // Detection: filesystem only, no Gradle evaluation. The layout, the
     // source roots, and the root package are all readable straight off
-    // disk — that keeps init to a single confirm for standard projects
+    // disk - that keeps init to a single confirm for standard projects
     // while never being as heavy or fragile as parsing build scripts.
     // ------------------------------------------------------------------
 
@@ -129,9 +129,9 @@ object InitCommand {
         return result
     }
 
-    /** Multiple candidate modules → one numbered pick instead of free-typed paths. */
+    /** Multiple candidate modules -> one numbered pick instead of free-typed paths. */
     private fun pickModule(projectDir: File, modules: List<File>): File? {
-        println("\nSeveral modules found — which should components install into?")
+        println("\nSeveral modules found - which should components install into?")
         modules.forEachIndexed { i, m ->
             println("  ${i + 1}) ${m.relativeTo(projectDir).path.replace('\\', '/')}")
         }
@@ -176,7 +176,7 @@ object InitCommand {
     }
 
     // ------------------------------------------------------------------
-    // Manual flow — unchanged behavior, used when detection fails or the
+    // Manual flow - unchanged behavior, used when detection fails or the
     // user rejects the detected settings.
     // ------------------------------------------------------------------
 
@@ -194,7 +194,7 @@ object InitCommand {
             if (!hasGradleBuildFileNearby(projectDir, root)) {
                 println(
                     "  Warning: no Gradle build file (build.gradle.kts / build.gradle) " +
-                        "found near '$root' — double-check it's correct. A wrong source " +
+                        "found near '$root' - double-check it's correct. A wrong source " +
                         "root means installed files land where Gradle never compiles them."
                 )
                 suspiciousRoots += root
@@ -237,7 +237,7 @@ object InitCommand {
                 default = false
             )
             if (!proceed) {
-                println("Aborted — nothing written. Re-run 'lamintra init' with corrected paths.")
+                println("Aborted - nothing written. Re-run 'lamintra init' with corrected paths.")
                 return
             }
         }
@@ -254,7 +254,7 @@ object InitCommand {
     }
 
     private fun printDone() {
-        println("\n✅ Wrote .lamintra/config.json")
+        println("\nWrote .lamintra/config.json")
         println("   Run 'lamintra add <component>' to install your first component,")
         println("   e.g.: lamintra add bottomsheet/glass")
     }
@@ -283,9 +283,9 @@ object InitCommand {
 
     /**
      * A plausible source root should have a Gradle build file somewhere in
-     * its module directory — e.g. `composeApp/src/commonMain/kotlin` sits
+     * its module directory - e.g. `composeApp/src/commonMain/kotlin` sits
      * three levels below `composeApp/build.gradle.kts`. Walks from the
-     * entered path (which may not exist yet — iosMain often doesn't) up
+     * entered path (which may not exist yet - iosMain often doesn't) up
      * through at most four ancestors, never above the project root.
      *
      * Depth-bounded on purpose: in a multi-module repo the project root
@@ -293,7 +293,7 @@ object InitCommand {
      * "find" it for any garbage path, defeating the check. The bound means
      * a typo in the module segment of a deep path (e.g. `featur/ui/src/...`)
      * is caught, while a typo in the source-set segment of a shallow path
-     * (e.g. `composeApp/src/comonMain/...`) can still slip through — this
+     * (e.g. `composeApp/src/comonMain/...`) can still slip through - this
      * is a heuristic warning, not a guarantee.
      */
     private fun hasGradleBuildFileNearby(projectDir: File, sourceRoot: String): Boolean {

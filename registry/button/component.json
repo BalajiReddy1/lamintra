@@ -1,0 +1,16 @@
+{
+  "name": "button",
+  "categories": ["button"],
+  "registryPackage": "com.lamintra.button",
+  "main": "src/LamintraButton.kt",
+  "prefix": "button",
+  "files": [
+    "src/LamintraButton.kt",
+    "src/internal/button/Squircle.kt"
+  ],
+  "preview": "src/LamintraButtonPreview.kt",
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  }
+}

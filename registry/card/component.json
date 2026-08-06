@@ -1,0 +1,16 @@
+{
+  "name": "card",
+  "categories": ["layout"],
+  "registryPackage": "com.lamintra.card",
+  "main": "src/LamintraCard.kt",
+  "prefix": "card",
+  "files": [
+    "src/LamintraCard.kt",
+    "src/internal/card/Squircle.kt"
+  ],
+  "preview": "src/LamintraCardPreview.kt",
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  }
+}

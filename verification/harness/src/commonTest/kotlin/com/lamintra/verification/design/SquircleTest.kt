@@ -34,7 +34,7 @@ class SquircleTest {
     fun outlineHasNoDiagonalChords() {
         // This is the check that would have caught the reversed corners: two
         // quadrants were traversed backwards, replacing each arc with a
-        // straight diagonal — including one 312px slash across the bottom.
+        // straight diagonal - including one 312px slash across the bottom.
         val pts = Squircle.outline(w, h, r)
         val offenders = mutableListOf<String>()
         for (i in 1 until pts.size) {
@@ -89,5 +89,57 @@ class SquircleTest {
         val pts = Squircle.outline(52f, 30f, 15f)
         assertTrue(pts.all { it.y >= -0.01f && it.y <= 30.01f })
         assertEquals(52f, pts.maxOf { it.x }, 0.01f)
+    }
+
+    /**
+     * Every registry component ships its own copy of this generator, because
+     * components are standalone after install and may not share files. The
+     * geometry is therefore only as good as those copies staying identical to
+     * the one these tests actually exercise.
+     *
+     * Copying is the rule ("copied from the tested generator, not re-derived"),
+     * and this is what stops a well-meaning edit to one copy from silently
+     * shipping a different shape in one component than in the other four.
+     */
+    @Test
+    fun everyRegistryCopyOfTheGeneratorMatchesTheTestedOne() {
+        val cases = listOf(
+            Triple(324f, 46f, 12f),   // button
+            Triple(324f, 98f, 18f),   // card
+            Triple(52f, 30f, 15f),    // switch track (pill)
+            Triple(24f, 24f, 12f)     // switch knob (circle)
+        )
+        val copies = mapOf<String, (Float, Float, Float) -> List<androidx.compose.ui.geometry.Offset>>(
+            "button" to { a, b, c -> com.lamintra.button.internal.button.Squircle.outline(a, b, c) },
+            "card" to { a, b, c -> com.lamintra.card.internal.card.Squircle.outline(a, b, c) },
+            "text-field" to { a, b, c ->
+                com.lamintra.text_field.internal.text_field.Squircle.outline(a, b, c)
+            },
+            "list-row" to { a, b, c ->
+                com.lamintra.list_row.internal.list_row.Squircle.outline(a, b, c)
+            },
+            "switch" to { a, b, c -> com.lamintra.switch.internal.switch.Squircle.outline(a, b, c) }
+        )
+
+        for ((name, outline) in copies) {
+            for ((w, h, r) in cases) {
+                val expected = Squircle.outline(w, h, r)
+                val actual = outline(w, h, r)
+                assertEquals(
+                    expected.size, actual.size,
+                    "$name's Squircle has drifted: point count differs at ${w}x$h r=$r"
+                )
+                for (i in expected.indices) {
+                    assertEquals(
+                        expected[i].x, actual[i].x, 0.0001f,
+                        "$name's Squircle has drifted at point $i (${w}x$h r=$r)"
+                    )
+                    assertEquals(
+                        expected[i].y, actual[i].y, 0.0001f,
+                        "$name's Squircle has drifted at point $i (${w}x$h r=$r)"
+                    )
+                }
+            }
+        }
     }
 }

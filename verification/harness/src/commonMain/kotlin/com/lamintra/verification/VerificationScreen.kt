@@ -21,22 +21,31 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lamintra.bottomsheet.glass.GlassBottomSheet
-import com.lamintra.button.neon.NeonButton
-import com.lamintra.button.neon_outline.NeonOutlineButton
+import com.lamintra.button.ButtonEmphasis
+import com.lamintra.button.LamintraButton
+import com.lamintra.button.LamintraButtonColors
+import com.lamintra.glass_sheet.GlassBottomSheet
 
 /**
- * The demo screen used by every verification target: desktop, iOS simulator
- * and the browser (wasmJs).
+ * The signature tier: `glass-sheet`, on its own.
  *
- * Colours here are BRAND tokens — this is a demo surface, not component code,
- * so per design/TOKENS.md it may use them freely. The components themselves
- * take every colour as a parameter and none of these values reach them.
+ * This screen used to also carry the Day-1 neon buttons. Those were retired
+ * from the registry once wave 1 landed, so the trigger here is the wave-1
+ * button instead.
+ *
+ * The sheet has NOT been revisited for the new base-tier language, so it is
+ * still in the glass aesthetic it was released with. That is expected: the
+ * signature tier is deliberately a different look from the base tier, and
+ * whether the two still read as one family is exactly what this screen is for.
+ *
+ * Colours in the chrome here are BRAND tokens. This is a demo surface, not
+ * component code, so per design/TOKENS.md it may use them freely. The
+ * components themselves take every colour as a parameter and none of these
+ * values reach them.
  */
 @Composable
 fun VerificationScreen() {
     var sheetVisible by remember { mutableStateOf(false) }
-    var taps by remember { mutableStateOf(0) }
 
     Box(
         modifier = Modifier
@@ -49,7 +58,7 @@ fun VerificationScreen() {
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             BasicText(
-                text = "lamintra components",
+                text = "signature tier",
                 style = TextStyle(
                     color = Color(0xFF8A93A5),
                     fontSize = 13.sp,
@@ -59,28 +68,20 @@ fun VerificationScreen() {
 
             // Diagnostic for the light/dark gate. The colour-scheme decision
             // makes `.auto()` the default for every component, so this API has
-            // to actually track the host environment on all four targets — a
+            // to actually track the host environment on all four targets. A
             // constant here would mean every component on the website renders
             // in the wrong scheme.
             BasicText(
                 text = "isSystemInDarkTheme() = ${isSystemInDarkTheme()}",
-                style = TextStyle(
-                    color = Color(0xFF00E5FF),
-                    fontSize = 14.sp
-                )
+                style = TextStyle(color = Color(0xFF00E5FF), fontSize = 14.sp)
             )
-            NeonOutlineButton(
-                text = if (sheetVisible) "HIDE SHEET" else "SHOW SHEET",
-                onClick = { sheetVisible = !sheetVisible }
-            )
-            NeonButton(
-                text = if (taps == 0) "NEON" else "TAPPED $taps",
-                onClick = { taps++ }
-            )
-            NeonButton(
-                text = "DISABLED",
-                onClick = { taps++ },
-                enabled = false
+
+            LamintraButton(
+                text = if (sheetVisible) "Hide sheet" else "Show sheet",
+                onClick = { sheetVisible = !sheetVisible },
+                emphasis = ButtonEmphasis.Primary,
+                fillWidth = false,
+                colors = LamintraButtonColors.dark()
             )
         }
 

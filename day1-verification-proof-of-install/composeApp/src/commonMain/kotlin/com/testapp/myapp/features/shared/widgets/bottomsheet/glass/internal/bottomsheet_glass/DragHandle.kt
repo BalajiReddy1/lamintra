@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * The small pill-shaped grip shown at the top of the bottom sheet.
- * Internal to this component — not exported for external use, which is
+ * Internal to this component - not exported for external use, which is
  * exactly why it lives under the internal/<prefix> namespace instead of
  * the component's public package.
  */

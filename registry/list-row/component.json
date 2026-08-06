@@ -1,0 +1,16 @@
+{
+  "name": "list-row",
+  "categories": ["layout"],
+  "registryPackage": "com.lamintra.list_row",
+  "main": "src/LamintraListRow.kt",
+  "prefix": "list_row",
+  "files": [
+    "src/LamintraListRow.kt",
+    "src/internal/list_row/Squircle.kt"
+  ],
+  "preview": "src/LamintraListRowPreview.kt",
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  }
+}

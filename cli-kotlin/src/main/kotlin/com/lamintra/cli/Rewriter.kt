@@ -21,7 +21,7 @@ data class ResolvedTarget(
  *     declaration (the specific rule Kotlin enforces at compile time)
  *
  * This Kotlin version has NOT been compiled in the sandbox that produced
- * it (no javac/kotlinc available there — see the Day 1 report). Compile
+ * it (no javac/kotlinc available there - see the Day 1 report). Compile
  * and run it for real as your first step on your own machine; the logic
  * itself is already validated, only the JVM/Kotlin-specific syntax is new.
  */
@@ -29,12 +29,12 @@ object Rewriter {
 
     /**
      * Boundary-safe replacement of [oldRoot] with [newRoot] anywhere it
-     * appears in [content] as a complete package-path token — not as a
+     * appears in [content] as a complete package-path token - not as a
      * prefix of some longer, unrelated identifier.
      *
-     * Example: rewriting "com.lamintra.bottomsheet.glass" must NOT
-     * touch "com.lamintra.bottomsheet.glassy.Something" (a different,
-     * unrelated package that merely starts with the same characters).
+     * Example: rewriting "com.lamintra.glass_sheet" must NOT touch
+     * "com.lamintra.glass_sheety.Something" (a different, unrelated package
+     * that merely starts with the same characters).
      */
     fun rewriteRootPackage(content: String, oldRoot: String, newRoot: String): String {
         val escaped = Regex.escape(oldRoot)
@@ -44,20 +44,19 @@ object Rewriter {
 
     /**
      * Computes the new root package a component will live under once
-     * installed. Used by BOTH content rewriting and path resolution —
+     * installed. Used by BOTH content rewriting and path resolution -
      * sharing this single function guarantees a written file's path can
      * never disagree with its own package declaration, which is itself
      * a guaranteed Kotlin compile error if it ever happened.
      */
-    fun computeNewRootPackage(config: LamintraConfig, category: String, style: String): String {
+    fun computeNewRootPackage(config: LamintraConfig, componentSegment: String): String {
         val componentPathDotted = config.componentPath
             .split("/")
             .filter { it.isNotBlank() }
             .joinToString(".")
         val parts = mutableListOf(config.packageName)
         if (componentPathDotted.isNotEmpty()) parts.add(componentPathDotted)
-        parts.add(category)
-        parts.add(style)
+        parts.add(componentSegment)
         return parts.joinToString(".")
     }
 
@@ -66,7 +65,7 @@ object Rewriter {
      * and what package it should declare once there.
      *
      * Throws if a component's internal/ folder name doesn't match its
-     * own declared `prefix` — this is a real bug class we want to catch
+     * own declared `prefix` - this is a real bug class we want to catch
      * at install time, not silently ship a package/path mismatch.
      */
     fun resolveTargetPath(
@@ -80,7 +79,7 @@ object Rewriter {
         val segments = withoutSrc.split("/").toMutableList()
         val filename = segments.removeAt(segments.size - 1)
 
-        val newRoot = computeNewRootPackage(config, manifest.category, manifest.style)
+        val newRoot = computeNewRootPackage(config, manifest.packageSegment)
 
         val fullPackage: String = if (segments.getOrNull(0) == "internal") {
             val declaredPrefix = segments.getOrNull(1)
@@ -113,7 +112,7 @@ object Rewriter {
         config: LamintraConfig,
         manifest: ComponentManifest
     ): String {
-        val newRoot = computeNewRootPackage(config, manifest.category, manifest.style)
+        val newRoot = computeNewRootPackage(config, manifest.packageSegment)
         return rewriteRootPackage(originalContent, manifest.registryPackage, newRoot)
     }
 
@@ -122,12 +121,12 @@ object Rewriter {
      * dirs as needed.
      *
      * [relativePath] is derived from registry-supplied manifest fields
-     * (`category`, `style`, `prefix`, `files`), so it is untrusted input: a
+     * (`name`, `prefix`, `files`), so it is untrusted input: a
      * manifest containing `..` segments or an absolute path would otherwise
      * write anywhere on the user's disk. The resolved target is therefore
      * required to stay inside [projectDir]. This matters most for the
      * planned third-party/private registries, where manifests come from
-     * someone other than us — but it costs nothing to enforce now.
+     * someone other than us - but it costs nothing to enforce now.
      */
     fun writeInstalledFile(projectDir: File, relativePath: String, content: String) {
         val target = resolveSafeTarget(projectDir, relativePath)

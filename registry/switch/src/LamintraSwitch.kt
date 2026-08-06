@@ -1,0 +1,185 @@
+package com.lamintra.switch
+
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.lamintra.switch.internal.switch.Squircle
+import com.lamintra.switch.internal.switch.softShadow
+
+/**
+ * Colours for [LamintraSwitch].
+ *
+ * The three factory names - `dark()`, `light()`, `auto()` - are identical on
+ * every Lamintra component on purpose. They are the migration seam: a future
+ * shared token layer changes only what `auto()` reads, without touching a
+ * single call site. Do not rename them.
+ *
+ * **[trackOn] is the one load-bearing colour in this library.** Everywhere else
+ * colour is decoration over a form that already reads; here it encodes state.
+ * Any host rebranding Lamintra should expect to change this first.
+ */
+data class LamintraSwitchColors(
+    val trackOff: Color,
+    val trackOn: Color,
+    val knob: Color,
+    val shadow: Color,
+    val focus: Color
+) {
+    companion object {
+        fun dark(accent: Color = Color(0xFF3B82F6)): LamintraSwitchColors =
+            LamintraSwitchColors(
+                trackOff = Color(0xFF26262A),
+                trackOn = accent,
+                knob = Color(0xFFFFFFFF),
+                shadow = Color(0xFF000000),
+                focus = Color(0xFFFAFAFA)
+            )
+
+        fun light(accent: Color = Color(0xFF2563EB)): LamintraSwitchColors =
+            LamintraSwitchColors(
+                trackOff = Color(0xFFE4E4E7),
+                trackOn = accent,
+                knob = Color(0xFFFFFFFF),
+                shadow = Color(0xFF09090B),
+                focus = Color(0xFF09090B)
+            )
+
+        /**
+         * Follows the device's colour scheme. Reads the *device* setting, not
+         * your app's theme - an app that forces its own scheme should pass
+         * [dark] or [light] explicitly.
+         */
+        @Composable
+        fun auto(): LamintraSwitchColors = if (isSystemInDarkTheme()) dark() else light()
+    }
+}
+
+/**
+ * A switch: a static track with a knob riding in it.
+ *
+ * **Position is the primary signal, colour is reinforcement.** The knob's
+ * travel is what encodes on/off, which is why the component still reads
+ * correctly in a grayscale screenshot where [LamintraSwitchColors.trackOn]
+ * collapses to a mid-grey. Never invert that relationship in a new component -
+ * a state carried by hue alone fails the bar.
+ *
+ * The knob moves on a **spring** with a little overshoot, and carries a real
+ * soft shadow. Those two details are most of the difference between a switch
+ * that feels expensive and one that feels like a toggle drawn in CSS.
+ *
+ * @param checked current state
+ * @param onCheckedChange called with the new state on tap when [enabled]
+ * @param enabled when false the switch drops to [disabledAlpha] and ignores taps
+ * @param colors see [LamintraSwitchColors]; defaults to following the system
+ * @param shadowSpread how far the knob's shadow falls off. Set to 0.dp for a
+ *        completely flat switch
+ */
+@Composable
+fun LamintraSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    colors: LamintraSwitchColors = LamintraSwitchColors.auto(),
+    trackWidth: Dp = 52.dp,
+    trackHeight: Dp = 32.dp,
+    knobSize: Dp = 28.dp,
+    knobInset: Dp = 2.dp,
+    pressScale: Float = 0.94f,
+    disabledAlpha: Float = 0.3f,
+    shadowSpread: Dp = 3.dp,
+    shadowDrop: Dp = 1.dp,
+    shadowAlpha: Float = 0.5f,
+    focusRingGap: Dp = 4.dp,
+    focusRingWidth: Dp = 2.dp
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val focused by interaction.collectIsFocusedAsState()
+
+    val knobX by animateDpAsState(
+        targetValue = if (checked) trackWidth - knobSize - knobInset else knobInset,
+        animationSpec = spring(dampingRatio = 0.68f, stiffness = 700f)
+    )
+    // A bouncing opacity looks like a bug, so the track cross-fade gets no
+    // overshoot even though the knob does.
+    val on by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 700f)
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (pressed && enabled) pressScale else 1f,
+        animationSpec = spring(dampingRatio = 0.72f, stiffness = 1400f)
+    )
+
+    Box(
+        modifier = modifier
+            .size(width = trackWidth, height = trackHeight)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                alpha = if (enabled) 1f else disabledAlpha
+            }
+            .drawBehind {
+                val track = Squircle.path(size.width, size.height, size.height / 2f)
+
+                if (focused && enabled) {
+                    val pad = focusRingGap.toPx()
+                    val ring = Squircle.path(
+                        size.width + pad * 2,
+                        size.height + pad * 2,
+                        (size.height + pad * 2) / 2f
+                    )
+                    translate(left = -pad, top = -pad) {
+                        drawPath(ring, colors.focus, style = Stroke(focusRingWidth.toPx()))
+                    }
+                }
+
+                drawPath(track, colors.trackOff)
+                if (on > 0f) drawPath(track, colors.trackOn.copy(alpha = on))
+
+                val k = knobSize.toPx()
+                val knob = Squircle.path(k, k, k / 2f)
+                translate(left = knobX.toPx(), top = (size.height - k) / 2f) {
+                    if (shadowSpread > 0.dp) {
+                        softShadow(
+                            path = knob,
+                            color = colors.shadow,
+                            spread = shadowSpread,
+                            dropDown = shadowDrop,
+                            maxAlpha = shadowAlpha
+                        )
+                    }
+                    drawPath(knob, colors.knob)
+                }
+            }
+            .toggleable(
+                value = checked,
+                interactionSource = interaction,
+                indication = null,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange
+            )
+    )
+}

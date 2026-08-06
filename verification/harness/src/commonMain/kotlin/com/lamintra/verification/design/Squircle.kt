@@ -13,7 +13,7 @@ import kotlin.math.sin
  *
  * Kept as a pure point generator, separate from the [Path] it feeds, so the
  * geometry can be unit-tested. Three earlier attempts at this shape shipped
- * broken — first a superellipse inscribed in the whole box (corner radius
+ * broken - first a superellipse inscribed in the whole box (corner radius
  * scaled with element height, so every surface became a lozenge), then two
  * corner quadrants traversed in reverse, which turned them into straight
  * diagonal chords across the shape. Both survived a bounds check. Continuity
@@ -24,7 +24,7 @@ internal object Squircle {
     /**
      * The outline, in draw order, starting at the top-left tangent point and
      * running clockwise. Consecutive points are either axis-aligned (the four
-     * straight edges) or a short step along a corner arc — never a long
+     * straight edges) or a short step along a corner arc - never a long
      * diagonal.
      */
     fun outline(

@@ -23,7 +23,7 @@ data class LamintraConfig(
     fun activeSourceRoot(): String {
         val root = if (isKmp) sourceRoots.common else sourceRoots.android
         return root ?: error(
-            "Config is missing sourceRoots.${if (isKmp) "common" else "android"} — " +
+            "Config is missing sourceRoots.${if (isKmp) "common" else "android"} - " +
                 "run 'lamintra init' again or edit .lamintra/config.json directly."
         )
     }
@@ -48,7 +48,7 @@ data class LamintraConfig(
             val configFile = File(projectDir, ".lamintra/config.json")
             // Back-compat: projects initialised before the rename have a
             // .jetcompose/ directory. Read it rather than making an existing
-            // user re-run init — their config is still valid, only the folder
+            // user re-run init - their config is still valid, only the folder
             // name changed. Written configs always use the new path.
             val legacyFile = File(projectDir, ".jetcompose/config.json")
             val source = when {

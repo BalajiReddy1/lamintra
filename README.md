@@ -1,6 +1,6 @@
 # Lamintra
 
-Copy-paste UI components for Jetpack Compose and Kotlin Multiplatform —
+Copy-paste UI components for Jetpack Compose and Kotlin Multiplatform -
 a shadcn/ui-style registry for Android and iOS.
 
 Unlike a web `.tsx` file, a copy-pasted Kotlin file breaks the build
@@ -10,7 +10,7 @@ that rewrites packages, imports and file paths so an installed component
 compiles with zero manual fixes, plus the registry those components live
 in.
 
-Components use `compose.foundation` only — no Material 3, by design.
+Components use `compose.foundation` only - no Material 3, by design.
 
 > **Status: early. Working, but v0 and unproven at scale.** The CLI and
 > the registry both work end-to-end and the jar is downloadable below.
@@ -46,7 +46,7 @@ CLAUDE.md       Working rules, full current state, backlog
 ## Requirements
 
 - **JDK 17 or newer.** The CLI targets JVM 17 (`jvmToolchain(17)`), not
-  21 — Gradle itself requires 17+, so it is a floor every Android/KMP
+  21 - Gradle itself requires 17+, so it is a floor every Android/KMP
   developer already meets, and a 21-target jar fails with
   `UnsupportedClassVersionError` on JDK 17 machines.
 - **Gradle 9.2.1+** to build the CLI. Shadow 9.5.1 calls the `Provider`
@@ -115,7 +115,7 @@ Two consequences worth knowing:
 - **Shared library modules need `api(...)`.** Installing a component into
   a module like `:feature:ui` only compiles for consuming modules if that
   module exposes Compose via `api(...)` rather than `implementation(...)`
-  — the component's public signature exposes Compose types (`Modifier`,
+  - the component's public signature exposes Compose types (`Modifier`,
   `Color`, `Dp`, `@Composable`).
 - **Style names must be legal Kotlin package segments.** The rewriter
   joins `category`/`style` verbatim into the target package, so
@@ -134,13 +134,13 @@ Recorded so none of it is mistaken for an oversight:
 - **iOS appearance is not verified.** Interaction tests run on a real iOS
   simulator in CI (`Verify components`), so composition and behaviour are
   covered on all three targets. But nobody has yet *looked* at the
-  components on iOS — visual confirmation exists for Android and desktop
+  components on iOS - visual confirmation exists for Android and desktop
   only.
 - **Three components.** This is a v0 registry, not a component library.
 
 ## Contributing / working on this
 
-Read `CLAUDE.md` first. It carries the hard rules — including that a
+Read `CLAUDE.md` first. It carries the hard rules - including that a
 component counts as verified only when it both compiles on Android and
 desktop *and* has been run on a real screen with its interactions
 exercised. Compile-only verification is explicitly not sufficient here;

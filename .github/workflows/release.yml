@@ -2,7 +2,7 @@ name: Release
 
 # Cuts a GitHub Release with the fat JAR attached whenever a version tag
 # (v0.1.0, v0.2.1, ...) is pushed. This is the CLI's entire distribution
-# channel — users download lamintra-<version>.jar from the release page.
+# channel - users download lamintra-<version>.jar from the release page.
 on:
   push:
     tags:

@@ -1,0 +1,16 @@
+{
+  "name": "text-field",
+  "categories": ["form"],
+  "registryPackage": "com.lamintra.text_field",
+  "main": "src/LamintraTextField.kt",
+  "prefix": "text_field",
+  "files": [
+    "src/LamintraTextField.kt",
+    "src/internal/text_field/Squircle.kt"
+  ],
+  "preview": "src/LamintraTextFieldPreview.kt",
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  }
+}

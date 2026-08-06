@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 
 /**
  * A glassmorphism-styled bottom sheet built entirely on compose.foundation.
- * No Material 3 dependency — colors, corner radius, and blur are fully
+ * No Material 3 dependency - colors, corner radius, and blur are fully
  * theme-driven so it adapts to the host app's own design system.
  *
  * @param visible whether the sheet is currently shown
@@ -98,7 +98,7 @@ fun GlassBottomSheet(
 }
 
 /**
- * Thin wrapper kept private to this file so BottomSheet.kt stays readable —
+ * Thin wrapper kept private to this file so BottomSheet.kt stays readable -
  * delegates the actual gesture detection to compose.foundation's
  * detectVerticalDragGestures.
  */
@@ -110,6 +110,6 @@ private fun Modifier.pointerInputDragHandle(
     // together with detectVerticalDragGestures(onDragEnd = { onDragEnd() }) { _, dragAmount ->
     //     onDrag(dragAmount)
     // }
-    // Trimmed here for fixture brevity — full gesture wiring is mechanical
+    // Trimmed here for fixture brevity - full gesture wiring is mechanical
     // and doesn't touch the rewrite logic being validated today.
 )

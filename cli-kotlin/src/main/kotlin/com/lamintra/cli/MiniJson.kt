@@ -6,11 +6,11 @@ package com.lamintra.cli
  * WHY THIS EXISTS INSTEAD OF kotlinx.serialization:
  * component.json and .lamintra/config.json are small, flat, fixed-shape
  * documents. Pulling in a serialization library (and its compiler plugin)
- * for that is unnecessary weight — more Gradle dependencies, slower first
+ * for that is unnecessary weight - more Gradle dependencies, slower first
  * build, and one more thing that can break on a user's machine with an
  * unusual Gradle setup. This parser is ~100 lines, has zero dependencies,
  * and covers exactly what our manifests need: objects, arrays, strings,
- * booleans. Not a general-purpose JSON library — deliberately not trying
+ * booleans. Not a general-purpose JSON library - deliberately not trying
  * to be one.
  */
 sealed class JsonValue {

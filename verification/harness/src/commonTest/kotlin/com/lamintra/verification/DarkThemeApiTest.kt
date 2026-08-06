@@ -14,14 +14,14 @@ import kotlin.test.assertNotNull
  *
  * `.auto()` is the default for every component, and it is built on
  * `isSystemInDarkTheme()`. That API is `compose.foundation`, so it is
- * Material-safe — but "it compiles" is not "it works". If it failed or
+ * Material-safe - but "it compiles" is not "it works". If it failed or
  * returned a hardcoded constant on a target, every component would render
  * in the wrong scheme there, and on wasm that target is the website itself.
  *
  * This asserts only that the API resolves inside composition without
  * crashing, and prints the value so each target's result is visible in CI
  * logs. Deliberately does NOT assert a specific value: the correct result
- * depends on the host environment, which is the very property under test —
+ * depends on the host environment, which is the very property under test -
  * an assertion either way would fail spuriously on a machine themed the
  * other way.
  */
