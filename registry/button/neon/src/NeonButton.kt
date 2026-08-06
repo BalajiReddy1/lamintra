@@ -1,4 +1,4 @@
-package com.jetcompose.button.neon
+package com.lamintra.button.neon
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jetcompose.button.neon.internal.button_neon.neonGlow
+import com.lamintra.button.neon.internal.button_neon.neonGlow
 
 /**
  * A neon glow button built entirely on compose.foundation — no Material 3.

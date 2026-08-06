@@ -1,4 +1,4 @@
-package com.jetcompose.bottomsheet.glass
+package com.lamintra.bottomsheet.glass
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -42,8 +42,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
-import com.jetcompose.bottomsheet.glass.internal.bottomsheet_glass.DragHandle
-import com.jetcompose.bottomsheet.glass.internal.bottomsheet_glass.glassSurface
+import com.lamintra.bottomsheet.glass.internal.bottomsheet_glass.DragHandle
+import com.lamintra.bottomsheet.glass.internal.bottomsheet_glass.glassSurface
 
 /**
  * An "Obsidian Glass" bottom sheet built entirely on compose.foundation —

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * JetCompose rewrite engine — executable prototype.
+ * Lamintra rewrite engine — executable prototype.
  *
  * WHY THIS EXISTS AS JS AND NOT KOTLIN:
  * This sandbox has a JRE but no JDK (no javac) and no Kotlin compiler,
@@ -29,8 +29,8 @@ const path = require("path");
  * sub-packages, e.g. its internal/<prefix> namespace).
  *
  * Boundary-safety matters: a naive global string replace of
- * "com.jetcompose.bottomsheet.glass" would ALSO corrupt an unrelated
- * import like "com.jetcompose.bottomsheet.glassy.Something" (note the
+ * "com.lamintra.bottomsheet.glass" would ALSO corrupt an unrelated
+ * import like "com.lamintra.bottomsheet.glassy.Something" (note the
  * trailing 'y') by mangling it mid-identifier. We guard against that with
  * a negative lookahead for any character that could continue a Kotlin
  * identifier (letters, digits, underscore).
@@ -127,7 +127,7 @@ function installComponent(registryDir, componentName, targetProjectDir, log) {
   const manifestPath = path.join(componentDir, "component.json");
   const manifest = loadJson(manifestPath);
 
-  const config = loadJson(path.join(targetProjectDir, ".jetcompose", "config.json"));
+  const config = loadJson(path.join(targetProjectDir, ".lamintra", "config.json"));
 
   const newRoot = computeNewRootPackage(config, manifest.category, manifest.style);
   log(`\n=== Installing ${manifest.name} ===`);

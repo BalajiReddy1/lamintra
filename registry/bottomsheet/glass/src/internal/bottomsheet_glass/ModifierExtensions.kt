@@ -1,4 +1,4 @@
-package com.jetcompose.bottomsheet.glass.internal.bottomsheet_glass
+package com.lamintra.bottomsheet.glass.internal.bottomsheet_glass
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind

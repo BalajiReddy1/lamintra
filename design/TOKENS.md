@@ -1,4 +1,4 @@
-# JetCompose Design Tokens
+# Lamintra Design Tokens
 
 **Precedence: `PRODUCT_BRIEF.md` is upstream of this file.** The brief
 defines what the product is and who it serves; this file is one concrete
@@ -77,6 +77,95 @@ So the resolution is not "drop the aesthetic" — it is *keep the glass,
 demote the neon*. Neon may appear as an opt-in parameter default, but it
 may never be what makes a component recognisable, and it should not be
 what a component is *named* after.
+
+---
+
+# Base-tier design language — DEFINED BY LAYER
+
+Selected 2026-08-05 from three candidates (edge / recess / layer), each of
+which answered one question differently: **what makes a component visible at
+all?** That lever was never specified before, and its absence is why the first
+design pass came out generic — the base tier had only a negative definition
+("quiet, themeable, boring on purpose"), and nothing can be designed from a
+negative.
+
+**The idea:** every interactive component is two planes — a face, and a base
+peeking out beneath it. Depth comes from honest offset geometry, never a
+blurred shadow. The family resemblance to the signature tier is structural:
+the glass sheet is lit from above, and so is this.
+
+## The rules
+
+Any new base-tier component should be derivable from these alone. If one
+cannot be, that is a hole in the language, not a licence to special-case.
+
+1. **Interactive = face + base plane. Static = flat + hairline.** Layering
+   everything turns the idea into indiscriminate embossing; the restraint is
+   what makes it a language.
+2. **Press = the face travels down and bottoms out on its base**, 120ms
+   `motionFast`. Like a key.
+3. **State is expressed by form, not colour** — disabled collapses the base
+   offset and drops alpha. Colour belongs to the host app, so it can never be
+   what carries meaning.
+4. **Squircle at a fixed radius**: 12dp controls, 18dp containers, pill where
+   a pill is genuinely correct (switch tracks, slider handles). Fixed radius,
+   never proportional to height.
+5. **Everything derives from two host colours** — surface and ink — at varying
+   alpha. This is what makes it survive a theme we never chose.
+6. **Light and dark express elevation differently.** On dark a raised face is
+   a lighter fill; that identical rule on light produces a dirty grey slab, so
+   there the face stays surface-coloured and depth comes from the cast base
+   plus a finer hairline.
+7. **Never set `fontFamily`.** Size, weight and tracking are form and may be
+   set, but only through a replaceable `TextStyle`.
+
+## Evidence it is generative, not merely consistent
+
+Tested by building two components the language was **not** designed around and
+allowing only the rules above — no new primitive, no new token, no exception.
+
+- **Tabs — passed cleanly, and improved the idea.** Selection is expressed as
+  elevation: the selected tab is the only one carrying a base plane, so
+  *"selected" literally means "raised"*. No colour needed, survives grayscale,
+  nothing added. This is the strongest evidence the language generates rather
+  than merely describes.
+- **Slider — exposed two real holes** (below). Both are nameable and fixable;
+  neither says "layer is the wrong idea". Had tabs *also* needed
+  special-casing, the correct call would have been to drop the candidate.
+
+## Known holes — must be closed before this governs 20 components
+
+- ~~**Rule 2 does not transfer to drag.**~~ **CLOSED 2026-08-05 — dragging
+  counts as a press.** Rule 2 is restated as: *the face travels toward its
+  base under direct pressure, and a drag is sustained pressure.* So a slider
+  handle stays depressed for the whole drag and lifts on release. Settled by
+  the founder judging it on screen, which was the only way it could be —
+  reasoning could not decide it.
+- **The depth tokens are size-blind.** `face` is ink at 10%, tuned for a 46dp
+  button. On a 26dp slider handle that is likely too faint to read as a solid
+  object. The language says *what* expresses depth but not how it scales with
+  element size.
+- **Slider handle alignment** is visibly off against the filled track
+  (founder-observed 2026-08-05, deliberately deferred).
+
+## Not yet designed at all
+
+Focus state (keyboard and accessibility — entirely absent), input error and
+validation states, icon sizing and treatment, and how the language holds up on
+a dense list-heavy screen rather than a roomy settings page.
+
+## Reference implementation
+
+`verification/harness/src/commonMain/kotlin/com/lamintra/verification/design/`
+— real Compose, `compose.foundation` only, rendering on desktop, iOS and wasm.
+It is the canonical expression of these rules; the HTML studies that preceded
+it were discarded after three of them shipped geometry bugs.
+
+**Consequence for the existing registry:** `button/neon` and
+`button/neon_outline` are base-tier components built in an entirely different
+language, and named after the brief's stated anti-reference. Adopting this
+means they are rebuilt or retired. `bottomsheet/glass` is unaffected — it is
+signature tier.
 
 ---
 
@@ -197,7 +286,7 @@ not cosmetic — see the migration note below.
 
 ### Why per-component rather than one shared theme file
 
-A shared `JetComposeTokens.kt` would be better DX at 20 components, and
+A shared `LamintraTokens.kt` would be better DX at 20 components, and
 it is closer to how shadcn actually works (its components depend on
 Tailwind config plus CSS variables — they are not self-contained either).
 It was still rejected *for now*, on four grounds:
@@ -349,7 +438,7 @@ per the hard rule — compiled on Android + desktop, then run on a real
 screen with interactions exercised (see the verification log below).
 
 ⚠️ **These fixes are LOCAL ONLY. The published registry tag v0.3.1 still
-serves the old code**, so `jetcompose add` installs the unfixed
+serves the old code**, so `lamintra add` installs the unfixed
 components until a new registry tag is cut and `REGISTRY_BASE` is
 bumped. That release is a founder decision, not done here.
 
@@ -405,7 +494,7 @@ anti-reference into the public install command. See below.
 
 **Naming — needs a decision, not fixable here.** `button/neon` and
 `button/neon_outline` put the brief's named anti-reference into the
-public install command (`jetcompose add button/neon`). Component names
+public install command (`lamintra add button/neon`). Component names
 *are* public API, so renaming is a breaking change for the registry and
 is deliberately left to the founder. If it happens, do it before there
 are external users, when the cost is still zero.

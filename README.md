@@ -1,11 +1,11 @@
-# JetCompose
+# Lamintra
 
 Copy-paste UI components for Jetpack Compose and Kotlin Multiplatform —
 a shadcn/ui-style registry for Android and iOS.
 
 Unlike a web `.tsx` file, a copy-pasted Kotlin file breaks the build
 immediately: its `package` declaration is bound at compile time to its
-physical location under the module's source root. JetCompose is a CLI
+physical location under the module's source root. Lamintra is a CLI
 that rewrites packages, imports and file paths so an installed component
 compiles with zero manual fixes, plus the registry those components live
 in.
@@ -14,8 +14,9 @@ Components use `compose.foundation` only — no Material 3, by design.
 
 > **Status: early. Working, but v0 and unproven at scale.** The CLI and
 > the registry both work end-to-end and the jar is downloadable below.
-> There are three components, no website yet, and the project name is
-> under review — so expect the command name to change.
+> There are three components and no website yet. The project was recently
+> renamed to Lamintra; the published release below still carries the old
+> `jetcompose` asset name until the next release is cut.
 
 ## Current state
 
@@ -65,7 +66,7 @@ cd cli-kotlin && ./gradlew test
 cd cli-kotlin && ./gradlew shadowJar
 ```
 
-That produces `cli-kotlin/build/libs/jetcompose-0.3.3.jar`.
+That produces `cli-kotlin/build/libs/lamintra-0.3.3.jar`.
 
 ## Install
 
@@ -92,7 +93,7 @@ java -jar jetcompose-0.3.3.jar add bottomsheet/glass
 evaluation): it finds Gradle modules, classifies KMP vs Android by
 source-set layout, and reads the root package from your sources. Standard
 projects need one Enter to confirm; anything unusual falls back to manual
-prompts. It writes `.jetcompose/config.json`, which every `add` reads.
+prompts. It writes `.lamintra/config.json`, which every `add` reads.
 
 ## Registry
 
@@ -130,9 +131,11 @@ Two consequences worth knowing:
 
 Recorded so none of it is mistaken for an oversight:
 
-- **The name is under review.** `jetcompose` is close to Google's
-  "Jetpack Compose" and evokes JetBrains, so it is being reconsidered.
-  The command name and download URL will likely change.
+- **The rename is not fully shipped.** The project is now Lamintra (the
+  previous name sat too close to Google's "Jetpack Compose" and to
+  JetBrains). The source is renamed, but the GitHub repos, the published
+  jar and the registry tag still carry the old name until the next
+  coordinated release.
 - **No website.** The registry repo also has no README or landing
   content.
 - **iOS appearance is not verified.** Interaction tests run on a real iOS

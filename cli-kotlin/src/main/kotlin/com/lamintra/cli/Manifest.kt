@@ -1,4 +1,4 @@
-package com.jetcompose.cli
+package com.lamintra.cli
 
 data class ComponentManifest(
     val name: String,

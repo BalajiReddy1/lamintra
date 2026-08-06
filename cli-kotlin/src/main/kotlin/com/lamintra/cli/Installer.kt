@@ -1,4 +1,4 @@
-package com.jetcompose.cli
+package com.lamintra.cli
 
 import java.io.File
 import java.net.URI
@@ -16,6 +16,12 @@ object Installer {
     // transient 404s or stale files right after a registry push. Tagged
     // URLs are immutable — bump the tag here (and re-release the jar)
     // to pick up registry changes.
+    // NOTE: still points at the pre-rename repo and tag. The published v0.3.2
+    // tag is internally consistent (its manifests and sources both say
+    // com.jetcompose), so the CLI keeps working — the rewriter replaces
+    // whatever registryPackage the manifest declares. Update this ONLY in
+    // lockstep with renaming the registry repo and cutting a new tag,
+    // otherwise every `add` 404s.
     private const val REGISTRY_BASE = "https://raw.githubusercontent.com/BalajiReddy1/jetcompose-registry/v0.3.2"
 
     private val client: HttpClient = HttpClient.newBuilder()
@@ -43,7 +49,7 @@ object Installer {
      * locations. Returns a human-readable log of what was written, for
      * the CLI to print.
      */
-    fun install(componentName: String, projectDir: File, config: JetComposeConfig): List<String> {
+    fun install(componentName: String, projectDir: File, config: LamintraConfig): List<String> {
         val log = mutableListOf<String>()
 
         val manifestText = fetch("$componentName/component.json")
@@ -59,7 +65,7 @@ object Installer {
                     "    $existingElsewhere\n" +
                     "Installing to '${target.relativePath}' as well would create duplicate " +
                     "declarations in the same module and break the build (both directories " +
-                    "compile). Delete the existing copy first, or re-run 'jetcompose init' " +
+                    "compile). Delete the existing copy first, or re-run 'lamintra init' " +
                     "so the configured source root matches where it already lives."
             )
         }
@@ -100,7 +106,7 @@ object Installer {
     private fun installPreviewIfSafe(
         componentName: String,
         projectDir: File,
-        config: JetComposeConfig,
+        config: LamintraConfig,
         manifest: ComponentManifest,
         newRoot: String,
         log: MutableList<String>
@@ -108,7 +114,7 @@ object Installer {
         val previewRel = manifest.preview ?: return
         val androidRoot = config.sourceRoots.android
         if (androidRoot == null) {
-            log += "  (preview skipped — no android source root in .jetcompose/config.json)"
+            log += "  (preview skipped — no android source root in .lamintra/config.json)"
             return
         }
         if (!moduleBuildFileShowsPreviewDep(projectDir, config)) {
@@ -117,7 +123,7 @@ object Installer {
             log += "  previews, add the dependency, e.g.:"
             log += "      implementation(\"androidx.compose.ui:ui-tooling-preview\")"
             log += "      debugImplementation(\"androidx.compose.ui:ui-tooling\")"
-            log += "  then re-run: jetcompose add $componentName"
+            log += "  then re-run: lamintra add $componentName"
             return
         }
         val content = fetch("$componentName/$previewRel")
@@ -130,7 +136,7 @@ object Installer {
         log += "  wrote: $relativePath (Android Studio preview)"
     }
 
-    private fun moduleBuildFileShowsPreviewDep(projectDir: File, config: JetComposeConfig): Boolean {
+    private fun moduleBuildFileShowsPreviewDep(projectDir: File, config: LamintraConfig): Boolean {
         val sourceRoot = config.activeSourceRoot()
         val moduleRel = sourceRoot.substringBefore("/src/", missingDelimiterValue = "")
         if (moduleRel.isEmpty()) return false
@@ -157,7 +163,7 @@ object Installer {
      */
     private fun findExistingCopyElsewhere(
         projectDir: File,
-        config: JetComposeConfig,
+        config: LamintraConfig,
         manifest: ComponentManifest,
         targetRelativePath: String
     ): String? {

@@ -1,4 +1,4 @@
-package com.jetcompose.verification
+package com.lamintra.verification
 
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.getValue
@@ -11,9 +11,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
-import com.jetcompose.bottomsheet.glass.GlassBottomSheet
-import com.jetcompose.button.neon.NeonButton
-import com.jetcompose.button.neon_outline.NeonOutlineButton
+import com.lamintra.bottomsheet.glass.GlassBottomSheet
+import com.lamintra.button.neon.NeonButton
+import com.lamintra.button.neon_outline.NeonOutlineButton
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

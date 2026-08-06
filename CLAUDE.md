@@ -1,4 +1,4 @@
-# JetCompose — CLAUDE.md
+# Lamintra — CLAUDE.md
 
 Copy-paste UI component registry for Jetpack Compose + Kotlin Multiplatform
 (shadcn/ui equivalent for Android + iOS). Two parts: a CLI that installs
@@ -14,13 +14,75 @@ the full story, it's deliberately short because it reloads every turn.
 Never copy that doc, or excerpts of its strategy content, back into this
 repo.**
 
+## Product name — DECIDED 2026-08-05: **Lamintra**
+
+`lamintra.com`, `.dev`, GitHub and npm all verified available on the day of
+the decision. Replaces "JetCompose", which was dropped for trademark
+proximity to Google's *Jetpack Compose* and to JetBrains.
+
+**Why this one.** Roughly 1200 words were checked across `.com`, `.dev` and
+`.org` — fruit, animals, food, spices, flowers, mushrooms, fabrics,
+pigments, birds, emotions, magic words, five languages, and real technical
+vocabulary. Free `.com` for any bare real word: **zero**. The only
+categories with availability left are meaningless inventions, unnatural
+spellings, and longer coined words. Research on YC naming (87% brandable,
+~38% single-word, near-universal `.com`) confirmed the pattern: those
+companies *buy* their domains rather than find them.
+
+Lamintra is coined from *lamina*, a thin layer — which is the base-tier
+design language ("defined by LAYER") without being descriptive. Being a
+fanciful mark, it is also the strongest and cheapest category to clear
+legally, the opposite of the descriptive name it replaces.
+
+**Rejected along the way, with reasons worth keeping:** `oreganoo` (one
+obvious misspelling, and oregano.com is a live site so it could never be
+bought later); `beacko` (seven phonetic spellings, all already registered);
+`swanky` (an existing Substrate CLI is already named `swanky`); `guava` (
+`google/guava` is *the* core Java library — fatal for a JVM tool).
+
+**Rename EXECUTED in source 2026-08-05** — 182 occurrences across 45 files,
+plus 5 package directories moved (`com/jetcompose` → `com/lamintra` in the
+CLI, its tests, and all three harness source sets). CLI 12/12 tests pass,
+harness 12/12 pass, `lamintra-0.4.0.jar` builds and installs end-to-end.
+Version bumped 0.3.3 → 0.4.0, since a renamed CLI cannot ship as a patch.
+
+**Deliberately NOT renamed — do not "fix" these:**
+- `Desktop\jetcompose-private-docs\` — a real directory on disk.
+- `DAY1-REPORT.md` — a dated historical record; renaming it would falsify
+  what the project was called on Day 1.
+- `.claude/settings.local.json` — historical permission grants with literal
+  old paths. Rewriting them could silently alter what is authorised.
+- `REGISTRY_BASE` and the README download URLs — they point at the **live**
+  published repo and tag, which still carry the old name. The published
+  v0.3.2 tag is internally consistent (its manifests and sources both say
+  `com.jetcompose`), so the CLI keeps working: the rewriter substitutes
+  whatever `registryPackage` the manifest declares.
+- `.jetcompose/config.json` — still *read* as a fallback so projects
+  initialised before the rename keep working. New configs write
+  `.lamintra/`.
+
+**Remaining, and it must be done as ONE coordinated release** — doing any
+step alone breaks `add` for everyone:
+1. Rename both GitHub repos (`jetcompose` → `lamintra`,
+   `jetcompose-registry` → `lamintra-registry`). GitHub redirects old URLs,
+   but do not rely on that for `raw.githubusercontent.com`.
+2. Push the renamed registry sources; cut registry tag **v0.4.0**.
+3. Bump `REGISTRY_BASE` to the new repo + tag.
+4. Tag `v0.4.0` on the main repo → CI publishes `lamintra-0.4.0.jar`.
+5. Update the README download URLs and the status callout.
+
+Installed components are unaffected at every step — the rewriter replaces
+the registry package with the host's, so no user's source ever contained
+our name. Verified: a fresh install leaks neither `lamintra` nor
+`jetcompose` into the target project.
+
 ## Hard rules — do not relitigate these without being asked
 
 - **No Material 3, anywhere, ever.** Components use `compose.foundation`
   only. If you see a Material 3 import in any component file, that's a bug,
   not a style choice — remove it.
 - **CLI distribution is a fat JAR via GitHub Releases**, invoked as
-  `java -jar jetcompose.jar ...`. Not a Node/npx CLI, not a Gradle plugin,
+  `java -jar lamintra.jar ...`. Not a Node/npx CLI, not a Gradle plugin,
   not GraalVM native-image, not SDKMAN as the primary channel. These were
   each considered and rejected for specific, documented reasons (see the
   private context doc's "Architecture decisions" section if you need the
@@ -29,8 +91,8 @@ repo.**
 - **Package/import rewriting must be boundary-safe.** Never use a plain
   string replace for rewriting a component's registry package to a target
   package — it must not corrupt an unrelated package that merely shares a
-  prefix (e.g. rewriting `com.jetcompose.bottomsheet.glass` must never
-  touch `com.jetcompose.bottomsheet.glassy.Something`). `Rewriter.kt`
+  prefix (e.g. rewriting `com.lamintra.bottomsheet.glass` must never
+  touch `com.lamintra.bottomsheet.glassy.Something`). `Rewriter.kt`
   already implements this correctly with a bounded regex — match that
   pattern in any new rewrite logic.
 - **Internal component dependencies are namespaced per-component** via
@@ -101,7 +163,7 @@ repo.**
   ~5 minutes, which caused a transient 404 and stale-content serving
   during real-project testing. Tag URLs are immutable — registry changes
   require cutting a new tag and bumping `REGISTRY_BASE` (jar re-release).
-- `jetcompose init` now **auto-detects the project** (filesystem-only —
+- `lamintra init` now **auto-detects the project** (filesystem-only —
   no Gradle evaluation, consistent with the config-over-parsing
   decision): finds Gradle modules (build file + src/, ≤2 levels deep),
   classifies KMP vs Android by source-set layout, prefers whichever of
@@ -113,7 +175,7 @@ repo.**
   build-file-nearby validation). Driven by real-user testing 2026-07-20:
   a tester hit the wrong-default → re-init → duplicate-install trap and
   said flatly he'd never use a tool with this many questions.
-- `jetcompose add` has an **idempotency guard**: before writing, it scans
+- `lamintra add` has an **idempotency guard**: before writing, it scans
   the target module's `src/` tree for an existing copy of the component
   (matching `<category>/<style>/<mainfile>` suffix) at any other path —
   found → hard abort naming both paths (duplicate declarations in one
@@ -146,11 +208,11 @@ repo.**
   remains the long-term API for multi-anchor sheets. Lesson encoded in
   the verification hard rule above: this compiled everywhere for days
   and fell to the first real finger.
-- **`jetcompose-registry` MUST stay public.** The installer does
+- **`lamintra-registry` MUST stay public.** The installer does
   unauthenticated raw.githubusercontent.com GETs — making that repo
-  private silently 404s every `jetcompose add` for every user (this
+  private silently 404s every `lamintra add` for every user (this
   actually happened 2026-07-20 and stalled the v0.2.1 release). The
-  main `jetcompose` repo can be private; the registry cannot.
+  main `lamintra` repo can be private; the registry cannot.
 - **Window insets are a component responsibility (added 2026-08-01).**
   `GlassBottomSheet` now takes `contentWindowInsets`, defaulting to
   `WindowInsets.safeDrawing.only(Horizontal + Bottom)`, applied to the
@@ -176,11 +238,11 @@ repo.**
   threshold, velocity 1006 px/s vs 344 px/s threshold — both criteria
   fire correctly. Don't diagnose gesture bugs from sub-100ms swipes.
 - **Testbed inventory** (all under `Downloads\Projects\Testbeds\`):
-  `jetcompose-kmp-testbed` is the ONLY runnable one (MainActivity +
+  `lamintra-kmp-testbed` is the ONLY runnable one (MainActivity +
   launcher manifest + `@Preview` + desktop entry point, added
   2026-07-12 after the gap was found). The other three —
-  `jetcompose-testbed-android`, `jetcompose-testbed-catalog`,
-  `jetcompose-testbed-multimodule` — are **compile-only**: they have no
+  `lamintra-testbed-android`, `lamintra-testbed-catalog`,
+  `lamintra-testbed-multimodule` — are **compile-only**: they have no
   Activity or launcher and exist to test config-routing patterns
   (non-KMP path, version catalog, multi-module source roots). Do not
   assume they can run; a "successful build" there proves compilation
@@ -198,7 +260,7 @@ is hardened (12/12 tests). Insets handled for Android 15 edge-to-edge.
 
 **Publicly obtainable as of 2026-08-05.** The main repo is now public.
 Verified unauthenticated: repo page, Releases API and the v0.3.3 release
-page all 200, and `jetcompose-0.3.3.jar` downloads (1,774,619 bytes) and
+page all 200, and `lamintra-0.3.3.jar` downloads (1,774,619 bytes) and
 runs. The registry repo is public and serving all three manifests from
 the v0.3.2 tag. The copy-the-command flow now terminates in a real
 artifact instead of a 404 — this was the hard gate on the website, and
@@ -211,7 +273,7 @@ a new session drift back into plumbing — it is comfortable and it is
 not what's blocking.
 
 **Design status — first pass rejected by the founder as "too simple".**
-A Claude Design project exists: **"JetCompose Design System"**
+A Claude Design project exists: **"Lamintra Design System"**
 (`claude.ai/design`, projectId `ecb1d604-a8ff-4b11-9ceb-f06e26e78f57`),
 with Foundations/Tokens + Button + Card. Local sources are in
 `design/design-system/*.html` (standalone previews, true superellipse
@@ -326,7 +388,7 @@ non-technical product story to design from.
 
 - **Main repo made public — 2026-08-05.** The CLI jar is now downloadable
   by anyone. Verified unauthenticated: repo page, Releases API and the
-  v0.3.3 release page all 200; `jetcompose-0.3.3.jar` downloads and runs.
+  v0.3.3 release page all 200; `lamintra-0.3.3.jar` downloads and runs.
   This was the hard gate on the website. **Note:** the repo's git history
   is now public too, and it contains one line of internal strategy (the
   kill-criteria numbers) in an older CLAUDE.md revision. The working tree
@@ -385,7 +447,7 @@ non-technical product story to design from.
   object (`<Component>Colors` with `.dark()` / `.light()` / `.auto()`),
   defaulting to `.auto()`, which follows the system. Full reasoning and the
   caveats are in `design/TOKENS.md`; the short version:
-  - A shared `JetComposeTokens.kt` would be better DX at 20 components and
+  - A shared `LamintraTokens.kt` would be better DX at 20 components and
     is closer to how shadcn really works — but per-component → shared is a
     forward migration that preserves every call site, while the reverse is
     not, and the shared route needs CLI machinery (install-once,
@@ -412,6 +474,33 @@ non-technical product story to design from.
     non-compositing viewport, and startup-correctness is what `.auto()`
     needs.
 
+- **Base-tier design language — SELECTED 2026-08-05: "defined by LAYER".**
+  Full spec, evidence and holes in `design/TOKENS.md`. Interactive components
+  are two planes (face + base); depth is honest offset geometry, never a
+  blurred shadow; static surfaces stay flat with a hairline. Chosen from three
+  candidates that each answered "what makes a component visible at all"
+  differently — the lever the tokens never specified, and the reason the first
+  pass came out generic.
+
+  **Proven generative, not merely consistent:** tabs and a slider were built
+  from the rules alone, with no new primitive or token allowed. Tabs derived
+  cleanly and improved the idea (selection = elevation, so "selected" literally
+  means "raised", which needs no colour and survives grayscale). The slider
+  exposed two real holes, both recorded in `TOKENS.md`: rule 2 does not
+  transfer from tap to drag, and the depth tokens are size-blind. Neither
+  invalidates the direction.
+
+  **Reference implementation is Compose, not HTML** —
+  `verification/harness/.../design/`, running on desktop, iOS and wasm. Three
+  HTML studies preceded it and all three shipped geometry bugs (a lozenge
+  shape, muddy light greys, diagonal chords). Do not judge this language from a
+  mockup again; build it in the harness where it cannot lie.
+
+  **Consequence:** `button/neon` and `button/neon_outline` are base-tier
+  components in a different language, named after the brief's anti-reference.
+  Adopting this means rebuilding or retiring them. `bottomsheet/glass` is
+  unaffected (signature tier).
+
 ### Still open, in rough order
 
 1. Folder-depth complaint from real-dev test (deep
@@ -436,7 +525,7 @@ non-technical product story to design from.
 ## Cutting a CLI release
 
 The CLI ships as a fat JAR attached to a GitHub Release on the main repo
-(`github.com/BalajiReddy1/jetcompose`, currently **private** — history
+(`github.com/BalajiReddy1/jetcompose` — history
 was reset 2026-07-12 to purge the internal strategy doc, so going public
 is now purely the founder's call). The release pipeline is
 `.github/workflows/release.yml`, triggered by pushing a `v*` tag:
@@ -444,11 +533,11 @@ is now purely the founder's call). The release pipeline is
 1. Bump `archiveVersion` in `cli-kotlin/build.gradle.kts` if the version
    is changing; commit.
 2. If registry content changed, first cut a new tag in the registry repo
-   (`jetcompose-registry`) and bump `REGISTRY_BASE` in `Installer.kt` to
+   (`lamintra-registry`) and bump `REGISTRY_BASE` in `Installer.kt` to
    match — the two repos have **independent tag lines**.
 3. `git tag vX.Y.Z && git push origin master vX.Y.Z`
 4. Actions builds the jar on JDK 17, smoke-tests it (`--help` output),
-   and creates the release with `jetcompose-X.Y.Z.jar` attached.
+   and creates the release with `lamintra-X.Y.Z.jar` attached.
 5. Verify with `gh release view vX.Y.Z` or download and run the jar.
 
 ## Key commands
@@ -457,7 +546,7 @@ is now purely the founder's call). The release pipeline is
 cd cli-kotlin
 ./gradlew test                     # run RewriterTest.kt
 ./gradlew shadowJar                # build the fat JAR
-java -jar build/libs/jetcompose-0.3.3.jar init
-java -jar build/libs/jetcompose-0.3.3.jar add bottomsheet/glass
-java -jar build/libs/jetcompose-0.3.3.jar add button/neon_outline
+java -jar build/libs/lamintra-0.4.0.jar init
+java -jar build/libs/lamintra-0.4.0.jar add bottomsheet/glass
+java -jar build/libs/lamintra-0.4.0.jar add button/neon_outline
 ```

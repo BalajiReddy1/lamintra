@@ -17,5 +17,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "jetcompose-verification"
+rootProject.name = "lamintra-verification"
 include(":harness")

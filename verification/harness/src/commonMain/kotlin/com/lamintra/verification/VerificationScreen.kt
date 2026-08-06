@@ -1,4 +1,4 @@
-package com.jetcompose.verification
+package com.lamintra.verification
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -21,9 +21,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jetcompose.bottomsheet.glass.GlassBottomSheet
-import com.jetcompose.button.neon.NeonButton
-import com.jetcompose.button.neon_outline.NeonOutlineButton
+import com.lamintra.bottomsheet.glass.GlassBottomSheet
+import com.lamintra.button.neon.NeonButton
+import com.lamintra.button.neon_outline.NeonOutlineButton
 
 /**
  * The demo screen used by every verification target: desktop, iOS simulator
@@ -49,7 +49,7 @@ fun VerificationScreen() {
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             BasicText(
-                text = "jetcompose components",
+                text = "lamintra components",
                 style = TextStyle(
                     color = Color(0xFF8A93A5),
                     fontSize = 13.sp,

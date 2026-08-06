@@ -1,1 +1,1 @@
-rootProject.name = "jetcompose-cli"
+rootProject.name = "lamintra-cli"

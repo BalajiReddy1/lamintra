@@ -26,7 +26,7 @@ kotlin {
 }
 
 application {
-    mainClass.set("com.jetcompose.cli.MainKt")
+    mainClass.set("com.lamintra.cli.MainKt")
 }
 
 // Deliberately NOT adding kotlinx.serialization, clikt, or any other
@@ -35,9 +35,9 @@ application {
 // first build; zero-dependency was a design decision, not an oversight.
 
 tasks.shadowJar {
-    archiveBaseName.set("jetcompose")
+    archiveBaseName.set("lamintra")
     archiveClassifier.set("")
-    archiveVersion.set("0.3.3")
+    archiveVersion.set("0.4.0")
 }
 
 tasks.test {

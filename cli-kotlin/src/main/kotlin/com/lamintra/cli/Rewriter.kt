@@ -1,4 +1,4 @@
-package com.jetcompose.cli
+package com.lamintra.cli
 
 import java.io.File
 
@@ -32,8 +32,8 @@ object Rewriter {
      * appears in [content] as a complete package-path token — not as a
      * prefix of some longer, unrelated identifier.
      *
-     * Example: rewriting "com.jetcompose.bottomsheet.glass" must NOT
-     * touch "com.jetcompose.bottomsheet.glassy.Something" (a different,
+     * Example: rewriting "com.lamintra.bottomsheet.glass" must NOT
+     * touch "com.lamintra.bottomsheet.glassy.Something" (a different,
      * unrelated package that merely starts with the same characters).
      */
     fun rewriteRootPackage(content: String, oldRoot: String, newRoot: String): String {
@@ -49,7 +49,7 @@ object Rewriter {
      * never disagree with its own package declaration, which is itself
      * a guaranteed Kotlin compile error if it ever happened.
      */
-    fun computeNewRootPackage(config: JetComposeConfig, category: String, style: String): String {
+    fun computeNewRootPackage(config: LamintraConfig, category: String, style: String): String {
         val componentPathDotted = config.componentPath
             .split("/")
             .filter { it.isNotBlank() }
@@ -70,7 +70,7 @@ object Rewriter {
      * at install time, not silently ship a package/path mismatch.
      */
     fun resolveTargetPath(
-        config: JetComposeConfig,
+        config: LamintraConfig,
         manifest: ComponentManifest,
         manifestRelativeFilePath: String
     ): ResolvedTarget {
@@ -110,7 +110,7 @@ object Rewriter {
      */
     fun rewriteFileContent(
         originalContent: String,
-        config: JetComposeConfig,
+        config: LamintraConfig,
         manifest: ComponentManifest
     ): String {
         val newRoot = computeNewRootPackage(config, manifest.category, manifest.style)

@@ -8,7 +8,7 @@ plugins {
 }
 
 // The components under test, by registry name. Each one's registryPackage is
-// com.jetcompose.<category>.<style>, so the target directory is a direct
+// com.lamintra.<category>.<style>, so the target directory is a direct
 // function of the name — no package rewriting needed here. This harness
 // consumes the registry sources as-is, unlike an installed component, which
 // the CLI rewrites into the host app's namespace.
@@ -27,7 +27,7 @@ val syncRegistrySources by tasks.registering(Sync::class) {
     into(layout.buildDirectory.dir("generated/registry"))
     components.forEach { component ->
         from(rootProject.file("../registry/$component/src")) {
-            into("com/jetcompose/$component")
+            into("com/lamintra/$component")
             exclude("**/*Preview.kt")
         }
     }

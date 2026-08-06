@@ -1,4 +1,4 @@
-package com.jetcompose.verification
+package com.lamintra.verification
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.text.BasicText

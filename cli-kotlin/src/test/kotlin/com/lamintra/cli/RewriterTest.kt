@@ -1,4 +1,4 @@
-package com.jetcompose.cli
+package com.lamintra.cli
 
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 
 class RewriterTest {
 
-    private val testConfig = JetComposeConfig(
+    private val testConfig = LamintraConfig(
         packageName = "com.testapp.myapp",
         isKmp = true,
         sourceRoots = SourceRoots(
@@ -24,7 +24,7 @@ class RewriterTest {
         name = "bottomsheet/glass",
         category = "bottomsheet",
         style = "glass",
-        registryPackage = "com.jetcompose.bottomsheet.glass",
+        registryPackage = "com.lamintra.bottomsheet.glass",
         main = "src/BottomSheet.kt",
         prefix = "bottomsheet_glass",
         files = listOf(
@@ -38,7 +38,7 @@ class RewriterTest {
         name = "button/neon",
         category = "button",
         style = "neon",
-        registryPackage = "com.jetcompose.button.neon",
+        registryPackage = "com.lamintra.button.neon",
         main = "src/NeonButton.kt",
         prefix = "button_neon",
         files = listOf(
@@ -49,7 +49,7 @@ class RewriterTest {
 
     @Test
     fun `package declaration is rewritten to the target namespace`() {
-        val original = "package com.jetcompose.bottomsheet.glass\n\nimport androidx.compose.runtime.Composable\n"
+        val original = "package com.lamintra.bottomsheet.glass\n\nimport androidx.compose.runtime.Composable\n"
         val rewritten = Rewriter.rewriteFileContent(original, testConfig, bottomSheetManifest)
         assertTrue(
             rewritten.startsWith("package com.testapp.myapp.features.shared.widgets.bottomsheet.glass"),
@@ -59,8 +59,8 @@ class RewriterTest {
 
     @Test
     fun `cross-file internal import is rewritten to the new namespace`() {
-        val original = "package com.jetcompose.bottomsheet.glass\n" +
-            "import com.jetcompose.bottomsheet.glass.internal.bottomsheet_glass.DragHandle\n"
+        val original = "package com.lamintra.bottomsheet.glass\n" +
+            "import com.lamintra.bottomsheet.glass.internal.bottomsheet_glass.DragHandle\n"
         val rewritten = Rewriter.rewriteFileContent(original, testConfig, bottomSheetManifest)
         assertTrue(
             rewritten.contains(
@@ -71,7 +71,7 @@ class RewriterTest {
 
     @Test
     fun `unrelated androidx imports are left untouched`() {
-        val original = "package com.jetcompose.bottomsheet.glass\n" +
+        val original = "package com.lamintra.bottomsheet.glass\n" +
             "import androidx.compose.foundation.background\n"
         val rewritten = Rewriter.rewriteFileContent(original, testConfig, bottomSheetManifest)
         assertTrue(rewritten.contains("import androidx.compose.foundation.background"))
@@ -79,12 +79,12 @@ class RewriterTest {
 
     @Test
     fun `boundary-safe rewrite does not corrupt a decoy package with a longer name`() {
-        val original = "package com.jetcompose.bottomsheet.glass\n" +
-            "import com.jetcompose.bottomsheet.glassy.SomeUnrelatedThing\n" +
-            "import com.jetcompose.bottomsheet.glass2.AnotherUnrelatedThing\n"
+        val original = "package com.lamintra.bottomsheet.glass\n" +
+            "import com.lamintra.bottomsheet.glassy.SomeUnrelatedThing\n" +
+            "import com.lamintra.bottomsheet.glass2.AnotherUnrelatedThing\n"
         val rewritten = Rewriter.rewriteFileContent(original, testConfig, bottomSheetManifest)
-        assertTrue(rewritten.contains("import com.jetcompose.bottomsheet.glassy.SomeUnrelatedThing"))
-        assertTrue(rewritten.contains("import com.jetcompose.bottomsheet.glass2.AnotherUnrelatedThing"))
+        assertTrue(rewritten.contains("import com.lamintra.bottomsheet.glassy.SomeUnrelatedThing"))
+        assertTrue(rewritten.contains("import com.lamintra.bottomsheet.glass2.AnotherUnrelatedThing"))
     }
 
     @Test
@@ -132,7 +132,7 @@ class RewriterTest {
 
     @Test
     fun `a normal path resolves inside the project`() {
-        val projectDir = createTempDirectory("jetcompose-safe").toFile()
+        val projectDir = createTempDirectory("lamintra-safe").toFile()
         val target = Rewriter.resolveSafeTarget(
             projectDir, "composeApp/src/commonMain/kotlin/com/x/Button.kt"
         )
@@ -144,7 +144,7 @@ class RewriterTest {
 
     @Test
     fun `a traversing path is refused instead of writing outside the project`() {
-        val projectDir = createTempDirectory("jetcompose-traversal").toFile()
+        val projectDir = createTempDirectory("lamintra-traversal").toFile()
         val thrown = runCatching {
             Rewriter.resolveSafeTarget(projectDir, "../../../../evil.kt")
         }
@@ -156,8 +156,8 @@ class RewriterTest {
 
     @Test
     fun `an absolute path is refused`() {
-        val projectDir = createTempDirectory("jetcompose-absolute").toFile()
-        val absolute = File(createTempDirectory("jetcompose-elsewhere").toFile(), "evil.kt").absolutePath
+        val projectDir = createTempDirectory("lamintra-absolute").toFile()
+        val absolute = File(createTempDirectory("lamintra-elsewhere").toFile(), "evil.kt").absolutePath
         val thrown = runCatching { Rewriter.resolveSafeTarget(projectDir, absolute) }
         assertTrue(thrown.isFailure, "An absolute manifest path must be refused")
     }
@@ -166,7 +166,7 @@ class RewriterTest {
     fun `a sibling directory sharing the project name prefix is refused`() {
         // "…/proj" must not be treated as containing "…/proj-evil" — the
         // guard compares path boundaries, not raw string prefixes.
-        val base = createTempDirectory("jetcompose-prefix").toFile()
+        val base = createTempDirectory("lamintra-prefix").toFile()
         val projectDir = File(base, "proj").apply { mkdirs() }
         File(base, "proj-evil").mkdirs()
         val thrown = runCatching { Rewriter.resolveSafeTarget(projectDir, "../proj-evil/x.kt") }

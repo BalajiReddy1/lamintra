@@ -1,4 +1,4 @@
-# JetCompose — Product Brief (for design work)
+# Lamintra — Product Brief (for design work)
 
 Non-technical. This is what the product *is* and who it's for, written so a
 designer (human or AI) can make decisions without reading any code.
@@ -61,7 +61,7 @@ have their own colors and fonts. So:
 
 **Therefore the components' distinctiveness must live in their FORM — shape,
 spacing, proportion, and motion — not in their color.** That is the central
-design problem. A JetCompose component should be recognizable in a grayscale
+design problem. A Lamintra component should be recognizable in a grayscale
 screenshot. If it's only recognizable because it's dark with a neon glow, we
 have decoration, not a design system.
 

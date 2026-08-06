@@ -1,10 +1,10 @@
-package com.jetcompose.cli
+package com.lamintra.cli
 
 import java.io.File
 
 object InitCommand {
     fun run(projectDir: File) {
-        println("jetcompose init")
+        println("lamintra init")
 
         val detected = detectLayout(projectDir)
         if (detected != null) {
@@ -19,7 +19,7 @@ object InitCommand {
             )
             val accepted = promptYesNo("\nUse these settings?", default = true)
             if (accepted) {
-                val config = JetComposeConfig(
+                val config = LamintraConfig(
                     packageName = detected.packageName,
                     isKmp = detected.isKmp,
                     sourceRoots = SourceRoots(
@@ -237,12 +237,12 @@ object InitCommand {
                 default = false
             )
             if (!proceed) {
-                println("Aborted — nothing written. Re-run 'jetcompose init' with corrected paths.")
+                println("Aborted — nothing written. Re-run 'lamintra init' with corrected paths.")
                 return
             }
         }
 
-        val config = JetComposeConfig(
+        val config = LamintraConfig(
             packageName = packageName,
             isKmp = isKmp,
             sourceRoots = SourceRoots(common = commonRoot, android = androidRoot, ios = iosRoot),
@@ -254,13 +254,13 @@ object InitCommand {
     }
 
     private fun printDone() {
-        println("\n✅ Wrote .jetcompose/config.json")
-        println("   Run 'jetcompose add <component>' to install your first component,")
-        println("   e.g.: jetcompose add bottomsheet/glass")
+        println("\n✅ Wrote .lamintra/config.json")
+        println("   Run 'lamintra add <component>' to install your first component,")
+        println("   e.g.: lamintra add bottomsheet/glass")
     }
 
-    private fun writeConfig(projectDir: File, config: JetComposeConfig) {
-        val dir = File(projectDir, ".jetcompose")
+    private fun writeConfig(projectDir: File, config: LamintraConfig) {
+        val dir = File(projectDir, ".lamintra")
         dir.mkdirs()
         val json = buildString {
             appendLine("{")

@@ -22,11 +22,11 @@ function check(label, condition, detail) {
 }
 
 console.log("################################################################");
-console.log("# JetCompose rewrite engine — Day 1 verification suite");
+console.log("# Lamintra rewrite engine — Day 1 verification suite");
 console.log("################################################################");
 
 console.log("\n--- Target project config ---");
-console.log(fs.readFileSync(path.join(TARGET_DIR, ".jetcompose", "config.json"), "utf8"));
+console.log(fs.readFileSync(path.join(TARGET_DIR, ".lamintra", "config.json"), "utf8"));
 
 // ---------------------------------------------------------------------------
 // Test 1: install bottomsheet/glass
@@ -92,9 +92,9 @@ const allWrittenContent = [...bottomsheetResults, ...neonResults]
   .map(r => r.rewritten)
   .join("\n");
 check(
-  "No leftover 'com.jetcompose' references in any installed file",
-  !allWrittenContent.includes("com.jetcompose"),
-  allWrittenContent.includes("com.jetcompose") ? "found a leftover occurrence!" : ""
+  "No leftover 'com.lamintra' references in any installed file",
+  !allWrittenContent.includes("com.lamintra"),
+  allWrittenContent.includes("com.lamintra") ? "found a leftover occurrence!" : ""
 );
 
 // --- Check 5: THE COLLISION TEST — two components both ship ModifierExtensions.kt
@@ -126,22 +126,22 @@ check(
 console.log("\n--- Boundary-safety regex test (isolated, not part of shipped files) ---");
 
 const decoyOriginal = [
-  "package com.jetcompose.bottomsheet.glass",
+  "package com.lamintra.bottomsheet.glass",
   "",
   "// Decoy 1: a DIFFERENT, unrelated package that happens to start with",
   "// the same characters — must NOT be rewritten by a naive string replace.",
-  "import com.jetcompose.bottomsheet.glassy.SomeUnrelatedThing",
+  "import com.lamintra.bottomsheet.glassy.SomeUnrelatedThing",
   "",
   "// Decoy 2: same idea, but the continuation is a digit instead of a letter.",
-  "import com.jetcompose.bottomsheet.glass2.AnotherUnrelatedThing",
+  "import com.lamintra.bottomsheet.glass2.AnotherUnrelatedThing",
   "",
   "// The real thing that SHOULD be rewritten:",
-  "import com.jetcompose.bottomsheet.glass.internal.bottomsheet_glass.DragHandle",
+  "import com.lamintra.bottomsheet.glass.internal.bottomsheet_glass.DragHandle",
 ].join("\n");
 
 const decoyRewritten = rewriteRootPackage(
   decoyOriginal,
-  "com.jetcompose.bottomsheet.glass",
+  "com.lamintra.bottomsheet.glass",
   "com.testapp.myapp.features.shared.widgets.bottomsheet.glass"
 );
 
@@ -149,11 +149,11 @@ console.log(decoyRewritten);
 
 check(
   "Decoy 'glassy' package left completely untouched",
-  decoyRewritten.includes("import com.jetcompose.bottomsheet.glassy.SomeUnrelatedThing")
+  decoyRewritten.includes("import com.lamintra.bottomsheet.glassy.SomeUnrelatedThing")
 );
 check(
   "Decoy 'glass2' package left completely untouched",
-  decoyRewritten.includes("import com.jetcompose.bottomsheet.glass2.AnotherUnrelatedThing")
+  decoyRewritten.includes("import com.lamintra.bottomsheet.glass2.AnotherUnrelatedThing")
 );
 check(
   "The real internal import WAS correctly rewritten",

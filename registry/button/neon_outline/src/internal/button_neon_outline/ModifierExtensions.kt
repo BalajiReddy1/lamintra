@@ -1,4 +1,4 @@
-package com.jetcompose.button.neon_outline.internal.button_neon_outline
+package com.lamintra.button.neon_outline.internal.button_neon_outline
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind

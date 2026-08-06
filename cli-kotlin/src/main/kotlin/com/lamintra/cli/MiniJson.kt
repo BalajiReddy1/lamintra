@@ -1,10 +1,10 @@
-package com.jetcompose.cli
+package com.lamintra.cli
 
 /**
  * A deliberately minimal JSON parser.
  *
  * WHY THIS EXISTS INSTEAD OF kotlinx.serialization:
- * component.json and .jetcompose/config.json are small, flat, fixed-shape
+ * component.json and .lamintra/config.json are small, flat, fixed-shape
  * documents. Pulling in a serialization library (and its compiler plugin)
  * for that is unnecessary weight — more Gradle dependencies, slower first
  * build, and one more thing that can break on a user's machine with an

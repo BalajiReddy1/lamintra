@@ -1,4 +1,4 @@
-package com.jetcompose.bottomsheet.glass.internal.bottomsheet_glass
+package com.lamintra.bottomsheet.glass.internal.bottomsheet_glass
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

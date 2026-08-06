@@ -1,4 +1,4 @@
-package com.jetcompose.button.neon
+package com.lamintra.button.neon
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

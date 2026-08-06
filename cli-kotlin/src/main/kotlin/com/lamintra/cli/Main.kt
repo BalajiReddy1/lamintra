@@ -1,4 +1,4 @@
-package com.jetcompose.cli
+package com.lamintra.cli
 
 import java.io.File
 
@@ -11,12 +11,12 @@ fun main(args: Array<String>) {
         "add" -> {
             val componentName = args.getOrNull(1)
             if (componentName == null) {
-                System.err.println("Usage: jetcompose add <category>/<style>")
-                System.err.println("Example: jetcompose add bottomsheet/glass")
+                System.err.println("Usage: lamintra add <category>/<style>")
+                System.err.println("Example: lamintra add bottomsheet/glass")
                 kotlin.system.exitProcess(1)
             }
             try {
-                val config = JetComposeConfig.load(projectDir)
+                val config = LamintraConfig.load(projectDir)
                 val log = Installer.install(componentName, projectDir, config)
                 log.forEach(::println)
                 println("\n✅ Installed $componentName with zero manual fixes needed.")
@@ -33,11 +33,11 @@ fun main(args: Array<String>) {
 private fun printHelp() {
     println(
         """
-        jetcompose — copy-paste UI components for Jetpack Compose & KMP
+        lamintra — copy-paste UI components for Jetpack Compose & KMP
 
         Usage:
-          jetcompose init              Set up this project (run once)
-          jetcompose add <component>   Install a component, e.g. bottomsheet/glass
+          lamintra init              Set up this project (run once)
+          lamintra add <component>   Install a component, e.g. bottomsheet/glass
         """.trimIndent()
     )
 }

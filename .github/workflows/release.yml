@@ -2,7 +2,7 @@ name: Release
 
 # Cuts a GitHub Release with the fat JAR attached whenever a version tag
 # (v0.1.0, v0.2.1, ...) is pushed. This is the CLI's entire distribution
-# channel — users download jetcompose-<version>.jar from the release page.
+# channel — users download lamintra-<version>.jar from the release page.
 on:
   push:
     tags:
@@ -27,13 +27,13 @@ jobs:
         run: ./gradlew shadowJar --no-daemon
 
       - name: Smoke-test the jar
-        run: java -jar cli-kotlin/build/libs/jetcompose-*.jar | grep -q "Usage:"
+        run: java -jar cli-kotlin/build/libs/lamintra-*.jar | grep -q "Usage:"
 
       - name: Create release with jar attached
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
           gh release create "$GITHUB_REF_NAME"
-          cli-kotlin/build/libs/jetcompose-*.jar
+          cli-kotlin/build/libs/lamintra-*.jar
           --title "$GITHUB_REF_NAME"
           --generate-notes

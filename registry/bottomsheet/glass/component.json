@@ -2,7 +2,7 @@
   "name": "bottomsheet/glass",
   "category": "bottomsheet",
   "style": "glass",
-  "registryPackage": "com.jetcompose.bottomsheet.glass",
+  "registryPackage": "com.lamintra.bottomsheet.glass",
   "main": "src/BottomSheet.kt",
   "prefix": "bottomsheet_glass",
   "files": [
