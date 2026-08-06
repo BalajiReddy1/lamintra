@@ -20,8 +20,8 @@ Components use `compose.foundation` only - no Material 3, by design.
 
 | | Version | Verified |
 |---|---|---|
-| CLI | **0.4.0** | 12/12 `RewriterTest.kt` tests pass (2026-08-05) |
-| Registry | **0.4.0** | All 3 manifests fetch 200 from the pinned tag; jar installs from it end-to-end |
+| CLI | **0.5.0** | 16/16 `RewriterTest.kt` tests pass (2026-08-06) |
+| Registry | **0.5.2** | All 6 manifests fetch 200 from the pinned tag; the released jar installs all six end-to-end |
 
 Three components: `bottomsheet/glass`, `button/neon`,
 `button/neon_outline`.
@@ -64,7 +64,7 @@ cd cli-kotlin && ./gradlew test
 cd cli-kotlin && ./gradlew shadowJar
 ```
 
-That produces `cli-kotlin/build/libs/lamintra-0.4.0.jar`.
+That produces `cli-kotlin/build/libs/lamintra-0.5.0.jar`.
 
 ## Install
 
@@ -72,7 +72,7 @@ Requires a JVM 17+ (you already have one if you run Gradle). Download the
 jar from the [latest release](https://github.com/BalajiReddy1/lamintra/releases/latest):
 
 ```bash
-curl -LO https://github.com/BalajiReddy1/lamintra/releases/download/v0.4.0/lamintra-0.4.0.jar
+curl -LO https://github.com/BalajiReddy1/lamintra/releases/download/v0.5.0/lamintra-0.5.0.jar
 ```
 
 ## Using the CLI
@@ -80,11 +80,11 @@ curl -LO https://github.com/BalajiReddy1/lamintra/releases/download/v0.4.0/lamin
 Run once per project, then once per component:
 
 ```bash
-java -jar lamintra-0.4.0.jar init
+java -jar lamintra-0.5.0.jar init
 ```
 
 ```bash
-java -jar lamintra-0.4.0.jar add bottomsheet/glass
+java -jar lamintra-0.5.0.jar add button
 ```
 
 `init` auto-detects the project from the filesystem alone (no Gradle

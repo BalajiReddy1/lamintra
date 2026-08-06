@@ -74,42 +74,40 @@ dangerous than it looks.
 
 ## NEXT SESSION: start here
 
-**Wave 1 is built and compiles. It is BLOCKED on one thing: the founder has
-not looked at it yet.** Claude cannot - the browser pane does not composite for
-it, and three rounds of design work have already been lost to shipping renders
-nobody had seen.
+**Wave 1 is SHIPPED as of 2026-08-06.** CLI **v0.5.0** released, registry
+**v0.5.2** published, six components live, neon pair retired. Verified by
+downloading the released jar unauthenticated and installing all six into a
+clean fixture: 20 files, zero path/package mismatches, zero surviving namespace
+references, zero non-ASCII, and a retired name 404s with a readable error.
 
-**To look:**
+**THE NEXT STEP IS THE WEBSITE.** Not more components. There are six, which is
+thin against RikkaUI's forty, but the count is not what is blocking: there are
+**zero external users** and no page anyone can look at, so every decision about
+which component to build next is currently a guess. Ship the site with six,
+find out what people ask for, then build those. Do not let a session drift back
+into plumbing, which is comfortable and is not what is blocking.
+
+`design/PRODUCT_BRIEF.md` holds the product story to design the site from. The
+site is the one surface with no theming constraint, so personality is allowed
+there. The wasm harness proves the real components can run in a browser, which
+is the live-demo path: `:harness:wasmJsBrowserDistribution`, ~2.5min, serve
+`harness/build/dist/wasmJs/productionExecutable`, payload ~10.7MB of which
+8.4MB is the fixed Skia cost.
+
+**To look at the components:**
 
 ```bash
 cd verification && ./gradlew :harness:run
 ```
 
-~30s, opens a native window with three tabs - GALLERY (each component alone
-with its states), SETTINGS SCREEN (all five composed, which is wave 1's actual
-claim), SIGNATURE + DAY-1. Each screen has its own DARK/LIGHT toggle; both
-schemes need judging. Wasm is the slower confirmation
-(`:harness:wasmJsBrowserDistribution`, ~2.5min, serve
-`harness/build/dist/wasmJs/productionExecutable`).
+~30s, native window, three tabs: GALLERY (each component alone with its
+states), SETTINGS SCREEN (all six composed plus the two next-wave candidates),
+SIGNATURE. Each screen has its own Dark/Light toggle.
 
-**What still needs a verdict:**
-1. **The whole set in the new language**, both schemes. The direction was
-   approved from a prototype ("it's looking good"); the ported registry
-   components have not been judged as a set.
-2. **Focus states.** Detached ring on the button, field and switch; an *inset*
-   ring on the list row, because a row is flush to its card's edge and an
-   outward ring would be clipped. Tab through the gallery.
-3. **The light scheme.** Historically where "cheap" shows first.
-
-**Already done since:** the neon pair is retired, registry **v0.5.2** is cut and
-verified serving, and `REGISTRY_BASE` points at it. What remains is releasing
-the CLI jar, which needs a `v0.5.0` tag pushed on THIS repo to trigger
-`.github/workflows/release.yml`. That is a founder call and has not been done.
-
-**What is already done** - see "Wave 1" under Current state for the full
-record: the five components exist in the registry, the CLI moved to flat slugs,
-both recorded language holes are closed, and 26/26 harness tests pass on
-desktop with the suite mutation-checked.
+**Judged and approved:** the design direction, and the accent switch over the
+ink one. **Not separately judged:** the focus states (detached ring on button,
+field and switch; an *inset* ring on the list row, because a row is flush to
+its card's edge and an outward ring would be clipped).
 
 **Definition of done, per component - all of it, not most of it:**
 1. `<Component>Colors` with `.dark()` / `.light()` / `.auto()`. Factory names
@@ -307,7 +305,7 @@ Don't "simplify" by using underscores in the command - `add text_field` next to
     compiled at all, since the harness excludes `*Preview.kt`). **iOS not
     compiled locally - Kotlin/Native for iOS needs macOS**; the
     `verify-components.yml` workflow covers it on a hosted runner.
-  - Tests: **26/26 on desktop** (13 new interaction tests for the five, 6
+  - Tests: **23/23 on desktop** (13 interaction tests for the five, 3
     existing, 6 squircle incl. a new drift guard, 1 dark-theme). The suite is
     **mutation-checked**: breaking `enabled` on `LayerSwitch` and drifting one
     registry copy of `Squircle` failed exactly the two tests that guard them and
@@ -452,7 +450,7 @@ Don't "simplify" by using underscores in the command - `add text_field` next to
 
 ## Where things stand (read this first in a new session)
 
-**Built and working:** CLI **v0.3.3**, registry **v0.3.2**. The whole
+**Built and working:** CLI **v0.5.0**, registry **v0.5.2**. The whole
 flow is proven end-to-end by real users: one-Enter `init` (filesystem
 auto-detection), `add` with an idempotency guard, correct package
 rewriting, `@Preview` on install, zero manual fixes, builds clean on
@@ -752,14 +750,14 @@ is now purely the founder's call). The release pipeline is
 cd cli-kotlin
 ./gradlew test                     # run RewriterTest.kt (16 tests)
 ./gradlew shadowJar                # build the fat JAR
-java -jar build/libs/lamintra-0.4.0.jar init
-java -jar build/libs/lamintra-0.4.0.jar add button
-java -jar build/libs/lamintra-0.4.0.jar add glass-sheet
+java -jar build/libs/lamintra-0.5.0.jar init
+java -jar build/libs/lamintra-0.5.0.jar add button
+java -jar build/libs/lamintra-0.5.0.jar add glass-sheet
 ```
 
 ```bash
 cd verification
 ./gradlew :harness:run                        # native window, ~30s - LOOK HERE FIRST
-./gradlew :harness:desktopTest                # 26 interaction + geometry tests
+./gradlew :harness:desktopTest                # 23 interaction + geometry tests
 ./gradlew :harness:wasmJsBrowserDistribution  # ~2.5min, then serve build/dist/wasmJs/productionExecutable
 ```
