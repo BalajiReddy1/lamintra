@@ -52,11 +52,6 @@ Version bumped 0.3.3 → 0.4.0, since a renamed CLI cannot ship as a patch.
   what the project was called on Day 1.
 - `.claude/settings.local.json` — historical permission grants with literal
   old paths. Rewriting them could silently alter what is authorised.
-- `REGISTRY_BASE` and the README download URLs — they point at the **live**
-  published repo and tag, which still carry the old name. The published
-  v0.3.2 tag is internally consistent (its manifests and sources both say
-  `com.jetcompose`), so the CLI keeps working: the rewriter substitutes
-  whatever `registryPackage` the manifest declares.
 - `.jetcompose/config.json` — still *read* as a fallback so projects
   initialised before the rename keep working. New configs write
   `.lamintra/`.
