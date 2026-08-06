@@ -72,6 +72,55 @@ v0.3.3 jar did not break, and there was no downtime window. Do not rely on
 this for anything load-bearing, but it means a repo rename is far less
 dangerous than it looks.
 
+## NEXT SESSION: start here
+
+**Task: wave 1 — promote five components from the harness into the registry.**
+Button, Card, TextField, ListRow, Switch. That set builds a complete settings
+screen in one language. Tabs and Slider also exist in the harness but were
+built as language stress-tests, not as wave 1 — leave them.
+
+Reference implementation (real Compose, already running on desktop/iOS/wasm):
+`verification/harness/src/commonMain/kotlin/com/lamintra/verification/design/`.
+`LayerButton.kt` is the refined button; `CandidateC.kt` still holds an older
+duplicate `CButton` that should be deleted rather than promoted.
+
+**Definition of done, per component — all of it, not most of it:**
+1. `<Component>Colors` with `.dark()` / `.light()` / `.auto()`. Factory names
+   must be identical across every component — that consistency is the
+   migration seam for a future shared token layer.
+2. Every visual value an exposed parameter with a token default.
+3. All states: rest, pressed, disabled, focus.
+4. `compose.foundation` only. No Material, no blur, no platform shadow.
+5. Squircle geometry copied from the tested generator, not re-derived.
+6. `component.json` — `registryPackage` `com.lamintra.<category>.<style>`,
+   `prefix`, `files`, `preview`.
+7. A `@Preview` file routed to the android source root.
+8. Compiles Android + desktop + iOS + wasm.
+9. **Run on a real screen with interactions exercised, and the founder looks.**
+10. Registry tag + `REGISTRY_BASE` bump + jar release only after 1–9.
+
+**Also in wave 1:** retire `button/neon` and `button/neon_outline` — Day-1
+fixtures in the wrong design language, named after the brief's own
+anti-reference. Zero external users means deleting them is free now and a
+breaking change later. Close the two recorded holes in the language:
+size-blind depth tokens, and slider handle alignment.
+
+**Operational gotchas that have already cost real time — do not rediscover:**
+- **Claude cannot see rendered output.** The browser pane does not composite
+  for it. The founder must look. Three rounds of design work were lost to
+  shipping renders nobody had seen.
+- **Do not patch files by `sed`/slicing between comment markers.** It silently
+  deleted `const W` and both screen builders once, and broke the squircle
+  twice. Rewrite whole files instead.
+- Emulator: **Pixel_35 (API 35)** is the one that matters. `adb shell input
+  swipe` needs **150–300ms** or Compose never sees a drag.
+- wasm build ≈ 2.5 min, desktop compile ≈ 30s. **Validate on desktop first.**
+- Serve wasm from `harness/build/dist/wasmJs/productionExecutable`, then use
+  `preview_start` — a plain navigate to a localhost port gets denied.
+- Geometry gets unit-tested before it gets drawn, and the tests get
+  mutation-checked. Bounds and flat-span checks pass on a broken shape;
+  continuity and per-corner checks are what actually catch it.
+
 ## Hard rules — do not relitigate these without being asked
 
 - **No Material 3, anywhere, ever.** Components use `compose.foundation`
