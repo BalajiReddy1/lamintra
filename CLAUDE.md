@@ -118,6 +118,41 @@ dangerous than it looks.
   testbed was compile-only, no app had ever been launched. Don't tag a
   registry release for a component that hasn't met both bars.
 
+## Competitive landscape — checked 2026-08-06, correct an older premise
+
+Earlier planning assumed no competitor served this niche. That is no longer
+true, and a future session should not repeat it.
+
+- **RikkaUI** (`github.com/rainxchzed/RikkaUi`, ~151 stars) is the closest
+  thing to us that exists: 40+ components, `compose.foundation` only with
+  "Zero Material3", Android + iOS + Desktop + WasmJs, and a CLI with
+  `init` / `add` / `list`. Same category, same philosophy, further along.
+  **The one real architectural difference:** RikkaUI requires a Gradle
+  dependency for its foundation/theme library, and copied components depend
+  on it. Ours are fully standalone after install — the per-component token
+  inlining is what buys that, and it is the stricter form of the ownership
+  promise. Do not casually trade it away when the shared-token-tier decision
+  is revisited at wave 2.
+- **Composables / Composables One** (Alex Styl) — live WASM previews, a CLI,
+  an MCP server, and a paid kit at **$29 / $69 one-time**. That pricing is
+  the most useful real data point we have for this audience, and it
+  validates both the wasm-preview plan and that AI/MCP is *not* an
+  available moat.
+- **Lumo UI**, **Compose Unstyled**, **shadcn-kotlin** also occupy nearby
+  ground.
+- A library already exists at `github.com/kk-amit/jetcompose` — retroactive
+  confirmation that the old name was a poor choice on availability grounds
+  as well as trademark ones.
+
+**Parked deliberately — good ideas, wrong time:** MCP/AI-agent integration,
+a component marketplace, enterprise tier, Figma import, migration tooling.
+Revisit once the component set and the website exist; none of them help a
+registry with three components.
+
+**Rejected outright:** an npx/npm CLI (forces Node on Android devs — already
+a documented decision), and any name containing "Compose"/"Kompose" (the
+exact trademark proximity the rename escaped).
+
 ## Build behavior
 
 - **Don't run a full `./gradlew build` unless explicitly asked.** Gradle
