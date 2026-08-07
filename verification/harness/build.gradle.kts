@@ -106,6 +106,24 @@ kotlin {
     }
 }
 
+// Renders every registry component to a PNG, headlessly, from the sources the
+// CLI installs. The website needs component images, and the alternatives are
+// hand-screenshotting (does not survive a component change) or rebuilding the
+// components in HTML (the exact drift this project keeps getting bitten by).
+//
+//   ./gradlew :harness:renderSpecimens -PoutDir=C:/path/to/site/public/img
+val renderSpecimens by tasks.registering(JavaExec::class) {
+    group = "verification"
+    description = "Renders registry components to PNG for the website."
+    dependsOn("desktopMainClasses")
+    mainClass.set("com.lamintra.verification.RenderSpecimensKt")
+    val desktopMain = kotlin.targets.getByName("desktop").compilations.getByName("main")
+    classpath = files(desktopMain.output.allOutputs, desktopMain.runtimeDependencyFiles)
+    argumentProviders.add {
+        listOf(project.findProperty("outDir")?.toString() ?: "build/specimens")
+    }
+}
+
 // `./gradlew :harness:run` opens the harness in a native window. The visual
 // check is a hard gate on every release and this is the fastest way to reach
 // it - ~30s here against ~2.5min for a wasm build.
