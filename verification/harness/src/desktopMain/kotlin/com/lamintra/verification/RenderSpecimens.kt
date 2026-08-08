@@ -185,14 +185,15 @@ fun main(args: Array<String>) {
             }
         }
 
-        render("switch-$s", 380, 150) {
+        // Height sized to the content. At 150 the canvas left visible dead
+        // space under a single row of switches, which showed up on the page as
+        // an oddly tall empty frame.
+        render("switch-$s", 380, 100) {
             Surface(scheme) {
-                Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                        LamintraSwitch(true, {}, colors = scheme.switch())
-                        LamintraSwitch(false, {}, colors = scheme.switch())
-                        LamintraSwitch(true, {}, enabled = false, colors = scheme.switch())
-                    }
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    LamintraSwitch(true, {}, colors = scheme.switch())
+                    LamintraSwitch(false, {}, colors = scheme.switch())
+                    LamintraSwitch(true, {}, enabled = false, colors = scheme.switch())
                 }
             }
         }

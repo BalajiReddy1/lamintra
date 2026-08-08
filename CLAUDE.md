@@ -80,19 +80,33 @@ downloading the released jar unauthenticated and installing all six into a
 clean fixture: 20 files, zero path/package mismatches, zero surviving namespace
 references, zero non-ASCII, and a retired name 404s with a readable error.
 
-**THE NEXT STEP IS THE WEBSITE.** Not more components. There are six, which is
-thin against RikkaUI's forty, but the count is not what is blocking: there are
-**zero external users** and no page anyone can look at, so every decision about
-which component to build next is currently a guess. Ship the site with six,
-find out what people ask for, then build those. Do not let a session drift back
-into plumbing, which is comfortable and is not what is blocking.
+**THE WEBSITE IS STARTED AND LIVES IN A SEPARATE FOLDER.**
+`C:\Users\balaj\Downloads\Projects\Testbeds\lamintra-site` - deliberately
+outside this repo. It has its own `PRODUCT.md` (strategy), `DESIGN.md` (visual
+system) and **`CHECKLIST.md`, which is the actual to-do list. Read that first.**
 
-`design/PRODUCT_BRIEF.md` holds the product story to design the site from. The
-site is the one surface with no theming constraint, so personality is allowed
-there. The wasm harness proves the real components can run in a browser, which
-is the live-demo path: `:harness:wasmJsBrowserDistribution`, ~2.5min, serve
-`harness/build/dist/wasmJs/productionExecutable`, payload ~10.7MB of which
-8.4MB is the fixed Skia cost.
+A working landing page exists: hero, ownership proof, three steps, a six
+component gallery and an FAQ. Nothing is deployed and no domain is bought.
+
+**The palette is a neutral placeholder awaiting the founder's own values.** Two
+tinted attempts were built and rejected (a graphite-green, then a violet-indigo
+in the Rose Pine register). `public/styles.css` opens with a single marked
+palette block; everything else is written against token names only, so swapping
+that block moves the whole page.
+
+**Claude CAN see rendered output now, via files.** The Browser pane still does
+not composite, but headless Chrome writes a PNG and PNG files are readable. Two
+real bugs were caught this way that DOM inspection had missed: the whole page
+below the fold rendering blank, and alternating gallery rows doubling in size.
+The exact commands are in `CHECKLIST.md` section 5. Use this loop.
+
+`./gradlew :harness:renderSpecimens -PoutDir=<site>/public/img` renders every
+component to PNG headlessly from the real registry sources. Re-run it after any
+component change or the site silently shows something the CLI no longer
+installs.
+
+More components can wait. There are still **zero external users** and no public
+page, so which component to build next is a guess until the site is live.
 
 **To look at the components:**
 
@@ -139,6 +153,29 @@ its card's edge and an outward ring would be clipped).
 - Geometry gets unit-tested before it gets drawn, and the tests get
   mutation-checked. Bounds and flat-span checks pass on a broken shape;
   continuity and per-corner checks are what actually catch it.
+
+## Seeing rendered output - CORRECTED 2026-08-07
+
+The long-standing note that "Claude cannot see rendered output" is only half
+true, and the half that is wrong has cost real time.
+
+- **The Browser pane genuinely does not composite.** A screenshot request
+  against it fails outright. That part stands.
+- **PNG files on disk ARE readable.** So anything that can be rendered to a
+  file can be looked at directly.
+
+Two routes exist, both proven on 2026-08-07:
+
+- **Components:** `./gradlew :harness:renderSpecimens -PoutDir=<dir>` draws
+  every registry component to PNG headlessly via `ImageComposeScene`. This
+  caught the glass sheet capturing while still off-screen mid-animation.
+- **Web pages:** serve the folder, then headless Chrome with `--screenshot`.
+  This caught a page that rendered completely blank below the fold and a grid
+  bug that doubled every other image. Neither was visible from the DOM.
+
+**This does not replace the founder looking.** Interaction, feel and taste are
+still theirs to judge, and the hard verification rule is unchanged. It does
+mean shipping a render nobody has looked at is no longer necessary.
 
 ## Writing style - HARD RULE, added 2026-08-06
 
