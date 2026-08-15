@@ -241,4 +241,83 @@ class RewriterTest {
         val thrown = runCatching { Rewriter.resolveSafeTarget(projectDir, "../proj-evil/x.kt") }
         assertTrue(thrown.isFailure, "A sibling dir sharing the name prefix must be refused")
     }
+
+    // ---- Cross-component requirements. Added 2026-08-11 with the shared theme.
+
+    private val themedButtonManifest = ComponentManifest(
+        name = "button",
+        categories = listOf("button"),
+        registryPackage = "com.lamintra.button",
+        main = "src/LamintraButton.kt",
+        prefix = "button",
+        files = listOf("src/LamintraButton.kt"),
+        requires = listOf("theme")
+    )
+
+    /**
+     * The bug this whole field exists for: a component importing shared code
+     * used to install with that import still pointing at OUR namespace, which
+     * compiles in the registry and fails in the user's project.
+     */
+    @Test
+    fun `rewrites a required component's package, not just its own`() {
+        val source = """
+            package com.lamintra.button
+
+            import com.lamintra.theme.LamintraTheme
+            import com.lamintra.theme.lamintraDarkColors
+            import com.lamintra.button.internal.button.Squircle
+        """.trimIndent()
+
+        val out = Rewriter.rewriteFileContent(source, testConfig, themedButtonManifest)
+
+        assertTrue(
+            out.contains("package com.testapp.myapp.features.shared.widgets.button"),
+            "the component's own package must still be rewritten"
+        )
+        assertTrue(
+            out.contains("import com.testapp.myapp.features.shared.widgets.theme.LamintraTheme"),
+            "a required component's package must be rewritten too"
+        )
+        assertTrue(
+            out.contains("import com.testapp.myapp.features.shared.widgets.button.internal.button.Squircle"),
+            "internal cross-references must still work"
+        )
+        assertTrue(
+            !out.contains("com.lamintra"),
+            "no reference to the registry namespace may survive: found in $out"
+        )
+    }
+
+    /** A component that requires nothing must be byte-identical to before. */
+    @Test
+    fun `a component with no requirements is unaffected`() {
+        val source = "package com.lamintra.button\n\nimport com.lamintra.button.internal.button.Squircle\n"
+
+        val withField = Rewriter.rewriteFileContent(source, testConfig, themedButtonManifest.copy(requires = emptyList()))
+        val withoutField = Rewriter.rewriteFileContent(source, testConfig, buttonManifest)
+
+        assertEquals(withoutField, withField)
+    }
+
+    /** Requirements become package segments, so they take the same slug rule. */
+    @Test
+    fun `an illegal requirement name is rejected at parse time`() {
+        val json = """
+            {
+              "name": "button",
+              "registryPackage": "com.lamintra.button",
+              "main": "src/LamintraButton.kt",
+              "prefix": "button",
+              "files": ["src/LamintraButton.kt"],
+              "requires": ["Not-A-Slug"]
+            }
+        """.trimIndent()
+
+        val failure = runCatching { ComponentManifest.parse(json) }.exceptionOrNull()
+        assertTrue(
+            failure is IllegalArgumentException,
+            "expected a rejection, got: $failure"
+        )
+    }
 }

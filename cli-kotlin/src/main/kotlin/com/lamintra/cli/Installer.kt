@@ -16,13 +16,50 @@ object Installer {
     // transient 404s or stale files right after a registry push. Tagged
     // URLs are immutable - bump the tag here (and re-release the jar)
     // to pick up registry changes.
-    private const val REGISTRY_BASE = "https://raw.githubusercontent.com/BalajiReddy1/lamintra-registry/v0.5.2"
+    private const val PUBLISHED_REGISTRY =
+        "https://raw.githubusercontent.com/BalajiReddy1/lamintra-registry/v0.5.2"
+
+    /**
+     * Where components are read from. The published tag, unless overridden.
+     *
+     * **Why an override exists.** Until 2026-08-11 this was a hard-coded
+     * constant, which made the release order impossible to get right: the only
+     * way to test an install was to publish a registry tag first, and the only
+     * responsible time to publish is after testing an install. Every release
+     * therefore shipped its registry changes untested, and the one time that
+     * was checked properly it was checked *after the fact*.
+     *
+     * Set `LAMINTRA_REGISTRY` to close that loop:
+     *
+     *     # a working tree, so you test the exact files you are about to tag
+     *     LAMINTRA_REGISTRY=/path/to/jetcompose/registry lamintra add button
+     *
+     *     # or a branch, before cutting the tag
+     *     LAMINTRA_REGISTRY=https://raw.githubusercontent.com/OWNER/REPO/main
+     *
+     * A value that does not start with http is treated as a local directory.
+     * This is a developer affordance and is not needed by users: unset, the
+     * behaviour is exactly what it always was.
+     */
+    private val REGISTRY_BASE: String =
+        System.getenv("LAMINTRA_REGISTRY")?.takeIf { it.isNotBlank() } ?: PUBLISHED_REGISTRY
 
     private val client: HttpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NORMAL)
         .build()
 
     private fun fetch(relativeUrl: String): String {
+        if (!REGISTRY_BASE.startsWith("http://") && !REGISTRY_BASE.startsWith("https://")) {
+            val local = File(REGISTRY_BASE, relativeUrl)
+            if (!local.isFile) {
+                error(
+                    "Not found in the local registry: ${local.path}. " +
+                        "LAMINTRA_REGISTRY is set to '$REGISTRY_BASE'. Unset it to use the " +
+                        "published registry."
+                )
+            }
+            return local.readText()
+        }
         val request = HttpRequest.newBuilder()
             .uri(URI.create("$REGISTRY_BASE/$relativeUrl"))
             .GET()
@@ -38,16 +75,39 @@ object Installer {
     }
 
     /**
-     * Installs a component by name (e.g. "bottomsheet/glass") into
+     * Installs a component by name (e.g. "button" or "text-field") into
      * [projectDir], using [config] to decide package names and file
      * locations. Returns a human-readable log of what was written, for
      * the CLI to print.
      */
-    fun install(componentName: String, projectDir: File, config: LamintraConfig): List<String> {
+    fun install(componentName: String, projectDir: File, config: LamintraConfig): List<String> =
+        install(componentName, projectDir, config, mutableSetOf())
+
+    /**
+     * [installed] guards against doing the same component twice in one run,
+     * which happens as soon as two components share a requirement, and against
+     * a registry that declares a requirement cycle. Without it a cycle is a
+     * stack overflow rather than a message.
+     */
+    private fun install(
+        componentName: String,
+        projectDir: File,
+        config: LamintraConfig,
+        installed: MutableSet<String>
+    ): List<String> {
+        if (!installed.add(componentName)) return emptyList()
+
         val log = mutableListOf<String>()
 
         val manifestText = fetch("$componentName/component.json")
         val manifest = ComponentManifest.parse(manifestText)
+
+        // Requirements first: shared code has to be on disk before the file
+        // that imports it, or the project is briefly uncompilable between two
+        // writes. Depth-first, so a requirement's own requirements land first.
+        for (required in manifest.requires) {
+            log += install(required, projectDir, config, installed)
+        }
 
         val newRoot = Rewriter.computeNewRootPackage(config, manifest.packageSegment)
 

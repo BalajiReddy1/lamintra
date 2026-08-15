@@ -106,14 +106,38 @@ object Rewriter {
      * root package with its new, project-specific root, wherever it
      * appears (the file's own package line, plus any cross-references to
      * sibling internal files that share the same root).
+     *
+     * AND the same for every package the component declares in `requires`.
+     * This second half was added 2026-08-11 with the shared theme. Before it,
+     * a component that imported another component's package installed a file
+     * still importing `com.lamintra.theme`, which does not exist in the user's
+     * project. It compiled here and failed there, which is the worst shape a
+     * bug can have.
+     *
+     * The registry's own namespace is derived from the manifest rather than
+     * hard-coded: `com.lamintra.button` minus its last segment gives the
+     * prefix every sibling shares.
      */
     fun rewriteFileContent(
         originalContent: String,
         config: LamintraConfig,
         manifest: ComponentManifest
     ): String {
-        val newRoot = computeNewRootPackage(config, manifest.packageSegment)
-        return rewriteRootPackage(originalContent, manifest.registryPackage, newRoot)
+        var content = rewriteRootPackage(
+            originalContent,
+            manifest.registryPackage,
+            computeNewRootPackage(config, manifest.packageSegment)
+        )
+        val registryNamespace = manifest.registryPackage.substringBeforeLast('.')
+        for (required in manifest.requires) {
+            val segment = required.replace('-', '_')
+            content = rewriteRootPackage(
+                content,
+                "$registryNamespace.$segment",
+                computeNewRootPackage(config, segment)
+            )
+        }
+        return content
     }
 
     /**

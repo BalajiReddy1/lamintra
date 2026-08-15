@@ -33,7 +33,21 @@ data class ComponentManifest(
     // root (androidMain for KMP - the annotation doesn't exist in common
     // code), and only when the module's build file shows the ui-tooling
     // dependency actually exists.
-    val preview: String? = null
+    val preview: String? = null,
+    /**
+     * Other registry components this one needs on disk to compile.
+     *
+     * Added 2026-08-11 for the shared theme. Until then every component was an
+     * island: two or three files that imported nothing but Compose, so the
+     * installer only ever had to rewrite ONE package prefix. `button` now
+     * imports `com.lamintra.theme`, and without this field that import would
+     * land in a user's project still pointing at our namespace and fail to
+     * compile - the exact outcome this product exists to prevent.
+     *
+     * Names are slugs, same as [name]. Requirements install first, and a
+     * requirement may itself require others.
+     */
+    val requires: List<String> = emptyList()
 ) {
     /**
      * [name] as a legal Kotlin package segment.
@@ -75,7 +89,8 @@ data class ComponentManifest(
                 main = json["main"]!!.asString(),
                 prefix = json["prefix"]!!.asString(),
                 files = json["files"]!!.asStringList(),
-                preview = json["preview"]?.asStringOrNull()
+                preview = json["preview"]?.asStringOrNull(),
+                requires = json["requires"]?.asStringList() ?: emptyList()
             )
             validate(manifest)
             return manifest
@@ -95,6 +110,13 @@ data class ComponentManifest(
                 "Invalid component name \"${manifest.name}\". Names must be lowercase " +
                     "kebab-case (letters, digits and single hyphens, starting with a " +
                     "letter), e.g. \"button\" or \"text-field\"."
+            }
+            manifest.requires.forEach { required ->
+                require(SLUG.matches(required)) {
+                    "Component \"${manifest.name}\" requires \"$required\", which is not a " +
+                        "valid component name. Requirements become package segments in the " +
+                        "user's project, so they follow the same rule as names."
+                }
             }
             require(manifest.packageSegment !in HARD_KEYWORDS) {
                 "Invalid component name \"${manifest.name}\": it becomes the package " +
