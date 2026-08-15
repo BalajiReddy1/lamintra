@@ -2,3 +2,10 @@
 .kotlin/
 build/
 *.log
+
+# Internal working documents, kept in their own PRIVATE git repository.
+#
+# Strategy, cross-repo state, and honest notes on what has not been tested.
+# The same arrangement as the site repo, and for the same reason this repo's
+# history was already reset once: none of it belongs in a public repository.
+internal/

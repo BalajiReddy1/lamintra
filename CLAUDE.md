@@ -14,6 +14,24 @@ the full story, it's deliberately short because it reloads every turn.
 Never copy that doc, or excerpts of its strategy content, back into this
 repo.**
 
+## Cross-repo state: read CROSS-REPO.md first
+
+`internal/CROSS-REPO.md` exists in BOTH this repo and the site repo
+(`Testbeds/lamintra-site/internal/`), and the two copies must stay identical. It
+records the contracts that span the two, what is currently in flight, and what
+is deliberately half-finished. Anything that touches both sides belongs in one
+session, not two.
+
+`internal/` is a SEPARATE PRIVATE git repository, ignored by this one, for the
+same reason this repo's history was reset: strategy does not belong in a public
+repository. If the folder is missing, this is a fresh clone and only the
+reasoning is absent.
+
+Right now it records a HALF-FINISHED theme migration: `registry/theme/` exists
+and `button` reads from it, but the CLI's `Rewriter` cannot yet rewrite a
+cross-component import, so nothing from `main` is installable. Read it before
+touching the registry or the CLI.
+
 ## Product name - DECIDED 2026-08-05: **Lamintra**
 
 `lamintra.com`, `.dev`, GitHub and npm all verified available on the day of
