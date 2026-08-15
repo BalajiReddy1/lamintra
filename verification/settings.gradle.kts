@@ -19,3 +19,11 @@ dependencyResolutionManagement {
 
 rootProject.name = "lamintra-verification"
 include(":harness")
+
+// The public demo. A separate module rather than a second entry point in
+// :harness, because the two have opposite audiences: :harness is a dev tool
+// carrying test dependencies, a composed settings screen, and a Day-1 screen
+// still written in the rejected design language. None of that can reach a
+// stranger. Splitting them also keeps the shipped wasm bundle down to the
+// gallery, which is the only surface a visitor should ever see.
+include(":demo")
