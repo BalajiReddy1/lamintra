@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,6 +29,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lamintra.theme.LamintraColors
+import com.lamintra.theme.LamintraTheme
+import com.lamintra.theme.lamintraDarkColors
+import com.lamintra.theme.lamintraLightColors
 import com.lamintra.text_field.internal.text_field.Squircle
 
 /**
@@ -50,25 +53,26 @@ data class LamintraTextFieldColors(
     val cursor: Color
 ) {
     companion object {
-        fun dark(): LamintraTextFieldColors = LamintraTextFieldColors(
-            fill = Color(0xFF141416),
-            border = Color(0xFF26262A),
-            borderFocused = Color(0xFFFAFAFA),
-            content = Color(0xFFFAFAFA),
-            placeholder = Color(0xFF8B8B90),
-            label = Color(0xFF8B8B90),
-            cursor = Color(0xFFFAFAFA)
+        /**
+         * Maps the shared semantic layer onto this component's own slots.
+         *
+         * `borderFocused` is `hairlineStrong` rather than `accent`: focus is a
+         * state of the keyboard, not of the field, and accent is reserved for
+         * component state. See the focus note in LamintraColors.
+         */
+        fun from(colors: LamintraColors): LamintraTextFieldColors = LamintraTextFieldColors(
+            fill = colors.container,
+            border = colors.hairline,
+            borderFocused = colors.hairlineStrong,
+            content = colors.ink,
+            placeholder = colors.inkMuted,
+            label = colors.inkMuted,
+            cursor = colors.ink
         )
 
-        fun light(): LamintraTextFieldColors = LamintraTextFieldColors(
-            fill = Color(0xFFF4F4F5),
-            border = Color(0xFFE4E4E7),
-            borderFocused = Color(0xFF09090B),
-            content = Color(0xFF09090B),
-            placeholder = Color(0xFF70707B),
-            label = Color(0xFF70707B),
-            cursor = Color(0xFF09090B)
-        )
+        fun dark(): LamintraTextFieldColors = from(lamintraDarkColors())
+
+        fun light(): LamintraTextFieldColors = from(lamintraLightColors())
 
         /**
          * Follows the device's colour scheme. Reads the *device* setting, not
@@ -76,8 +80,7 @@ data class LamintraTextFieldColors(
          * [dark] or [light] explicitly.
          */
         @Composable
-        fun auto(): LamintraTextFieldColors =
-            if (isSystemInDarkTheme()) dark() else light()
+        fun auto(): LamintraTextFieldColors = from(LamintraTheme.colors)
     }
 }
 

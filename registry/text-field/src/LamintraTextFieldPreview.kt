@@ -39,7 +39,7 @@ private fun TextFieldSpecimen(canvas: Color, colors: LamintraTextFieldColors) {
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         LamintraTextField(
-            value = "Balaji",
+            value = "Ada Lovelace",
             onValueChange = {},
             label = "Display name",
             colors = colors

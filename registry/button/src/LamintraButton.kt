@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +26,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lamintra.theme.LamintraColors
+import com.lamintra.theme.LamintraTheme
+import com.lamintra.theme.lamintraDarkColors
+import com.lamintra.theme.lamintraLightColors
 import com.lamintra.button.internal.button.Squircle
 
 /**
@@ -64,38 +67,52 @@ data class LamintraButtonColors(
     val focus: Color
 ) {
     companion object {
-        fun dark(): LamintraButtonColors = LamintraButtonColors(
-            // Neither pure black nor pure white anywhere: pure values vibrate
-            // on OLED and read as an unstyled page rather than a designed one.
-            ink = Color(0xFFFAFAFA),
-            onInk = Color(0xFF0A0A0B),
-            inkDim = Color(0xFF8B8B90),
-            hairline = Color(0xFF26262A),
-            danger = Color(0xFFF04438),
-            onDanger = Color(0xFFFFFFFF),
-            focus = Color(0xFFFAFAFA)
-        )
-
-        fun light(): LamintraButtonColors = LamintraButtonColors(
-            ink = Color(0xFF09090B),
-            onInk = Color(0xFFFFFFFF),
-            inkDim = Color(0xFF70707B),
-            hairline = Color(0xFFE4E4E7),
-            danger = Color(0xFFD92D20),
-            onDanger = Color(0xFFFFFFFF),
-            focus = Color(0xFF09090B)
+        /**
+         * Maps the shared semantic layer onto this component's own slots.
+         *
+         * This is the whole of the third token tier: the names on the left
+         * belong to a button, the names on the right belong to the system, and
+         * this function is the only place the two vocabularies meet. Nothing
+         * here invents a value.
+         *
+         * Note `inkDim` reads `inkMuted`. The slot names are NOT identical on
+         * purpose: renaming a component's public field to match a token would
+         * break every call site that passes it, for no gain.
+         */
+        fun from(colors: LamintraColors): LamintraButtonColors = LamintraButtonColors(
+            ink = colors.ink,
+            onInk = colors.onInk,
+            inkDim = colors.inkMuted,
+            hairline = colors.hairline,
+            danger = colors.danger,
+            onDanger = colors.onDanger,
+            focus = colors.focus
         )
 
         /**
-         * Follows the device's colour scheme. This is the default because when
-         * it is wrong it is wrong *loudly* - a dark button on a light app is
-         * glaring and takes one parameter to fix.
+         * The dark scheme, forced.
          *
-         * Note it reads the *device* setting, not your app's theme. An app that
-         * forces its own scheme should pass [dark] or [light] explicitly.
+         * Values live in the theme now rather than here. Before 2026-08-11 this
+         * function held seven literals and five of them also appeared in other
+         * components, so a rebrand meant editing six files. Neither pure black
+         * nor pure white appears anywhere in them: pure values vibrate on OLED
+         * and read as an unstyled page rather than a designed one.
+         */
+        fun dark(): LamintraButtonColors = from(lamintraDarkColors())
+
+        /** The light scheme, forced. */
+        fun light(): LamintraButtonColors = from(lamintraLightColors())
+
+        /**
+         * Follows the theme if one is present, and the device otherwise.
+         *
+         * This is the default because when it is wrong it is wrong *loudly* -
+         * a dark button on a light app is glaring and takes one parameter to
+         * fix. Wrapping your app in [LamintraTheme] makes this follow your
+         * palette; without it, it follows the device scheme as it always did.
          */
         @Composable
-        fun auto(): LamintraButtonColors = if (isSystemInDarkTheme()) dark() else light()
+        fun auto(): LamintraButtonColors = from(LamintraTheme.colors)
     }
 }
 

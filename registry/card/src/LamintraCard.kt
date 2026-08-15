@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +22,10 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.lamintra.theme.LamintraColors
+import com.lamintra.theme.LamintraTheme
+import com.lamintra.theme.lamintraDarkColors
+import com.lamintra.theme.lamintraLightColors
 import com.lamintra.card.internal.card.Squircle
 
 /**
@@ -39,20 +42,20 @@ data class LamintraCardColors(
     val focus: Color
 ) {
     companion object {
-        fun dark(): LamintraCardColors = LamintraCardColors(
-            fill = Color(0xFF141416),
+        /** Maps the shared semantic layer onto this component's own slots. */
+        fun from(colors: LamintraColors): LamintraCardColors = LamintraCardColors(
+            fill = colors.container,
             // A card separates from the page by value alone. The border exists
             // as a parameter for hosts whose background sits too close to the
-            // fill, not as part of the default look.
+            // fill, not as part of the default look. Transparent is not a token
+            // and never will be: it is the absence of one.
             border = Color.Transparent,
-            focus = Color(0xFFFAFAFA)
+            focus = colors.focus
         )
 
-        fun light(): LamintraCardColors = LamintraCardColors(
-            fill = Color(0xFFF4F4F5),
-            border = Color.Transparent,
-            focus = Color(0xFF09090B)
-        )
+        fun dark(): LamintraCardColors = from(lamintraDarkColors())
+
+        fun light(): LamintraCardColors = from(lamintraLightColors())
 
         /**
          * Follows the device's colour scheme. Reads the *device* setting, not
@@ -60,7 +63,7 @@ data class LamintraCardColors(
          * [dark] or [light] explicitly.
          */
         @Composable
-        fun auto(): LamintraCardColors = if (isSystemInDarkTheme()) dark() else light()
+        fun auto(): LamintraCardColors = from(LamintraTheme.colors)
     }
 }
 

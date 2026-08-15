@@ -7,7 +7,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
@@ -23,6 +22,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.lamintra.theme.LamintraColors
+import com.lamintra.theme.LamintraPalette
+import com.lamintra.theme.LamintraTheme
+import com.lamintra.theme.lamintraDarkColors
+import com.lamintra.theme.lamintraLightColors
 import com.lamintra.switch.internal.switch.Squircle
 import com.lamintra.switch.internal.switch.softShadow
 
@@ -46,23 +50,50 @@ data class LamintraSwitchColors(
     val focus: Color
 ) {
     companion object {
-        fun dark(accent: Color = Color(0xFF3B82F6)): LamintraSwitchColors =
-            LamintraSwitchColors(
-                trackOff = Color(0xFF26262A),
-                trackOn = accent,
-                knob = Color(0xFFFFFFFF),
-                shadow = Color(0xFF000000),
-                focus = Color(0xFFFAFAFA)
-            )
+        /**
+         * Maps the shared semantic layer onto this component's own slots.
+         *
+         * `trackOn` is the accent, and it is the ONE load-bearing colour in the
+         * whole library: everywhere else colour decorates a form that already
+         * reads without it. It still passes the grayscale bar because knob
+         * POSITION carries the state, not the hue.
+         *
+         * The knob is white in both schemes and is therefore not a token. It is
+         * a component decision with its own measurement behind it: see the note
+         * on the 1.18:1 contrast below.
+         */
+        fun from(colors: LamintraColors): LamintraSwitchColors = LamintraSwitchColors(
+            trackOff = colors.hairline,
+            trackOn = colors.accent,
+            knob = LamintraPalette.White,
+            shadow = colors.shadow,
+            focus = colors.focus
+        )
 
-        fun light(accent: Color = Color(0xFF2563EB)): LamintraSwitchColors =
-            LamintraSwitchColors(
-                trackOff = Color(0xFFE4E4E7),
-                trackOn = accent,
-                knob = Color(0xFFFFFFFF),
-                shadow = Color(0xFF09090B),
-                focus = Color(0xFF09090B)
-            )
+        /**
+         * [accent] is the brand lime.
+         *
+         * **The white knob on this track measures 1.18:1, and that is accepted
+         * deliberately.** Three treatments were rendered and compared rather
+         * than argued. Inverting the knob to dark scores 16.78:1 and looks
+         * wrong: a dark shape inside a bright field reads as a hole punched in
+         * the track, not as a knob resting on it. What actually separates the
+         * knob here is the soft shadow's edge, and the state itself is carried
+         * by knob POSITION, so nothing is riding on that ratio.
+         */
+        fun dark(accent: Color = LamintraPalette.Lime): LamintraSwitchColors =
+            from(lamintraDarkColors(accent = accent))
+
+        /**
+         * [accent] is a DARKENED lime, not the brand value, and the two schemes
+         * disagree here on purpose. Full lime on a white page measures 1.18:1
+         * against the surface BEHIND it, so the track would dissolve into the
+         * page and the switch would read as permanently off - that one is a
+         * real failure rather than an accepted one. This olive measures 5.57:1
+         * against white and carries the white knob at the same 5.57:1.
+         */
+        fun light(accent: Color = LamintraPalette.Olive): LamintraSwitchColors =
+            from(lamintraLightColors(accent = accent))
 
         /**
          * Follows the device's colour scheme. Reads the *device* setting, not
@@ -70,7 +101,7 @@ data class LamintraSwitchColors(
          * [dark] or [light] explicitly.
          */
         @Composable
-        fun auto(): LamintraSwitchColors = if (isSystemInDarkTheme()) dark() else light()
+        fun auto(): LamintraSwitchColors = from(LamintraTheme.colors)
     }
 }
 

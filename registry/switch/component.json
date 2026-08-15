@@ -1,6 +1,8 @@
 {
   "name": "switch",
-  "categories": ["form"],
+  "categories": [
+    "form"
+  ],
   "registryPackage": "com.lamintra.switch",
   "main": "src/LamintraSwitch.kt",
   "prefix": "switch",
@@ -13,5 +15,8 @@
   "dependencies": {
     "compose-foundation": "1.9.0",
     "compose-animation": "1.9.0"
-  }
+  },
+  "requires": [
+    "theme"
+  ]
 }

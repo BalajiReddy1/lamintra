@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,6 +32,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lamintra.theme.LamintraColors
+import com.lamintra.theme.LamintraTheme
+import com.lamintra.theme.lamintraDarkColors
+import com.lamintra.theme.lamintraLightColors
 import com.lamintra.list_row.internal.list_row.Squircle
 
 /**
@@ -50,19 +53,17 @@ data class LamintraListRowColors(
     val focus: Color
 ) {
     companion object {
-        fun dark(): LamintraListRowColors = LamintraListRowColors(
-            content = Color(0xFFFAFAFA),
-            contentSecondary = Color(0xFF8B8B90),
-            divider = Color(0xFF26262A),
-            focus = Color(0xFFFAFAFA)
+        /** Maps the shared semantic layer onto this component's own slots. */
+        fun from(colors: LamintraColors): LamintraListRowColors = LamintraListRowColors(
+            content = colors.ink,
+            contentSecondary = colors.inkMuted,
+            divider = colors.hairline,
+            focus = colors.focus
         )
 
-        fun light(): LamintraListRowColors = LamintraListRowColors(
-            content = Color(0xFF09090B),
-            contentSecondary = Color(0xFF70707B),
-            divider = Color(0xFFE4E4E7),
-            focus = Color(0xFF09090B)
-        )
+        fun dark(): LamintraListRowColors = from(lamintraDarkColors())
+
+        fun light(): LamintraListRowColors = from(lamintraLightColors())
 
         /**
          * Follows the device's colour scheme. Reads the *device* setting, not
@@ -70,7 +71,7 @@ data class LamintraListRowColors(
          * [dark] or [light] explicitly.
          */
         @Composable
-        fun auto(): LamintraListRowColors = if (isSystemInDarkTheme()) dark() else light()
+        fun auto(): LamintraListRowColors = from(LamintraTheme.colors)
     }
 }
 

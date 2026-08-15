@@ -55,7 +55,7 @@ private fun ListRowSpecimen(canvas: Color, container: Color, colors: LamintraLis
                     drawPath(Squircle.path(size.width, size.height, 16.dp.toPx()), container)
                 }
         ) {
-            LamintraListRow(label = "Email", value = "balaji@mail.com", onClick = {}, colors = colors)
+            LamintraListRow(label = "Email", value = "you@example.com", onClick = {}, colors = colors)
             LamintraListRowDivider(colors = colors)
             LamintraListRow(label = "Plan", value = "Free", onClick = {}, colors = colors)
             LamintraListRowDivider(colors = colors)

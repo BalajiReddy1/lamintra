@@ -1,0 +1,14 @@
+{
+  "name": "theme",
+  "categories": ["foundation"],
+  "registryPackage": "com.lamintra.theme",
+  "main": "src/LamintraTheme.kt",
+  "prefix": "theme",
+  "files": [
+    "src/LamintraTheme.kt"
+  ],
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  }
+}
