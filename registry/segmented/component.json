@@ -1,0 +1,21 @@
+{
+  "name": "segmented",
+  "categories": [
+    "form"
+  ],
+  "registryPackage": "com.lamintra.segmented",
+  "main": "src/LamintraSegmented.kt",
+  "prefix": "segmented",
+  "files": [
+    "src/LamintraSegmented.kt",
+    "src/internal/segmented/Squircle.kt"
+  ],
+  "preview": "src/LamintraSegmentedPreview.kt",
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  },
+  "requires": [
+    "theme"
+  ]
+}
