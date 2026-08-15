@@ -33,9 +33,9 @@ import com.lamintra.verification.design.SettingsScreen
  *   website needs.
  * - **Settings screen** judges whether five of them sitting together still read
  *   as one family, which is wave 1's actual claim.
- * - **Signature** is the older screen for the glass sheet and the Day-1 neon
- *   fixtures, kept until those are retired. It is still in the previous design
- *   language, so the jump between tabs is expected.
+ * The Signature surface was removed on 2026-08-11 with `glass-sheet`, the only
+ * component it existed to show. It carried the Day-1 neon fixtures before that.
+ * When a signature-tier component next exists, it needs a surface again.
  *
  * Claude cannot see any of this: the browser pane does not composite for it, so
  * a render it has "checked" is a render nobody has looked at. Three rounds of
@@ -49,7 +49,6 @@ fun HarnessRoot() {
         when (surface) {
             HarnessSurface.Gallery -> Gallery()
             HarnessSurface.Settings -> SettingsScreen()
-            HarnessSurface.Signature -> VerificationScreen()
         }
 
         // Deliberately plain chrome. It is scaffolding, not a specimen - if it
@@ -75,8 +74,7 @@ fun HarnessRoot() {
 
 enum class HarnessSurface(val label: String) {
     Gallery("GALLERY"),
-    Settings("SETTINGS SCREEN"),
-    Signature("SIGNATURE + DAY-1")
+    Settings("SETTINGS SCREEN")
 }
 
 @Composable

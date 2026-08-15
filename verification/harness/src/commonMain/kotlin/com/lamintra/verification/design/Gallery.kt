@@ -41,6 +41,8 @@ import com.lamintra.card.LamintraCardColors
 import com.lamintra.list_row.LamintraListRow
 import com.lamintra.list_row.LamintraListRowColors
 import com.lamintra.list_row.LamintraListRowDivider
+import com.lamintra.segmented.LamintraSegmented
+import com.lamintra.segmented.LamintraSegmentedColors
 import com.lamintra.switch.LamintraSwitch
 import com.lamintra.switch.LamintraSwitchColors
 import com.lamintra.text_field.LamintraTextField
@@ -160,7 +162,7 @@ fun Gallery() {
                 page = page
             ) {
                 val colors = if (dark) LamintraTextFieldColors.dark() else LamintraTextFieldColors.light()
-                var name by remember { mutableStateOf("Balaji") }
+                var name by remember { mutableStateOf("Ada Lovelace") }
                 var email by remember { mutableStateOf("") }
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     LamintraTextField(value = name, onValueChange = { name = it }, label = "Display name", colors = colors)
@@ -187,7 +189,7 @@ fun Gallery() {
                 var taps by remember { mutableStateOf(0) }
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     LamintraCard(colors = cardColors) {
-                        LamintraListRow("Email", value = "balaji@mail.com", onClick = { taps++ }, colors = colors)
+                        LamintraListRow("Email", value = "you@example.com", onClick = { taps++ }, colors = colors)
                         LamintraListRowDivider(colors = colors)
                         LamintraListRow(
                             "Plan",
@@ -223,6 +225,45 @@ fun Gallery() {
                     Note(
                         "The knob springs across with a little overshoot and carries a real " +
                             "shadow - drawn as fading strokes, so it renders on iOS and wasm too.",
+                        page
+                    )
+                }
+            }
+
+            Entry(
+                name = "Segmented",
+                install = "add segmented",
+                note = "One choice out of a few. Where the thumb is IS the answer, so it reads in grayscale.",
+                page = page
+            ) {
+                val colors =
+                    if (dark) LamintraSegmentedColors.dark() else LamintraSegmentedColors.light()
+                var range by remember { mutableStateOf(1) }
+                var view by remember { mutableStateOf(0) }
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    LamintraSegmented(
+                        options = listOf("Day", "Week", "Month"),
+                        selected = range,
+                        onSelect = { range = it },
+                        colors = colors
+                    )
+                    LamintraSegmented(
+                        options = listOf("All", "Unread"),
+                        selected = view,
+                        onSelect = { view = it },
+                        colors = colors
+                    )
+                    LamintraSegmented(
+                        options = listOf("Day", "Week", "Month"),
+                        selected = 2,
+                        onSelect = {},
+                        enabled = false,
+                        colors = colors
+                    )
+                    Note(
+                        "Tap across two segments at once: the thumb retargets from wherever it " +
+                            "is rather than restarting, and the labels fade in step with it " +
+                            "because they read its position rather than running their own timer.",
                         page
                     )
                 }

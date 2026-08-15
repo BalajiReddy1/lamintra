@@ -37,6 +37,8 @@ import com.lamintra.card.LamintraCardColors
 import com.lamintra.list_row.LamintraListRow
 import com.lamintra.list_row.LamintraListRowColors
 import com.lamintra.list_row.LamintraListRowDivider
+import com.lamintra.segmented.LamintraSegmented
+import com.lamintra.segmented.LamintraSegmentedColors
 import com.lamintra.switch.LamintraSwitch
 import com.lamintra.switch.LamintraSwitchColors
 import com.lamintra.text_field.LamintraTextField
@@ -51,10 +53,11 @@ import com.lamintra.text_field.LamintraTextFieldColors
  * this judges whether five of them together still read as one family.
  *
  * Everything is a REGISTRY source staged by the harness build, so this screen
- * is made of exactly what `lamintra add` installs. The segmented control and
- * slider are the two next-wave candidates and are deliberately included: a
- * language that only holds for the components it was designed around is not a
- * language.
+ * is made of exactly what `lamintra add` installs. The segmented control was
+ * the first of the two next-wave candidates to earn a registry entry and now
+ * appears here as the real component; the slider is still a prototype and is
+ * deliberately kept alongside it, because a language that only holds for the
+ * components it was designed around is not a language.
  */
 @Composable
 fun SettingsScreen() {
@@ -66,8 +69,10 @@ fun SettingsScreen() {
     val fieldColors = if (dark) LamintraTextFieldColors.dark() else LamintraTextFieldColors.light()
     val rowColors = if (dark) LamintraListRowColors.dark() else LamintraListRowColors.light()
     val switchColors = if (dark) LamintraSwitchColors.dark() else LamintraSwitchColors.light()
+    val segmentedColors =
+        if (dark) LamintraSegmentedColors.dark() else LamintraSegmentedColors.light()
 
-    var name by remember { mutableStateOf("Balaji") }
+    var name by remember { mutableStateOf("Ada Lovelace") }
     var email by remember { mutableStateOf("") }
     var notifications by remember { mutableStateOf(true) }
     var haptics by remember { mutableStateOf(false) }
@@ -117,7 +122,7 @@ fun SettingsScreen() {
             Caption("Account", c)
             Spacer(Modifier.height(10.dp))
             LamintraCard(colors = cardColors) {
-                LamintraListRow("Email", value = "balaji@mail.com", onClick = {}, colors = rowColors)
+                LamintraListRow("Email", value = "you@example.com", onClick = {}, colors = rowColors)
                 LamintraListRowDivider(colors = rowColors)
                 LamintraListRow("Plan", value = "Free", onClick = {}, colors = rowColors)
             }
@@ -136,10 +141,18 @@ fun SettingsScreen() {
             }
 
             Spacer(Modifier.height(32.dp))
+            Caption("Usage", c)
+            Spacer(Modifier.height(10.dp))
+            LamintraSegmented(
+                options = listOf("Day", "Week", "Month"),
+                selected = range,
+                onSelect = { range = it },
+                colors = segmentedColors
+            )
+
+            Spacer(Modifier.height(32.dp))
             Caption("Not yet in the registry", c)
             Spacer(Modifier.height(10.dp))
-            DSegmented(listOf("Day", "Week", "Month"), range, { range = it }, c)
-            Spacer(Modifier.height(14.dp))
             DSlider(value = volume, onValueChange = { volume = it }, c = c)
 
             Spacer(Modifier.height(36.dp))

@@ -28,10 +28,11 @@ import com.lamintra.button.LamintraButton
 import com.lamintra.button.LamintraButtonColors
 import com.lamintra.card.LamintraCard
 import com.lamintra.card.LamintraCardColors
-import com.lamintra.glass_sheet.GlassBottomSheet
 import com.lamintra.list_row.LamintraListRow
 import com.lamintra.list_row.LamintraListRowColors
 import com.lamintra.list_row.LamintraListRowDivider
+import com.lamintra.segmented.LamintraSegmented
+import com.lamintra.segmented.LamintraSegmentedColors
 import com.lamintra.switch.LamintraSwitch
 import com.lamintra.switch.LamintraSwitchColors
 import com.lamintra.text_field.LamintraTextField
@@ -153,7 +154,7 @@ fun main(args: Array<String>) {
             Surface(scheme) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     LamintraTextField(
-                        value = "Balaji",
+                        value = "Ada Lovelace",
                         onValueChange = {},
                         label = "Display name",
                         colors = scheme.field()
@@ -172,7 +173,7 @@ fun main(args: Array<String>) {
             Surface(scheme) {
                 LamintraCard(colors = scheme.card()) {
                     LamintraListRow(
-                        "Email", value = "balaji@mail.com",
+                        "Email", value = "you@example.com",
                         onClick = {}, colors = scheme.row()
                     )
                     LamintraListRowDivider(colors = scheme.row())
@@ -197,18 +198,49 @@ fun main(args: Array<String>) {
                 }
             }
         }
-    }
 
-    // The signature tier. Rendered over a plausible page rather than an empty
-    // canvas, because a sheet with nothing behind it does not show what a sheet
-    // is for. Settled 2 seconds in so the slide-up enter animation has finished.
-    render("glass-sheet-dark", 380, 300, settleNanos = 2_000_000_000L) {
-        GlassSheetSpecimen()
-    }
+        // 212 = three 44dp controls, two 16dp gaps, and the Surface's own 24dp
+        // top and bottom. Sized exactly rather than rounded up, because dead
+        // canvas under a specimen shows on the page as an oddly tall frame.
+        render("segmented-$s", 380, 212) {
+            Surface(scheme) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    LamintraSegmented(
+                        options = listOf("Day", "Week", "Month"),
+                        selected = 1,
+                        onSelect = {},
+                        colors = scheme.segmented()
+                    )
+                    LamintraSegmented(
+                        options = listOf("All", "Unread"),
+                        selected = 0,
+                        onSelect = {},
+                        colors = scheme.segmented()
+                    )
+                    LamintraSegmented(
+                        options = listOf("Day", "Week", "Month"),
+                        selected = 2,
+                        onSelect = {},
+                        enabled = false,
+                        colors = scheme.segmented()
+                    )
+                }
+            }
+        }
 
-    // The hero: a whole screen made of nothing but registry components, which is
-    // the claim the site has to make in one image.
-    render("hero", 420, 700) { HeroScreen() }
+        // The hero: a whole screen made of nothing but registry components, which
+        // is the claim the site has to make in one image. It sits inside the
+        // scheme loop because the site's toggle drives every specimen, and the
+        // hero was once the only render with no light half.
+        //
+        // 300x500, which is exactly the box the site gives it. It used to be
+        // 420x700 and the browser downscaled the PNG, which was fine while this
+        // was only ever an image. It is now also a live Compose canvas, and a
+        // canvas cannot be downscaled without taking its 44dp touch targets down
+        // to 31px with it. Laying out at the delivered size keeps them honest,
+        // and 300x500 at 2x is still exactly 2x on the page.
+        render("hero-$s", 300, 500) { HeroScreen(scheme) }
+    }
 
     println("done: ${outDir.absolutePath}")
 }
@@ -222,6 +254,8 @@ private enum class Scheme(val suffix: String, val surface: Color, val ink: Color
     fun field() = if (this == Dark) LamintraTextFieldColors.dark() else LamintraTextFieldColors.light()
     fun row() = if (this == Dark) LamintraListRowColors.dark() else LamintraListRowColors.light()
     fun switch() = if (this == Dark) LamintraSwitchColors.dark() else LamintraSwitchColors.light()
+    fun segmented() =
+        if (this == Dark) LamintraSegmentedColors.dark() else LamintraSegmentedColors.light()
 }
 
 private fun body(s: Scheme) =
@@ -237,106 +271,65 @@ private fun Surface(scheme: Scheme, content: @Composable () -> Unit) {
     ) { content() }
 }
 
+/**
+ * Sized to fit 300x500 with room to spare, and it has to STAY fitting, because
+ * the site swaps this render for a live Compose canvas of the same box. If the
+ * content grows past the box the canvas starts scrolling and comes to rest cut
+ * through the middle of a row, which reads as a broken page rather than a phone
+ * screen.
+ *
+ * Budget, measured rather than guessed: text field 56, list row 60, segmented
+ * 44, button 56. Every component in the registry appears exactly once, which is
+ * the actual job of this image.
+ *
+ * Kept character-identical to `DemoRoot` in the :demo module. The two are the
+ * same element at two moments in its life, so any difference between them shows
+ * up on the page as a jump at the moment the runtime arrives.
+ */
 @Composable
-private fun GlassSheetSpecimen() {
-    val s = Scheme.Dark
+private fun HeroScreen(s: Scheme) {
     Box(modifier = Modifier.fillMaxSize().background(s.surface)) {
-        // Something for the sheet to sit over, so the scrim and the glass have
-        // content to act on.
-        Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-            BasicText(
-                "Library",
-                style = TextStyle(
-                    fontSize = 28.sp, fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.7).sp, color = s.ink
-                )
-            )
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
             Spacer(Modifier.height(16.dp))
-            LamintraCard(colors = s.card()) {
-                LamintraListRow("Downloads", value = "24", colors = s.row())
-                LamintraListRowDivider(colors = s.row())
-                LamintraListRow("Offline", value = "6", colors = s.row())
-            }
-        }
-
-        GlassBottomSheet(
-            visible = true,
-            onDismiss = {},
-            contentWindowInsets = WindowInsets(0, 0, 0, 0)
-        ) {
-            Column {
-                BasicText(
-                    "Glass bottom sheet",
-                    style = TextStyle(
-                        fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
-                        letterSpacing = (-0.3).sp, color = Color(0xFFF2F5FA)
-                    )
-                )
-                Spacer(Modifier.height(6.dp))
-                BasicText(
-                    "Drag down to dismiss, flick it, or tap the scrim.",
-                    style = TextStyle(fontSize = 14.sp, color = Color(0xFF8A93A5))
-                )
-                Spacer(Modifier.height(18.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun HeroScreen() {
-    val s = Scheme.Dark
-    Box(modifier = Modifier.fillMaxSize().background(s.surface)) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
-            Spacer(Modifier.height(28.dp))
             BasicText(
                 "Settings",
                 style = TextStyle(
-                    fontSize = 32.sp, lineHeight = 40.sp,
-                    fontWeight = FontWeight.Bold, letterSpacing = (-0.8).sp, color = s.ink
+                    fontSize = 28.sp, lineHeight = 36.sp,
+                    fontWeight = FontWeight.Bold, letterSpacing = (-0.7).sp, color = s.ink
                 )
             )
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(14.dp))
             BasicText("Your name", style = dim(s))
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(4.dp))
             LamintraTextField(
-                value = "Balaji",
+                value = "Ada Lovelace",
                 onValueChange = {},
                 placeholder = "Add a name",
                 colors = s.field()
             )
 
-            Spacer(Modifier.height(28.dp))
-            BasicText("Account", style = dim(s))
-            Spacer(Modifier.height(10.dp))
-            LamintraCard(colors = s.card()) {
-                LamintraListRow("Email", value = "balaji@mail.com", onClick = {}, colors = s.row())
-                LamintraListRowDivider(colors = s.row())
-                LamintraListRow("Plan", value = "Free", onClick = {}, colors = s.row())
-            }
+            Spacer(Modifier.height(16.dp))
+            LamintraSegmented(
+                options = listOf("Day", "Week", "Month"),
+                selected = 1,
+                onSelect = {},
+                colors = s.segmented()
+            )
 
-            Spacer(Modifier.height(28.dp))
-            BasicText("Preferences", style = dim(s))
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(16.dp))
+            BasicText("Account", style = dim(s))
+            Spacer(Modifier.height(4.dp))
             LamintraCard(colors = s.card()) {
+                LamintraListRow("Email", value = "you@example.com", onClick = {}, colors = s.row())
+                LamintraListRowDivider(colors = s.row())
                 LamintraListRow("Notifications", colors = s.row()) {
                     LamintraSwitch(true, {}, colors = s.switch())
                 }
-                LamintraListRowDivider(colors = s.row())
-                LamintraListRow("Haptic feedback", colors = s.row()) {
-                    LamintraSwitch(false, {}, colors = s.switch())
-                }
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(16.dp))
             LamintraButton("Save changes", {}, colors = s.button())
-            Spacer(Modifier.height(12.dp))
-            LamintraButton(
-                "Cancel", {},
-                emphasis = ButtonEmphasis.Secondary,
-                colors = s.button()
-            )
         }
     }
 }

@@ -14,14 +14,16 @@ plugins {
 // needed here. This harness consumes the registry sources as-is, unlike an
 // installed component, which the CLI rewrites into the host app's namespace.
 val components = listOf(
+    // The shared token layer. Must come first: every component below reads it.
+    "theme",
     // wave 1, base tier: contrast, space and physics
     "button",
     "card",
     "text-field",
     "list-row",
     "switch",
-    // signature tier
-    "glass-sheet"
+    // wave 2
+    "segmented"
 )
 
 // Copies registry sources into a generated source root at the path their own

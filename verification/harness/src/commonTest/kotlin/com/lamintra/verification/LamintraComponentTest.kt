@@ -15,6 +15,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import com.lamintra.button.LamintraButton
 import com.lamintra.card.LamintraCard
 import com.lamintra.list_row.LamintraListRow
+import com.lamintra.segmented.LamintraSegmented
 import com.lamintra.switch.LamintraSwitch
 import com.lamintra.text_field.LamintraTextField
 import kotlin.test.Test
@@ -200,5 +201,78 @@ class LamintraComponentTest {
         onNode(isToggleable()).performClick()
 
         assertEquals(0, changes, "a disabled LamintraSwitch must not report a state change")
+    }
+
+    @Test
+    fun segmentedReportsTheTappedIndex() = runComposeUiTest {
+        var picked = -1
+        setContent {
+            LamintraSegmented(
+                options = listOf("DAY", "WEEK", "MONTH"),
+                selected = 0,
+                onSelect = { picked = it }
+            )
+        }
+
+        onNodeWithText("MONTH").performClick()
+
+        assertEquals(2, picked, "an enabled LamintraSegmented should report the tapped index")
+    }
+
+    @Test
+    fun segmentedIgnoresTapsWhenDisabled() = runComposeUiTest {
+        var picks = 0
+        setContent {
+            LamintraSegmented(
+                options = listOf("DAY", "WEEK"),
+                selected = 0,
+                onSelect = { picks++ },
+                enabled = false
+            )
+        }
+
+        onNodeWithText("WEEK").performClick()
+
+        assertEquals(0, picks, "a disabled LamintraSegmented must not report a selection")
+    }
+
+    /**
+     * The selected index usually comes from state that a list edit can
+     * invalidate, so an out-of-range value is clamped rather than thrown. This
+     * asserts the control still composes and still reports taps in that state,
+     * because a silently dead control is the worse failure.
+     */
+    @Test
+    fun segmentedClampsAnOutOfRangeSelection() = runComposeUiTest {
+        var picked = -1
+        setContent {
+            LamintraSegmented(
+                options = listOf("DAY", "WEEK"),
+                selected = 7,
+                onSelect = { picked = it }
+            )
+        }
+
+        onNodeWithText("DAY").assertIsDisplayed()
+        onNodeWithText("WEEK").performClick()
+
+        assertEquals(1, picked, "a clamped LamintraSegmented should still report taps")
+    }
+
+    /**
+     * An empty option list returns before drawing. It has to compose rather
+     * than divide by its own segment count, which is what sizing the thumb
+     * would otherwise do.
+     */
+    @Test
+    fun segmentedWithNoOptionsComposes() = runComposeUiTest {
+        setContent {
+            Column {
+                LamintraSegmented(options = emptyList(), selected = 0, onSelect = {})
+                BasicText("AFTER EMPTY")
+            }
+        }
+
+        onNodeWithText("AFTER EMPTY").assertIsDisplayed()
     }
 }
