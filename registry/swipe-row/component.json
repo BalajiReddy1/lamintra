@@ -1,0 +1,20 @@
+{
+  "name": "swipe-row",
+  "categories": [
+    "layout"
+  ],
+  "registryPackage": "com.lamintra.swipe_row",
+  "main": "src/LamintraSwipeRow.kt",
+  "prefix": "swipe_row",
+  "files": [
+    "src/LamintraSwipeRow.kt"
+  ],
+  "preview": "src/LamintraSwipeRowPreview.kt",
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  },
+  "requires": [
+    "theme"
+  ]
+}

@@ -35,6 +35,9 @@ import com.lamintra.segmented.LamintraSegmented
 import com.lamintra.segmented.LamintraSegmentedColors
 import com.lamintra.sheet.LamintraSheet
 import com.lamintra.sheet.LamintraSheetColors
+import com.lamintra.swipe_row.LamintraSwipeAction
+import com.lamintra.swipe_row.LamintraSwipeRow
+import com.lamintra.swipe_row.LamintraSwipeRowColors
 import com.lamintra.switch.LamintraSwitch
 import com.lamintra.switch.LamintraSwitchColors
 import com.lamintra.text_field.LamintraTextField
@@ -267,6 +270,60 @@ fun main(args: Array<String>) {
             }
         }
 
+        // One row open, one at rest. A swipe row at rest is indistinguishable
+        // from a plain row, so a specimen showing only the resting state would
+        // photograph the component's least interesting frame and tell a reader
+        // nothing about what it does.
+        //
+        // `revealed` is real API rather than a hook added for this picture: a
+        // list wants at most one row open at a time, and the row cannot know
+        // which one that is. The harness gets its still for the same reason a
+        // list gets its behaviour.
+        //
+        // The wrapped content is the list-row component, which is the intended
+        // usage and the second specimen to show two components composed.
+        // 420 wide, not the usual 380. Two 88dp actions cover 176dp, and at 380
+        // the Surface's own padding leaves a 332dp row - so the revealed row's
+        // label slid clean off the canvas and the specimen showed an empty
+        // rectangle. 420 leaves 372dp, which is a real phone's row width, and
+        // the label stays where a reader would actually see it.
+        render("swipe-row-$s", 420, 170) {
+            Surface(scheme) {
+                Column {
+                    LamintraSwipeRow(
+                        actions = listOf(
+                            LamintraSwipeAction("Archive", onClick = {}),
+                            LamintraSwipeAction("Delete", onClick = {}, destructive = true)
+                        ),
+                        revealed = true,
+                        colors = scheme.swipeRow()
+                    ) {
+                        // A value, and not for decoration. Two actions cover
+                        // 176dp, so what stays visible is the row's RIGHT
+                        // portion - a label alone lives on the left and slides
+                        // out of sight, leaving the specimen an empty
+                        // rectangle. Real rows carry something on the right;
+                        // one with nothing there is the case where a swipe row
+                        // genuinely does look blank.
+                        LamintraListRow(
+                            "Quarterly report",
+                            value = "2.4 MB",
+                            colors = scheme.row()
+                        )
+                    }
+                    LamintraListRowDivider(colors = scheme.row())
+                    LamintraSwipeRow(
+                        actions = listOf(
+                            LamintraSwipeAction("Delete", onClick = {}, destructive = true)
+                        ),
+                        colors = scheme.swipeRow()
+                    ) {
+                        LamintraListRow("Meeting notes", colors = scheme.row())
+                    }
+                }
+            }
+        }
+
         // The hero: a whole screen made of nothing but registry components, which
         // is the claim the site has to make in one image. It sits inside the
         // scheme loop because the site's toggle drives every specimen, and the
@@ -296,6 +353,8 @@ private enum class Scheme(val suffix: String, val surface: Color, val ink: Color
     fun segmented() =
         if (this == Dark) LamintraSegmentedColors.dark() else LamintraSegmentedColors.light()
     fun sheet() = if (this == Dark) LamintraSheetColors.dark() else LamintraSheetColors.light()
+    fun swipeRow() =
+        if (this == Dark) LamintraSwipeRowColors.dark() else LamintraSwipeRowColors.light()
 }
 
 private fun body(s: Scheme) =
