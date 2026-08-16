@@ -1,0 +1,21 @@
+{
+  "name": "sheet",
+  "categories": [
+    "overlay"
+  ],
+  "registryPackage": "com.lamintra.sheet",
+  "main": "src/LamintraSheet.kt",
+  "prefix": "sheet",
+  "files": [
+    "src/LamintraSheet.kt",
+    "src/internal/sheet/SheetShape.kt"
+  ],
+  "preview": "src/LamintraSheetPreview.kt",
+  "dependencies": {
+    "compose-foundation": "1.9.0",
+    "compose-animation": "1.9.0"
+  },
+  "requires": [
+    "theme"
+  ]
+}

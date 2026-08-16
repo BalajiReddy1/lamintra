@@ -23,7 +23,10 @@ val components = listOf(
     "list-row",
     "switch",
     // wave 2
-    "segmented"
+    "segmented",
+    // wave 3, the first component whose point is how it MOVES rather than how
+    // it looks at rest
+    "sheet"
 )
 
 // Copies registry sources into a generated source root at the path their own

@@ -33,6 +33,8 @@ import com.lamintra.list_row.LamintraListRowColors
 import com.lamintra.list_row.LamintraListRowDivider
 import com.lamintra.segmented.LamintraSegmented
 import com.lamintra.segmented.LamintraSegmentedColors
+import com.lamintra.sheet.LamintraSheet
+import com.lamintra.sheet.LamintraSheetColors
 import com.lamintra.switch.LamintraSwitch
 import com.lamintra.switch.LamintraSwitchColors
 import com.lamintra.text_field.LamintraTextField
@@ -228,6 +230,43 @@ fun main(args: Array<String>) {
             }
         }
 
+        // The only specimen that cannot use Surface. The scrim is full-bleed by
+        // design, and Surface's 24dp padding would draw an undimmed frame around
+        // it - which would misrepresent the component rather than merely look
+        // wrong.
+        //
+        // Rows sit behind it on purpose. A scrim over an empty page is invisible,
+        // so half the component would not be in its own photograph. It is also
+        // the only specimen showing two components composed, which is the claim
+        // the set makes and nowhere demonstrates.
+        //
+        // A still cannot show the drag, the velocity-seeded settle, or the scrim
+        // tracking the finger, which are the reasons this component exists. This
+        // is the resting position and nothing more.
+        render("sheet-$s", 380, 300) {
+            Box(Modifier.fillMaxSize().background(scheme.surface)) {
+                Column(Modifier.padding(24.dp)) {
+                    LamintraListRow("Plan", value = "Free", onClick = {}, colors = scheme.row())
+                    LamintraListRowDivider(colors = scheme.row())
+                    LamintraListRow("Storage", value = "12 GB", onClick = {}, colors = scheme.row())
+                }
+                LamintraSheet(
+                    visible = true,
+                    onDismiss = {},
+                    colors = scheme.sheet(),
+                    contentWindowInsets = WindowInsets(0)
+                ) {
+                    BasicText("Move to folder", style = body(scheme))
+                    Spacer(Modifier.height(6.dp))
+                    BasicText(
+                        "Choose where this goes. You can move it again later.",
+                        style = dim(scheme)
+                    )
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
+        }
+
         // The hero: a whole screen made of nothing but registry components, which
         // is the claim the site has to make in one image. It sits inside the
         // scheme loop because the site's toggle drives every specimen, and the
@@ -256,6 +295,7 @@ private enum class Scheme(val suffix: String, val surface: Color, val ink: Color
     fun switch() = if (this == Dark) LamintraSwitchColors.dark() else LamintraSwitchColors.light()
     fun segmented() =
         if (this == Dark) LamintraSegmentedColors.dark() else LamintraSegmentedColors.light()
+    fun sheet() = if (this == Dark) LamintraSheetColors.dark() else LamintraSheetColors.light()
 }
 
 private fun body(s: Scheme) =
