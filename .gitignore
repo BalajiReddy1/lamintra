@@ -8,4 +8,14 @@ build/
 # Strategy, cross-repo state, and honest notes on what has not been tested.
 # The same arrangement as the site repo, and for the same reason this repo's
 # history was already reset once: none of it belongs in a public repository.
-internal/
+# Anchored to the repository root. Unanchored, `internal/` matches a directory
+# of that name at ANY depth, which silently swallowed
+# registry/sheet/src/internal/sheet/SheetShape.kt on 2026-08-16: it compiled
+# locally, was never committed, and both CI jobs failed on an unresolved
+# reference while two releases shipped green from the release workflow, which
+# does not compile the harness.
+#
+# The six older components survived only because their internal/ files were
+# committed BEFORE this line existed, and git keeps tracking what is already in
+# the index. Every component added after it would have hit the same wall.
+/internal/
