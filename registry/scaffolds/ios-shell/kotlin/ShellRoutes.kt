@@ -2,7 +2,7 @@ package {{PACKAGE}}.ui.shell
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,17 +48,23 @@ fun ShellScreen(route: ShellRoute) {
 
 // Placeholders, so the scaffold builds and runs the moment it is installed.
 // Replace the bodies; keep the signatures wired into ShellScreen above.
+//
+// BasicText rather than Material's Text on purpose. Every component in this
+// registry is written on compose.foundation alone, and a scaffold that pulled
+// material3 into a project would add a dependency the user did not ask for -
+// to a product whose entire claim is that it is not Material. It would also
+// fail to compile in any project that had not already added it.
 
 @Composable
 private fun HomeScreen() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Home")
+        BasicText("Home")
     }
 }
 
 @Composable
 private fun SettingsScreen() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Settings")
+        BasicText("Settings")
     }
 }

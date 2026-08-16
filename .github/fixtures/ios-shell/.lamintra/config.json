@@ -1,0 +1,10 @@
+{
+  "packageName": "com.acmeco.notes",
+  "isKmp": true,
+  "sourceRoots": {
+    "common": "composeApp/src/commonMain/kotlin",
+    "android": "composeApp/src/androidMain/kotlin",
+    "ios": "composeApp/src/iosMain/kotlin"
+  },
+  "componentPath": "ui/components"
+}

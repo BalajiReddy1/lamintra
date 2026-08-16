@@ -1,0 +1,110 @@
+name: Verify ios-shell
+
+# The ios-shell scaffold is half Swift, and Swift only compiles on macOS. It
+# was written and shipped from a Windows machine, so until this workflow
+# existed the Swift half had never been compiled by anything - the Kotlin was
+# tested and the Swift was hoped for.
+#
+# This builds a real Compose Multiplatform framework from the fixture project,
+# runs the scaffold against the working-tree registry, and type-checks the
+# generated Swift against BOTH the real iOS SDK and that real framework. That
+# second half is what makes it worth the runner minutes: it proves the Swift
+# calls a Kotlin symbol that genuinely exists, rather than one we believe
+# Kotlin/Native exports.
+#
+# Runs against registry/scaffolds/ in the working tree, never the published
+# tag, so a scaffold is verified BEFORE it is published rather than after.
+
+on:
+  push:
+    paths:
+      - "registry/scaffolds/**"
+      - "cli-kotlin/src/main/kotlin/com/lamintra/cli/Scaffold*.kt"
+      - ".github/fixtures/**"
+      - ".github/workflows/verify-ios-shell.yml"
+  pull_request:
+    paths:
+      - "registry/scaffolds/**"
+      - ".github/fixtures/**"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Toolchain versions
+        run: |
+          echo "Xcode:      $(xcodebuild -version | head -1)"
+          echo "Swift:      $(swift --version 2>&1 | head -1)"
+          echo "Simulator SDK: $(xcrun --sdk iphonesimulator --show-sdk-version)"
+          echo "Gradle:     $(gradle --version | grep Gradle | head -1)"
+
+      - name: Build the CLI
+        working-directory: cli-kotlin
+        run: ./gradlew shadowJar --no-daemon -q
+
+      - name: Stage the fixture project
+        run: |
+          cp -R .github/fixtures/ios-shell "$RUNNER_TEMP/project"
+          echo "PROJECT=$RUNNER_TEMP/project" >> "$GITHUB_ENV"
+
+      - name: Run the scaffold against the working-tree registry
+        env:
+          LAMINTRA_REGISTRY: ${{ github.workspace }}/registry
+        run: |
+          cd "$PROJECT"
+          java -jar "$GITHUB_WORKSPACE"/cli-kotlin/build/libs/lamintra-*.jar scaffold ios-shell
+
+      - name: The scaffold must not leave our namespace or a placeholder behind
+        run: |
+          cd "$PROJECT"
+          if grep -rn "com\.lamintra\|{{" --include='*.kt' --include='*.swift' .; then
+            echo "::error::registry package or unsubstituted token survived the install"
+            exit 1
+          fi
+          echo "clean: no com.lamintra, no {{TOKEN}}"
+
+      - name: Build the Kotlin framework
+        working-directory: ${{ env.PROJECT }}
+        run: gradle :composeApp:linkDebugFrameworkIosSimulatorArm64 --no-daemon --stacktrace
+
+      - name: Type-check the generated Swift against the real SDK and framework
+        working-directory: ${{ env.PROJECT }}
+        run: |
+          SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          FRAMEWORK_DIR="composeApp/build/bin/iosSimulatorArm64/debugFramework"
+          echo "framework dir contains:"; ls -1 "$FRAMEWORK_DIR"
+
+          # -typecheck, not -c: full semantic analysis (so a wrong SwiftUI API
+          # or a Kotlin symbol that does not exist fails here) without spending
+          # time emitting object code nothing will link.
+          #
+          # ios18.0 because the Tab(...) builder used by the shell needs it.
+          # Liquid Glass itself is iOS 26 and is applied by the system at run
+          # time; nothing here can assert that, and this file does not pretend to.
+          xcrun swiftc -typecheck \
+            -sdk "$SDK" \
+            -target arm64-apple-ios18.0-simulator \
+            -F "$FRAMEWORK_DIR" \
+            iosApp/iosApp/LamintraShell.swift \
+            iosApp/iosApp/ComposeScreen.swift
+
+          echo "Swift type-checks against NotesKit and the iOS SDK."
+
+      - name: Show what was generated
+        if: always()
+        working-directory: ${{ env.PROJECT }}
+        run: |
+          echo "--- Swift ---"; find iosApp -name '*.swift' -exec echo '::group::{}' \; -exec cat {} \; -exec echo '::endgroup::' \;
+          echo "--- Kotlin ---"; find composeApp/src -path '*ui/shell*' -name '*.kt' -exec echo '::group::{}' \; -exec cat {} \; -exec echo '::endgroup::' \;
