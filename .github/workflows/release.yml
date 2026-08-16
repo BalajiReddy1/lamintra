@@ -26,14 +26,31 @@ jobs:
         working-directory: cli-kotlin
         run: ./gradlew shadowJar --no-daemon
 
+      # Named exactly, not globbed. `lamintra-*.jar` also matches the thin jar
+      # the `jar` task produces (lamintra-cli-<version>.jar), so the glob was
+      # one stray `assemble` away from uploading two artifacts and smoke-testing
+      # whichever sorted first - the thin one has no dependencies and would fail
+      # here for a reason that looks nothing like the cause.
+      #
+      # Deriving the name from the tag also makes the release ASSERT that the
+      # jar matches the tag. A build.gradle.kts version left behind now fails
+      # the release instead of publishing v0.6.0 containing a 0.5.0 jar, which
+      # is the failure CROSS-REPO.md records as still open.
       - name: Smoke-test the jar
-        run: java -jar cli-kotlin/build/libs/lamintra-*.jar | grep -q "Usage:"
+        run: |
+          JAR="cli-kotlin/build/libs/lamintra-${GITHUB_REF_NAME#v}.jar"
+          test -f "$JAR" || {
+            echo "Expected $JAR, built:"; ls -1 cli-kotlin/build/libs/
+            echo "The version in cli-kotlin/build.gradle.kts must match the tag."
+            exit 1
+          }
+          java -jar "$JAR" | grep -q "Usage:"
 
       - name: Create release with jar attached
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
           gh release create "$GITHUB_REF_NAME"
-          cli-kotlin/build/libs/lamintra-*.jar
+          "cli-kotlin/build/libs/lamintra-${GITHUB_REF_NAME#v}.jar"
           --title "$GITHUB_REF_NAME"
           --generate-notes

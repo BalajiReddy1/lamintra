@@ -26,6 +26,25 @@ fun main(args: Array<String>) {
             }
         }
 
+        "scaffold" -> {
+            val scaffoldName = args.getOrNull(1)
+            if (scaffoldName == null) {
+                System.err.println("Usage: lamintra scaffold <name> [--force]")
+                System.err.println("Example: lamintra scaffold ios-shell")
+                kotlin.system.exitProcess(1)
+            }
+            try {
+                ScaffoldCommand.run(
+                    scaffoldName = scaffoldName,
+                    projectDir = projectDir,
+                    force = args.contains("--force")
+                )
+            } catch (e: Exception) {
+                System.err.println("Error: ${e.message}")
+                kotlin.system.exitProcess(1)
+            }
+        }
+
         else -> printHelp()
     }
 }
@@ -38,6 +57,11 @@ private fun printHelp() {
         Usage:
           lamintra init              Set up this project (run once)
           lamintra add <component>   Install a component, e.g. button, text-field
+          lamintra scaffold <name>   Write project structure, e.g. ios-shell
+
+        Scaffolds are project wiring rather than components: they write Swift
+        and Kotlin outside the component tree and are installed once. Pass
+        --force to overwrite files that already exist.
         """.trimIndent()
     )
 }

@@ -9,6 +9,17 @@ plugins {
     id("com.gradleup.shadow") version "9.5.1"
 }
 
+// One version, and the jar filename derives from it.
+//
+// It was a literal inside tasks.shadowJar until 2026-08-16, which made a
+// mislabeled release a single forgotten edit away: tagging v0.5.1 while that
+// literal still said 0.5.0 produces a release named for one version
+// containing a jar named for another. The site derives its install command
+// from the release, so the copy button would have handed every visitor a
+// filename that 404s - the same failure shape as the lamintra.jar bug, which
+// no automated check caught either.
+version = "0.6.0"
+
 repositories {
     mavenCentral()
 }
@@ -37,9 +48,16 @@ application {
 tasks.shadowJar {
     archiveBaseName.set("lamintra")
     archiveClassifier.set("")
-    archiveVersion.set("0.5.0")
+    archiveVersion.set(project.version.toString())
 }
 
 tasks.test {
     useJUnitPlatform()
+
+    // Point the registry at the working tree for tests. Two reasons, and the
+    // second is the important one: the suite never touches the network, and
+    // the scaffold tests exercise the ACTUAL files in ../registry, so a
+    // malformed scaffold.json or a stray {{TOKEN}} fails here rather than on
+    // a user's machine. Same override users have for testing an install.
+    environment("LAMINTRA_REGISTRY", projectDir.parentFile.resolve("registry").absolutePath)
 }

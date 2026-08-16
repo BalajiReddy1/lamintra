@@ -256,7 +256,11 @@ object InitCommand {
     private fun printDone() {
         println("\nWrote .lamintra/config.json")
         println("   Run 'lamintra add <component>' to install your first component,")
-        println("   e.g.: lamintra add bottomsheet/glass")
+        // A real, installable name. This said `bottomsheet/glass` until
+        // 2026-08-16: the nested form was dropped when names went flat, and
+        // the component itself was retired on 2026-08-11, so the first thing
+        // every new user was told to run had been failing twice over.
+        println("   e.g.: lamintra add button")
     }
 
     private fun writeConfig(projectDir: File, config: LamintraConfig) {

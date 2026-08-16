@@ -1,0 +1,31 @@
+{
+  "name": "ios-shell",
+  "title": "Native SwiftUI chrome around Compose screens (Liquid Glass on iOS 26)",
+  "requiresKmp": true,
+  "files": [
+    { "from": "swift/LamintraShell.swift", "to": "swift:LamintraShell.swift" },
+    { "from": "swift/ComposeScreen.swift", "to": "swift:ComposeScreen.swift" },
+    { "from": "kotlin/ShellEntry.kt", "to": "ios:ui/shell/ShellEntry.kt" },
+    { "from": "kotlin/ShellRoutes.kt", "to": "common:ui/shell/ShellRoutes.kt" }
+  ],
+  "postInstall": [
+    "  1. Add the two .swift files to the Xcode target.",
+    "     Open the project in Xcode, drag LamintraShell.swift and",
+    "     ComposeScreen.swift into the app group, and tick your app target.",
+    "     Editing the .pbxproj from a CLI is how project files get corrupted,",
+    "     so this one is left to Xcode.",
+    "",
+    "  2. Point your existing App at the shell.",
+    "     The Compose Multiplatform template ships an @main App already, and a",
+    "     second @main does not compile - so LamintraShell is a plain View.",
+    "     In iOSApp.swift, replace the body of the WindowGroup:",
+    "",
+    "         WindowGroup {",
+    "             LamintraShell()",
+    "         }",
+    "",
+    "  Then build from Xcode. Compose renders inside each tab; SwiftUI draws",
+    "  the tab bar and the navigation bars, which is what makes iOS 26 apply",
+    "  Liquid Glass to them without any styling code."
+  ]
+}
