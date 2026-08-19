@@ -18,7 +18,7 @@ plugins {
 // from the release, so the copy button would have handed every visitor a
 // filename that 404s - the same failure shape as the lamintra.jar bug, which
 // no automated check caught either.
-version = "0.8.0"
+version = "0.9.0"
 
 repositories {
     mavenCentral()
