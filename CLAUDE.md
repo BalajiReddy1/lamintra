@@ -154,7 +154,7 @@ its card's edge and an outward ring would be clipped).
 7. A `@Preview` file routed to the android source root.
 8. Compiles Android + desktop + iOS + wasm.
 9. **Run on a real screen with interactions exercised, and the founder looks.**
-10. Registry tag + `REGISTRY_BASE` bump + jar release only after 1-9.
+10. Registry tag + `PUBLISHED_REGISTRY` bump + jar release only after 1-9.
 
 **Operational gotchas that have already cost real time - do not rediscover:**
 - **Claude cannot see rendered output.** The browser pane does not composite
@@ -430,13 +430,14 @@ Don't "simplify" by using underscores in the command - `add text_field` next to
   source** - the pre-tag check that catches it is: simulate the rewrite over
   every component, then grep for `com.lamintra` and for non-ASCII.
 - The registry repo is live at
-  `github.com/BalajiReddy1/jetcompose-registry` (public - required, since
+  `github.com/BalajiReddy1/lamintra-registry` (public - required, since
   the installer does unauthenticated raw.githubusercontent.com fetches).
-  `Installer.kt`'s `REGISTRY_BASE` points at it, **pinned to a release
+  `Registry.kt`'s `PUBLISHED_REGISTRY` points at it, **pinned to a release
   tag, not `main`**: raw.githubusercontent.com caches branch URLs for
   ~5 minutes, which caused a transient 404 and stale-content serving
   during real-project testing. Tag URLs are immutable - registry changes
-  require cutting a new tag and bumping `REGISTRY_BASE` (jar re-release).
+  require cutting a new tag and bumping `PUBLISHED_REGISTRY` (jar
+  re-release).
 - `lamintra init` now **auto-detects the project** (filesystem-only -
   no Gradle evaluation, consistent with the config-over-parsing
   decision): finds Gradle modules (build file + src/, <=2 levels deep),
@@ -801,23 +802,103 @@ non-technical product story to design from.
    an outsider can actually download. The product-name decision is also
    still pending and is upstream of any public surface.
 
-## Cutting a CLI release
+## Cutting a release
 
-The CLI ships as a fat JAR attached to a GitHub Release on the main repo
-(`github.com/BalajiReddy1/jetcompose` - history
-was reset 2026-07-12 to purge the internal strategy doc, so going public
-is now purely the founder's call). The release pipeline is
-`.github/workflows/release.yml`, triggered by pushing a `v*` tag:
+**Corrected 2026-08-19**, after being followed for a release it described
+wrongly in three places. It said the repo was `BalajiReddy1/jetcompose`, which
+was renamed on 2026-08-05; that you bump `archiveVersion`, which is derived and
+not a thing you set; and that the registry pin is `REGISTRY_BASE` in
+`Installer.kt`, which contains no such constant since `Registry.kt` was
+extracted on 2026-08-16. The procedure still worked because the person running
+it went and looked. The next one might not.
 
-1. Bump `archiveVersion` in `cli-kotlin/build.gradle.kts` if the version
-   is changing; commit.
-2. If registry content changed, first cut a new tag in the registry repo
-   (`lamintra-registry`) and bump `REGISTRY_BASE` in `Installer.kt` to
-   match - the two repos have **independent tag lines**.
-3. `git tag vX.Y.Z && git push origin master vX.Y.Z`
-4. Actions builds the jar on JDK 17, smoke-tests it (`--help` output),
-   and creates the release with `lamintra-X.Y.Z.jar` attached.
-5. Verify with `gh release view vX.Y.Z` or download and run the jar.
+The CLI ships as a fat jar attached to a GitHub Release on
+`github.com/BalajiReddy1/lamintra`, which is public. The pipeline is
+`.github/workflows/release.yml`, triggered by pushing a `v*` tag.
+
+**This is a chain across three repositories and it has one correct order.**
+Doing half of it points the install page at a jar that does not exist.
+
+### 1. The registry, if its content changed
+
+**There is no publish script and nothing syncs this.** The registry repo has no
+checkout in this tree. Clone it, copy `registry/` over, commit, tag, push. Its
+tag line is **independent** of the CLI's.
+
+```bash
+git clone https://github.com/BalajiReddy1/lamintra-registry /tmp/reg
+```
+
+**Diff before you copy, and strip carriage returns when you do.** On 2026-08-19,
+27 files differed between the published registry and this tree and only 10 had
+real content changes; the other 17 differed by line endings alone. `cmp` counts
+CRLF as a difference, so copying wholesale would have made the release diff 63%
+noise and buried the actual change.
+
+```bash
+# what genuinely changed, ignoring line endings
+cd /tmp/reg && for f in $(git ls-files); do
+  diff -q <(tr -d '\r' < "$f") <(tr -d '\r' < "$REGISTRY/$f") >/dev/null || echo "$f"
+done
+```
+
+Then `git tag vX.Y.Z && git push origin main vX.Y.Z`, and confirm the CDN
+actually serves it before going further - the pin is worthless otherwise:
+
+```bash
+curl -sI https://raw.githubusercontent.com/BalajiReddy1/lamintra-registry/vX.Y.Z/theme/src/LamintraTheme.kt
+```
+
+### 2. The CLI
+
+1. Bump `version` in `cli-kotlin/build.gradle.kts`. **Not `archiveVersion`** -
+   that is `archiveVersion.set(project.version.toString())` and follows on its
+   own.
+2. If step 1 happened, bump `PUBLISHED_REGISTRY` in
+   `cli-kotlin/src/main/kotlin/com/lamintra/cli/Registry.kt` to the new
+   registry tag.
+3. Commit, then `git tag vX.Y.Z && git push origin master vX.Y.Z`.
+4. Actions builds on JDK 17, smoke-tests `--help`, and attaches
+   `lamintra-X.Y.Z.jar`. It names the jar **from the tag**, so a version left
+   behind in `build.gradle.kts` fails the release instead of publishing a
+   mismatched jar.
+
+### 3. The site, which is a different repository
+
+`src/data/releases.ts` in `lamintra-site`: `currentCli`, `pinnedRegistry`, and a
+`cliReleases` entry. Everything else there derives from `currentCli` - the jar
+filename, every command on the install page, the masthead version chip,
+`llms.txt`.
+
+**The OG card does not derive.** It bakes the version into a picture, so
+`node scripts/og-card.mjs` has to be re-run or the card ships showing the
+previous version under a page offering the new one. Then build, run both gate
+checks, and deploy.
+
+### Verify like a user, not like a build
+
+A green pipeline says the jar exists. It does not say the release works. Download
+the published jar from the Releases page, run it in a scratch project with
+`LAMINTRA_REGISTRY` **unset**, and confirm the new code actually arrives:
+
+```bash
+gh release download vX.Y.Z --pattern "lamintra-X.Y.Z.jar"
+java -jar lamintra-X.Y.Z.jar add sheet
+```
+
+**Watch every workflow, not the one you triggered.** `release.yml` builds only
+the jar. On 2026-08-16 two releases went out green from it while
+`verify-components.yml` had been red for six hours.
+
+```bash
+gh run list --limit 3
+```
+
+### The tag subject should not name its own version
+
+The site renders the version in its own column, so a subject like "Pin to
+registry v0.8.0 and cut 0.9.0" reads as "v0.9.0 - ... and cut 0.9.0" there and
+has to be trimmed by hand in `releases.ts`. Twice now.
 
 ## Key commands
 
