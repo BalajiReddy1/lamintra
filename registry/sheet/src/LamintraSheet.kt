@@ -81,7 +81,10 @@ data class LamintraSheetColors(
         fun from(colors: LamintraColors, scrimAlpha: Float = 0.55f): LamintraSheetColors =
             LamintraSheetColors(
                 scrim = colors.shadow.copy(alpha = scrimAlpha),
-                container = colors.container,
+                // containerOverlay, not container. They were the same colour
+                // until 2026-08-19, so a sheet over a card had nothing but the
+                // scrim to separate them.
+                container = colors.containerOverlay,
                 hairline = colors.hairline,
                 // Lighter than the hairline, because a sheet sits closer to the
                 // reader than a card does and its top edge is the first thing

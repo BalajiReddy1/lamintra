@@ -72,6 +72,12 @@ object LamintraPalette {
     val Neutral500 = Color(0xFF70707B)
     val Neutral600 = Color(0xFF8B8B90)
     val Neutral800 = Color(0xFF26262A)
+    // Between 900 and 800, added 2026-08-19 for the third surface level. Sized
+    // by measurement, not taste: 1.15:1 against Neutral900, which is the same
+    // step Neutral900 makes against Neutral950, so the ladder is even. Picking
+    // it by eye produced 1.10:1 on the first attempt, which is below where the
+    // rungs stop being distinguishable.
+    val Neutral850 = Color(0xFF28282F)
     // Raised from #141416 on 2026-08-17. Against surface (#09090B) the old value
     // measured 1.07:1, which is below what an eye resolves, so every container
     // in the dark scheme sat visually flat on the ground it was supposed to be
@@ -131,6 +137,21 @@ data class LamintraColors(
     val container: Color,
     /** A recessed container: a code block, the inside of a bar. */
     val containerSunk: Color,
+    /**
+     * The surface of anything that sits OVER the page: a sheet today, a dialog
+     * or a popover later.
+     *
+     * A role name, not an elevation one, for the reason given above `container`:
+     * on dark it is lighter than a container and on light it is a clean white
+     * against the container's grey, so "raised" would be true in one scheme and
+     * false in the other. What is constant is what uses it.
+     *
+     * It exists because until 2026-08-19 a sheet and a card were the same
+     * colour. Put a sheet over a card and nothing separated them: the ladder
+     * had two rungs and needed three, and the missing rung was the one the eye
+     * looks at most, because an overlay is what has the reader's attention.
+     */
+    val containerOverlay: Color,
 
     /** Primary text, and the fill of a primary action. Ink carries action. */
     val ink: Color,
@@ -200,6 +221,7 @@ fun lamintraDarkColors(
     surface: Color = LamintraPalette.Neutral950,
     container: Color = LamintraPalette.Neutral900,
     containerSunk: Color = LamintraPalette.Black,
+    containerOverlay: Color = LamintraPalette.Neutral850,
     ink: Color = LamintraPalette.Neutral50,
     inkMuted: Color = LamintraPalette.Neutral600,
     inkFaint: Color = LamintraPalette.Neutral600,
@@ -216,6 +238,7 @@ fun lamintraDarkColors(
     surface = surface,
     container = container,
     containerSunk = containerSunk,
+    containerOverlay = containerOverlay,
     ink = ink,
     inkMuted = inkMuted,
     inkFaint = inkFaint,
@@ -244,6 +267,10 @@ fun lamintraLightColors(
     surface: Color = LamintraPalette.White,
     container: Color = LamintraPalette.Neutral100,
     containerSunk: Color = LamintraPalette.Neutral100,
+    // White, not a grey. In light the page is already white and containers are
+    // Neutral100, so an overlay goes the other way to separate: it is the
+    // cleanest surface on screen, sitting over a scrimmed page.
+    containerOverlay: Color = LamintraPalette.White,
     ink: Color = LamintraPalette.Neutral950,
     inkMuted: Color = LamintraPalette.Neutral500,
     inkFaint: Color = LamintraPalette.Neutral500,
@@ -260,6 +287,7 @@ fun lamintraLightColors(
     surface = surface,
     container = container,
     containerSunk = containerSunk,
+    containerOverlay = containerOverlay,
     ink = ink,
     inkMuted = inkMuted,
     inkFaint = inkFaint,
