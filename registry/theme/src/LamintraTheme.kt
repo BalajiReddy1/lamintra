@@ -72,7 +72,14 @@ object LamintraPalette {
     val Neutral500 = Color(0xFF70707B)
     val Neutral600 = Color(0xFF8B8B90)
     val Neutral800 = Color(0xFF26262A)
-    val Neutral900 = Color(0xFF141416)
+    // Raised from #141416 on 2026-08-17. Against surface (#09090B) the old value
+    // measured 1.07:1, which is below what an eye resolves, so every container
+    // in the dark scheme sat visually flat on the ground it was supposed to be
+    // lifted off - most visibly the sheet, which lost its own edge. This is
+    // 1.16:1, close to the step iOS uses from systemBackground to
+    // secondarySystemBackground. Still between Neutral950 and Neutral800, so the
+    // scale stays ordered.
+    val Neutral900 = Color(0xFF1C1C20)
     val Neutral950 = Color(0xFF09090B)
     val Black = Color(0xFF0A0A0B)
     val TrueBlack = Color(0xFF000000)
@@ -81,6 +88,12 @@ object LamintraPalette {
     // Full lime measures 1.18:1 against a white page, so on light the track of
     // a switch would dissolve into the page and read as permanently off. The
     // olive measures 5.57:1 against white. See design/TOKENS.md.
+    // Opt-in since 2026-08-17, not defaults. The switch was the only consumer
+    // of `accent`, so a single acid green appeared twice on a screen that was
+    // otherwise white, black and one red - which read as a brand colour chosen
+    // by accident. The system is monochrome now and `accent` resolves to `ink`.
+    // Both stay here because they are still how you put the colour back:
+    // LamintraSwitch.dark(accent = LamintraPalette.Lime).
     val Lime = Color(0xFFC8FF34)
     val Olive = Color(0xFF57710A)
 
@@ -193,7 +206,7 @@ fun lamintraDarkColors(
     onInk: Color = LamintraPalette.Black,
     hairline: Color = LamintraPalette.Neutral800,
     hairlineStrong: Color = LamintraPalette.Neutral50,
-    accent: Color = LamintraPalette.Lime,
+    accent: Color = LamintraPalette.Neutral50,
     onAccent: Color = LamintraPalette.Black,
     danger: Color = LamintraPalette.Red500,
     onDanger: Color = LamintraPalette.White,
@@ -237,7 +250,7 @@ fun lamintraLightColors(
     onInk: Color = LamintraPalette.White,
     hairline: Color = LamintraPalette.Neutral200,
     hairlineStrong: Color = LamintraPalette.Neutral950,
-    accent: Color = LamintraPalette.Olive,
+    accent: Color = LamintraPalette.Neutral950,
     onAccent: Color = LamintraPalette.White,
     danger: Color = LamintraPalette.Red600,
     onDanger: Color = LamintraPalette.White,

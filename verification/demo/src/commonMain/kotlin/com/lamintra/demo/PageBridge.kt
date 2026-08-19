@@ -42,7 +42,17 @@ internal fun ObservePageScheme(onChange: (Boolean) -> Unit) {
     LaunchedEffect(Unit) {
         var last = pageIsDark()
         while (true) {
-            delay(200)
+            // 16ms, one frame, not 200. At 200 the average lag between the
+            // toggle flipping and this canvas following was 100ms and the worst
+            // case was 200, which the founder saw immediately on 2026-08-17 and
+            // described as the render arriving late. It did. One getAttribute
+            // per frame is genuinely free next to compositing this canvas at
+            // 60fps, and the markup stays the only contract between the two.
+            //
+            // A MutationObserver would be zero-poll and is the proper fix; it
+            // needs a JS-to-Kotlin callback across the wasm boundary, which is
+            // more machinery than this earns today.
+            delay(16)
             val now = pageIsDark()
             if (now != null && now != last) {
                 last = now

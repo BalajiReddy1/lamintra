@@ -46,6 +46,15 @@ enum class ButtonSize(val height: Dp, val horizontalPadding: Dp) {
 }
 
 /**
+ * The system corner radius, shared by every control-sized surface.
+ *
+ * Private to this file on purpose: components install independently, so a
+ * shared constant would be a package this component cannot assume exists.
+ * The value is the contract, not the symbol.
+ */
+private val RADIUS_MD: Dp = 12.dp
+
+/**
  * Colours for [LamintraButton].
  *
  * The three factory names - `dark()`, `light()`, `auto()` - are identical on
@@ -134,10 +143,11 @@ data class LamintraButtonColors(
  * @param onClick called on tap when [enabled]
  * @param emphasis Primary fills with ink, Destructive with the danger colour,
  *        Secondary draws a contour only, Ghost is text alone
- * @param enabled when false the button drops to [disabledAlpha] and ignores taps
+ * @param enabled when false the button becomes a recessed surface with dim
+ *   text, dimmed further by [disabledAlpha], and ignores taps
  * @param colors see [LamintraButtonColors]; defaults to following the system
- * @param cornerRadius `null` means a capsule (half the height), which is the
- *        default silhouette for an action. Pass a value for a tighter shape
+ * @param cornerRadius `null` means the system radius, 12.dp. Pass a value for
+ *        anything else, including `height / 2` for a capsule
  * @param pressScale how far the control shrinks while held
  * @param textStyle label style. Never sets `fontFamily`, so the host app's
  *        typeface is used; replace it wholesale to restyle the label
@@ -155,7 +165,7 @@ fun LamintraButton(
     cornerRadius: Dp? = null,
     contentPadding: Dp = size.horizontalPadding,
     pressScale: Float = 0.97f,
-    disabledAlpha: Float = 0.3f,
+    disabledAlpha: Float = 0.75f,
     borderWidth: Dp = 1.5.dp,
     focusRingGap: Dp = 4.dp,
     focusRingWidth: Dp = 2.dp,
@@ -177,16 +187,24 @@ fun LamintraButton(
         animationSpec = spring(dampingRatio = 0.72f, stiffness = 1400f)
     )
 
-    val fill: Color? = when (emphasis) {
-        ButtonEmphasis.Primary -> colors.ink
-        ButtonEmphasis.Destructive -> colors.danger
-        ButtonEmphasis.Secondary, ButtonEmphasis.Ghost -> null
+    // Disabled is a RECESSED SURFACE, not a faded one. Fading the whole layer
+    // was the old behaviour and it failed the same way in both schemes: a white
+    // Primary fill at 0.3 alpha over a near-black ground resolves to a mid-grey
+    // pill, which reads as an ordinary enabled button rather than an inert one.
+    // Recorded 2026-08-17 off the rendered specimen, where "Disabled" was the
+    // most button-looking thing in the frame.
+    val fill: Color? = when {
+        !enabled -> colors.hairline
+        emphasis == ButtonEmphasis.Primary -> colors.ink
+        emphasis == ButtonEmphasis.Destructive -> colors.danger
+        else -> null
     }
-    val label = when (emphasis) {
-        ButtonEmphasis.Primary -> colors.onInk
-        ButtonEmphasis.Destructive -> colors.onDanger
-        ButtonEmphasis.Secondary -> colors.ink
-        ButtonEmphasis.Ghost -> colors.inkDim
+    val label = when {
+        !enabled -> colors.inkDim
+        emphasis == ButtonEmphasis.Primary -> colors.onInk
+        emphasis == ButtonEmphasis.Destructive -> colors.onDanger
+        emphasis == ButtonEmphasis.Secondary -> colors.ink
+        else -> colors.inkDim
     }
 
     Box(
@@ -199,7 +217,15 @@ fun LamintraButton(
                 alpha = if (enabled) 1f else disabledAlpha
             }
             .drawBehind {
-                val radius = cornerRadius?.toPx() ?: (this.size.height / 2f)
+                // 12.dp, not height/2. A capsule is Material 3's button
+                // silhouette, and while this drew one no amount of colour work
+                // was going to stop the component reading as Material - the
+                // shape was the tell. It also made Squircle pointless: at
+                // half-height radius a superellipse and a circular arc are the
+                // same curve, so the one genuinely distinctive thing in this
+                // file was invisible. At 12.dp the continuous corner is
+                // visible, which is the whole point of drawing it.
+                val radius = cornerRadius?.toPx() ?: RADIUS_MD.toPx()
                 val path = Squircle.path(this.size.width, this.size.height, radius)
 
                 if (focused && enabled) {

@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
@@ -36,8 +37,28 @@ import com.lamintra.card.internal.card.Squircle
  * shared token layer changes only what `auto()` reads, without touching a
  * single call site. Do not rename them.
  */
+/**
+ * The lit top edge.
+ *
+ * Not a shadow, and the distinction is the whole point. A drop shadow is black,
+ * and black on a #09090B ground is invisible - which is why the dark scheme read
+ * as flat while the light one did not, and why reaching for `Modifier.shadow`
+ * here would have produced nothing on any platform and nothing useful on
+ * Android either.
+ *
+ * What actually lifts a surface in a dark interface is a light SOURCE: a
+ * hairline along the top edge, brighter than the fill, fading out before it
+ * reaches the bottom. The eye reads it as a lamp above the object. It is the
+ * signature of every dark interface that reads as expensive.
+ *
+ * Drawn as a stroke of the component's own outline filled with a vertical
+ * gradient, so it follows the superellipse exactly rather than approximating it
+ * with a straight line across the top, which would break at the corners.
+ */
 data class LamintraCardColors(
     val fill: Color,
+    /** The lit top edge. See the drawing code for why this is not a shadow. */
+    val highlight: Color,
     val border: Color,
     val focus: Color
 ) {
@@ -45,6 +66,12 @@ data class LamintraCardColors(
         /** Maps the shared semantic layer onto this component's own slots. */
         fun from(colors: LamintraColors): LamintraCardColors = LamintraCardColors(
             fill = colors.container,
+            // The hairline is already the token that means "the line that marks
+            // an edge", and in the dark scheme it is lighter than the container
+            // it sits on, which is exactly what a highlight needs to be. No new
+            // token: the theme's comment about how many a person can hold is
+            // right, and this did not earn a nineteenth.
+            highlight = colors.hairline,
             // A card separates from the page by value alone. The border exists
             // as a parameter for hosts whose background sits too close to the
             // fill, not as part of the default look. Transparent is not a token
@@ -137,6 +164,20 @@ fun LamintraCard(
                 }
 
                 drawPath(path, colors.fill)
+
+                // Top-edge highlight. Fades out by 60% of the height, so the
+                // bottom of the card carries none of it and the light reads as
+                // coming from above rather than surrounding the card evenly.
+                drawPath(
+                    path,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(colors.highlight, Color.Transparent),
+                        startY = 0f,
+                        endY = size.height * 0.6f
+                    ),
+                    style = Stroke(borderWidth.toPx())
+                )
+
                 if (colors.border != Color.Transparent) {
                     drawPath(path, colors.border, style = Stroke(borderWidth.toPx()))
                 }

@@ -97,6 +97,9 @@ data class LamintraSegmentedColors(
     }
 }
 
+/** The tightest step in the radius scale. The button uses the mid step. */
+private val RADIUS_SM: Dp = 8.dp
+
 /**
  * A segmented control: one choice out of a few, with a thumb that slides.
  *
@@ -206,11 +209,16 @@ fun LamintraSegmented(
                 val pad = contentPadding.toPx()
                 val thumbHeight = (size.height - pad * 2f).coerceAtLeast(0f)
                 val segmentWidth = ((size.width - pad * 2f) / count).coerceAtLeast(0f)
-                val thumbRadius = cornerRadius?.toPx() ?: (thumbHeight / 2f)
+                // 8.dp, the tightest step in the scale, because a segmented
+                // control is smaller than a button and a 12 would eat it. Was
+                // thumbHeight/2, a capsule inside a capsule, which is the iOS
+                // segmented silhouette and the Material one at once.
+                val thumbRadius = cornerRadius?.toPx() ?: RADIUS_SM.toPx()
                 // Concentric: a rounded rect inset by `pad` inside another needs
                 // the outer radius to be the inner one plus that inset, or the
-                // gutter pinches at the corners.
-                val trackRadius = cornerRadius?.let { it.toPx() + pad } ?: (size.height / 2f)
+                // gutter pinches at the corners. One expression now rather than
+                // two conditionals, so the relationship cannot drift.
+                val trackRadius = thumbRadius + pad
 
                 drawPath(Squircle.path(size.width, size.height, trackRadius), colors.track)
 

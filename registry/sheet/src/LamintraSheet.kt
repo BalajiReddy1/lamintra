@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -64,6 +65,8 @@ data class LamintraSheetColors(
     val scrim: Color,
     val container: Color,
     val hairline: Color,
+    /** The lit top edge. See [LamintraCardColors] for why this is not a shadow. */
+    val highlight: Color,
     val handle: Color
 ) {
     companion object {
@@ -80,6 +83,10 @@ data class LamintraSheetColors(
                 scrim = colors.shadow.copy(alpha = scrimAlpha),
                 container = colors.container,
                 hairline = colors.hairline,
+                // Lighter than the hairline, because a sheet sits closer to the
+                // reader than a card does and its top edge is the first thing
+                // that arrives when it slides up.
+                highlight = colors.ink.copy(alpha = 0.10f),
                 handle = colors.inkFaint
             )
 
@@ -153,7 +160,7 @@ fun LamintraSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     colors: LamintraSheetColors = LamintraSheetColors.auto(),
-    cornerRadius: Dp = 24.dp,
+    cornerRadius: Dp = 20.dp,
     dismissFraction: Float = 0.35f,
     flingVelocity: Dp = 400.dp,
     upwardResistance: Float = 0.28f,
@@ -233,7 +240,22 @@ fun LamintraSheet(
                         .drawBehind {
                             val card = SheetShape.path(size.width, size.height, cornerRadius.toPx())
                             drawPath(card, colors.container)
+                            // The uniform hairline stays: it is what separates
+                            // the sheet from the scrim on every edge. The
+                            // gradient on top of it is the light source, and
+                            // the two do different jobs. See LamintraCard for
+                            // the full reasoning; a black shadow does nothing
+                            // on a near-black ground.
                             drawPath(card, colors.hairline, style = Stroke(hairlineWidth.toPx()))
+                            drawPath(
+                                card,
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(colors.highlight, Color.Transparent),
+                                    startY = 0f,
+                                    endY = size.height * 0.45f
+                                ),
+                                style = Stroke(hairlineWidth.toPx())
+                            )
                         }
                         .draggable(
                             state = dragState,

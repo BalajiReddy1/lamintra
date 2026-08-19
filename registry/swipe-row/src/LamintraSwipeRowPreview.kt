@@ -61,8 +61,14 @@ private fun SwipeRowSpecimen(canvas: Color, ink: Color, colors: LamintraSwipeRow
         ) {
             PreviewRow("Quarterly report", ink)
         }
+        // Revealed, because a static preview of a gesture component shows
+        // nothing otherwise. `revealed` defaults to false, so until 2026-08-17
+        // this preview rendered the one component whose entire value is the
+        // swipe as two lines of plain text, in the IDE where it is most likely
+        // to be judged.
         LamintraSwipeRow(
             actions = listOf(LamintraSwipeAction("Delete", onClick = {}, destructive = true)),
+            revealed = true,
             colors = colors
         ) {
             PreviewRow("Meeting notes", ink)

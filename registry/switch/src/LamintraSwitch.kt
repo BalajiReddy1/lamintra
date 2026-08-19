@@ -15,7 +15,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
@@ -81,7 +83,7 @@ data class LamintraSwitchColors(
          * knob here is the soft shadow's edge, and the state itself is carried
          * by knob POSITION, so nothing is riding on that ratio.
          */
-        fun dark(accent: Color = LamintraPalette.Lime): LamintraSwitchColors =
+        fun dark(accent: Color = LamintraPalette.Neutral50): LamintraSwitchColors =
             from(lamintraDarkColors(accent = accent))
 
         /**
@@ -92,7 +94,7 @@ data class LamintraSwitchColors(
          * real failure rather than an accepted one. This olive measures 5.57:1
          * against white and carries the white knob at the same 5.57:1.
          */
-        fun light(accent: Color = LamintraPalette.Olive): LamintraSwitchColors =
+        fun light(accent: Color = LamintraPalette.Neutral950): LamintraSwitchColors =
             from(lamintraLightColors(accent = accent))
 
         /**
@@ -190,7 +192,14 @@ fun LamintraSwitch(
                 if (on > 0f) drawPath(track, colors.trackOn.copy(alpha = on))
 
                 val k = knobSize.toPx()
-                val knob = Squircle.path(k, k, k / 2f)
+                // A circle, not a squircle. Squircle at half-side radius gives a
+                // superellipse, which rendered as a rounded square - and every
+                // switch anyone has ever touched, physical or on either
+                // platform, has a round knob. It is the one place in this
+                // library where the continuous corner works against the shape
+                // rather than for it. Seen only once all eight components sat
+                // on one sheet together, 2026-08-17.
+                val knob = Path().apply { addOval(Rect(0f, 0f, k, k)) }
                 translate(left = knobX.toPx(), top = (size.height - k) / 2f) {
                     if (shadowSpread > 0.dp) {
                         softShadow(

@@ -84,6 +84,9 @@ data class LamintraTextFieldColors(
     }
 }
 
+/** The system control radius. Same value as the button, deliberately. */
+private val RADIUS_MD: Dp = 12.dp
+
 /**
  * A single-line text field, built on `BasicTextField` - not Material's.
  *
@@ -156,7 +159,11 @@ fun LamintraTextField(
                 .defaultMinSize(minHeight = minHeight)
                 .graphicsLayer { alpha = if (enabled) 1f else disabledAlpha }
                 .drawBehind {
-                    val radius = cornerRadius?.toPx() ?: (size.height / 2f)
+                    // 12.dp, matching the button. Was height/2, which made a
+                    // text field a capsule - Material 3's own filled-field
+                    // silhouette, and the shape that made this component read
+                    // as Material whatever its colours were.
+                    val radius = cornerRadius?.toPx() ?: RADIUS_MD.toPx()
                     val path = Squircle.path(size.width, size.height, radius)
                     drawPath(path, colors.fill)
                     drawPath(

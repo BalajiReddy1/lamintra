@@ -1,6 +1,7 @@
 package com.lamintra.button
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,8 +35,13 @@ private fun LamintraButtonLightPreview() {
 
 @Composable
 private fun ButtonSpecimen(canvas: Color, colors: LamintraButtonColors) {
+    // `.focusable()` on the Column, not decoration: Compose preview hands
+    // initial focus to the first focusable it finds, which was the Primary
+    // button, so the IDE always drew it wearing its focus ring while the
+    // headless render of the same source showed none. A focusable parent takes
+    // that focus instead and the specimen shows the resting state.
     Column(
-        modifier = Modifier.fillMaxSize().background(canvas).padding(20.dp),
+        modifier = Modifier.fillMaxSize().background(canvas).padding(20.dp).focusable(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         LamintraButton("Primary", {}, colors = colors)

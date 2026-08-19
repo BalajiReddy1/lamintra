@@ -252,6 +252,26 @@ regression rather than noise.
   was broken the first time a human touched it (2026-07-12): every
   testbed was compile-only, no app had ever been launched. Don't tag a
   registry release for a component that hasn't met both bars.
+- **Anchor every `.gitignore` pattern meant for the repo root.** Added
+  2026-08-16, after it cost six hours. Line 11 was `internal/`, unanchored,
+  so it matched a directory of that name at ANY depth and silently swallowed
+  `registry/sheet/src/internal/sheet/SheetShape.kt`. It compiled locally
+  because the file was on disk, so nothing looked wrong from here. The six
+  older components survived only by accident: their `internal/` files were
+  committed BEFORE that line existed and git keeps tracking what is already
+  in the index, so every component added after it would have hit this.
+  Published users were never affected, because the registry repo has no such
+  rule and both `v0.6.0` and `v0.7.0` carry the file - verified against the
+  CDN. It is `/internal/` now, which still ignores the private docs and
+  nothing else. Write `/dir/`, not `dir/`, unless you genuinely mean every
+  depth.
+- **Watch every workflow, not the one you triggered.** Same incident, same
+  date, and the reason it stayed hidden. Three workflows exist and two were
+  being watched: `release.yml` builds only the CLI jar, so it went green
+  twice and shipped two releases while `verify-components.yml` had been red
+  since `sheet` landed. A green release workflow is not evidence that the
+  components compile, because that workflow never compiles them. After any
+  release, check the Actions tab as a whole rather than the run you started.
 
 ## Competitive landscape - checked 2026-08-06, correct an older premise
 

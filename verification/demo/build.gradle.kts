@@ -11,6 +11,12 @@ plugins {
 // because it is not on the website either, and anything unfinished stays off
 // until it has been looked at.
 val components = listOf(
+    // The shared token layer. Must come first: every component below reads it.
+    // Absent from this list until 2026-08-17, which is why the demo stopped
+    // compiling the moment anything referenced it - the wasm hero on the live
+    // site was built from a pre-theme snapshot and had been stale since the
+    // shared theme shipped on 2026-08-16. :harness has always had it.
+    "theme",
     "button",
     "card",
     "text-field",

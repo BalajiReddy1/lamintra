@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
@@ -252,7 +253,19 @@ fun LamintraSwipeRow(
     }
 
     Box(
-        modifier = modifier
+        // fillMaxWidth BEFORE the caller's modifier, so it is a default rather
+        // than a rule: `Modifier.width(240.dp)` from a caller still wins.
+        //
+        // It was neither until 2026-08-17, and the row took its width from its
+        // content. Every specimen hid that, because they all pass
+        // LamintraListRow, which fills the width itself - so the first person
+        // to put plain content in a row got a 200px-wide row two thirds of the
+        // way off the left of the screen, with the destructive action floating
+        // in the middle of it. A swipe row spans its list; height is what
+        // should wrap, and still does.
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(modifier)
             // Not optional, and it was not obvious until it was rendered. Two
             // things escape these bounds without it: the content slides left
             // past the row's own left edge, and the parallaxed actions sit to
