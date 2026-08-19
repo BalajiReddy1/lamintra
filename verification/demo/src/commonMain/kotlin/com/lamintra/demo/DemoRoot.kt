@@ -96,7 +96,12 @@ fun DemoRoot() {
             .background(surface)
             .padding(horizontal = 20.dp)
     ) {
-        Spacer(Modifier.height(16.dp))
+        // 32, not 16. The title sat too close to the top of the frame and it
+        // read as cropped rather than as a screen. Changed in BOTH files on
+        // 2026-08-19: HeroScreen here and DemoRoot in :demo are the same screen,
+        // and any difference between them shows on the page as a jump when the
+        // canvas replaces the PNG rather than as it waking up.
+        Spacer(Modifier.height(32.dp))
         BasicText(
             "Settings",
             style = TextStyle(
