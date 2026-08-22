@@ -6,6 +6,25 @@ object InitCommand {
     fun run(projectDir: File) {
         println("lamintra init")
 
+        // Re-running init said nothing about an existing config until
+        // 2026-08-21 and silently replaced it. A customised componentPath was
+        // discarded by pressing Enter at a prompt that looked like an ordinary
+        // first-run detection, because the user was never told there was
+        // anything to keep.
+        val existing = runCatching { LamintraConfig.load(projectDir) }.getOrNull()
+        if (existing != null) {
+            println("\nThis project is already set up. Current settings:")
+            println("  Type         : ${if (existing.isKmp) "Kotlin Multiplatform" else "Android"}")
+            println("  Source root  : ${existing.sourceRoots.common ?: existing.sourceRoots.android}")
+            println("  Root package : ${existing.packageName}")
+            println("  Components   : ${existing.packageName}." +
+                existing.componentPath.replace('/', '.') + ".*")
+            if (!promptYesNo("\nRe-detect and replace these?", default = false)) {
+                println("Kept your existing settings. Nothing was changed.")
+                return
+            }
+        }
+
         val detected = detectLayout(projectDir)
         if (detected != null) {
             val componentPath = "ui/components"
@@ -30,7 +49,7 @@ object InitCommand {
                     componentPath = componentPath
                 )
                 writeConfig(projectDir, config)
-                printDone()
+                printDone(hasInstalledComponents(projectDir, config))
                 return
             }
             println("No problem - answer a few questions instead.\n")
@@ -129,16 +148,30 @@ object InitCommand {
         return result
     }
 
-    /** Multiple candidate modules -> one numbered pick instead of free-typed paths. */
+    /**
+     * Multiple candidate modules -> one numbered pick instead of free-typed paths.
+     *
+     * **Asks again on a bad answer.** Until 2026-08-21 anything that was not a
+     * valid number returned null, which made `detectLayout` return null, which
+     * printed "Couldn't auto-detect the project layout" one line after
+     * detecting it correctly and dropped the user into the manual
+     * questionnaire. One typo threw away a correct answer and replaced it with
+     * defaults that did not match the project.
+     */
     private fun pickModule(projectDir: File, modules: List<File>): File? {
         println("\nSeveral modules found - which should components install into?")
         modules.forEachIndexed { i, m ->
             println("  ${i + 1}) ${m.relativeTo(projectDir).path.replace('\\', '/')}")
         }
-        print("Enter a number [1]: ")
-        val input = readlnOrNull()?.trim()
-        val index = if (input.isNullOrEmpty()) 0 else (input.toIntOrNull()?.minus(1) ?: return null)
-        return modules.getOrNull(index)
+        repeat(3) {
+            print("Enter a number [1]: ")
+            val input = readlnOrNull()?.trim() ?: return null // stdin closed
+            if (input.isEmpty()) return modules.first()
+            val picked = input.toIntOrNull()?.let { n -> modules.getOrNull(n - 1) }
+            if (picked != null) return picked
+            println("  Please enter a number between 1 and ${modules.size}.")
+        }
+        return null
     }
 
     private fun containsKotlin(dir: File): Boolean =
@@ -191,7 +224,15 @@ object InitCommand {
 
         fun promptSourceRoot(question: String, default: String): String {
             val root = prompt(question, default)
-            if (!hasGradleBuildFileNearby(projectDir, root)) {
+            if (!moduleDirectoryExists(projectDir, root)) {
+                val module = root.substringBefore("/src/")
+                println(
+                    "  Warning: there is no '$module' directory in this project, so " +
+                        "'$root' does not exist. A wrong source root means installed " +
+                        "files land where Gradle never compiles them."
+                )
+                suspiciousRoots += root
+            } else if (!hasGradleBuildFileNearby(projectDir, root)) {
                 println(
                     "  Warning: no Gradle build file (build.gradle.kts / build.gradle) " +
                         "found near '$root' - double-check it's correct. A wrong source " +
@@ -202,24 +243,32 @@ object InitCommand {
             return root
         }
 
+        // Defaults named `composeApp` until 2026-08-21, which the Kotlin
+        // Multiplatform wizard has not produced for some time - it emits
+        // `shared` alongside `androidApp` and `desktopApp`. Three paths that
+        // exist in no current project were offered as defaults, and pressing
+        // Enter three times, which is what a default invites, wrote a config
+        // pointing at nothing. Derived from the filesystem now, with the old
+        // names as a last resort only.
+        val moduleGuess = guessModuleName(projectDir, isKmp)
         if (isKmp) {
             commonRoot = promptSourceRoot(
                 "Source root for shared (commonMain) code",
-                default = "composeApp/src/commonMain/kotlin"
+                default = "$moduleGuess/src/commonMain/kotlin"
             )
             androidRoot = promptSourceRoot(
                 "Source root for Android-specific code",
-                default = "composeApp/src/androidMain/kotlin"
+                default = "$moduleGuess/src/androidMain/kotlin"
             )
             iosRoot = promptSourceRoot(
                 "Source root for iOS-specific code",
-                default = "composeApp/src/iosMain/kotlin"
+                default = "$moduleGuess/src/iosMain/kotlin"
             )
         } else {
             commonRoot = null
             androidRoot = promptSourceRoot(
                 "Source root for your app's Kotlin code",
-                default = "app/src/main/kotlin"
+                default = "$moduleGuess/src/main/kotlin"
             )
             iosRoot = null
         }
@@ -250,11 +299,36 @@ object InitCommand {
         )
 
         writeConfig(projectDir, config)
-        printDone()
+        printDone(hasInstalledComponents(projectDir, config))
     }
 
-    private fun printDone() {
+    /**
+     * Whether any component is already installed under the configured path.
+     *
+     * Used only to choose between "your first component" and "another
+     * component". The old text told a project holding eight of them to install
+     * its first, which is a small thing that tells the reader the tool has not
+     * understood their project.
+     */
+    private fun hasInstalledComponents(projectDir: File, config: LamintraConfig): Boolean {
+        val root = config.sourceRoots.common ?: config.sourceRoots.android ?: return false
+        val componentsDir = File(
+            projectDir,
+            listOf(root, config.packageName.replace('.', '/'), config.componentPath)
+                .filter { it.isNotBlank() }
+                .joinToString("/")
+        )
+        return componentsDir.isDirectory &&
+            componentsDir.walkTopDown().any { it.isFile && it.extension == "kt" }
+    }
+
+    private fun printDone(alreadyHasComponents: Boolean = false) {
         println("\nWrote .lamintra/config.json")
+        if (alreadyHasComponents) {
+            println("   Run 'lamintra add <component>' to install another component,")
+            println("   e.g.: lamintra add button")
+            return
+        }
         println("   Run 'lamintra add <component>' to install your first component,")
         // A real, installable name. This said `bottomsheet/glass` until
         // 2026-08-16: the nested form was dropped when names went flat, and
@@ -300,6 +374,43 @@ object InitCommand {
      * (e.g. `composeApp/src/comonMain/...`) can still slip through - this
      * is a heuristic warning, not a guarantee.
      */
+    /**
+     * A plausible module name for the manual flow's defaults, read off disk.
+     *
+     * Prefers a real module of the right kind, then any module, and only then
+     * falls back to a hardcoded name. The fallbacks are what the wizard and
+     * Android Studio emit *today*, so even the last resort is current.
+     */
+    private fun guessModuleName(projectDir: File, isKmp: Boolean): String {
+        val modules = findGradleModules(projectDir)
+        val preferred = if (isKmp) {
+            modules.firstOrNull { File(it, "src/commonMain/kotlin").isDirectory }
+        } else {
+            modules.firstOrNull {
+                File(it, "src/main/java").isDirectory || File(it, "src/main/kotlin").isDirectory
+            }
+        }
+        val chosen = preferred ?: modules.firstOrNull()
+        return chosen?.relativeTo(projectDir)?.path?.replace('\\', '/')
+            ?: if (isKmp) "shared" else "app"
+    }
+
+    /**
+     * True when the module segment of [sourceRoot] is a directory that exists.
+     *
+     * The build-file check below is depth-bounded and a Gradle project root
+     * almost always has its own `build.gradle.kts`, so a path exactly four
+     * levels deep - which `<module>/src/commonMain/kotlin` is - reaches the
+     * root and is declared fine even when `<module>` does not exist at all.
+     * That is how a typo'd module name passed silently until 2026-08-21.
+     * Checking the module directory itself is the cheap, unambiguous test.
+     */
+    private fun moduleDirectoryExists(projectDir: File, sourceRoot: String): Boolean {
+        val moduleSegment = sourceRoot.substringBefore("/src/", missingDelimiterValue = "")
+            .ifEmpty { return true } // not a <module>/src/... shape; nothing to check
+        return File(projectDir, moduleSegment).isDirectory
+    }
+
     private fun hasGradleBuildFileNearby(projectDir: File, sourceRoot: String): Boolean {
         val projectCanonical = projectDir.canonicalFile
         var dir: File? = File(projectDir, sourceRoot).canonicalFile
