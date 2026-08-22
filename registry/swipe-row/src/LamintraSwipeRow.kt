@@ -236,9 +236,31 @@ fun LamintraSwipeRow(
     // let a long swipe do the safe thing while the user expected the dangerous
     // one, or the reverse - both are worse than not offering the shortcut.
     val fullSwipeAction = actions.lastOrNull()?.takeIf { it.destructive }
+
+    /**
+     * How far the row must travel before the destructive action arms.
+     *
+     * [fullSwipeFraction] of the row width is the intent, but on its own it is
+     * not enough: the resting open position is `actionWidth * actions.size`,
+     * which is a function of the action COUNT, while the threshold is a
+     * function of the row WIDTH. Nothing related the two, so three
+     * default-width actions on a 1080px screen rested at 726px against a 670px
+     * threshold - and the ordinary open state was already "armed". The
+     * component could not display its own three-action open state at all, and
+     * the expanded destructive field covered three still-clickable cells.
+     *
+     * Taking the larger of the two makes a full swipe mean what it says: a
+     * deliberate drag PAST the actions, whatever the action count. The half
+     * action width of clearance keeps it from arming the instant the row
+     * settles open.
+     */
+    val armThresholdPx = maxOf(
+        rowWidthPx * fullSwipeFraction,
+        revealPx + with(density) { actionWidth.toPx() } * 0.5f
+    )
     val armed = fullSwipeAction != null &&
         rowWidthPx > 0f &&
-        -offsetX > rowWidthPx * fullSwipeFraction
+        -offsetX > armThresholdPx
 
     // The armed action, or null. Carrying the action rather than re-testing
     // `armed && fullSwipeAction != null` at each use site: the compiler can
@@ -308,33 +330,48 @@ fun LamintraSwipeRow(
                 } else {
                     colors.actionBackground
                 }
+                // When armed, every action except the one that will fire is
+                // hidden. Leaving them visible under an expanded destructive
+                // background reads as three buttons on one red field, which is
+                // exactly the wrong signal.
+                val hidden = armed && !isLast
                 Box(
                     modifier = Modifier
                         .width(actionWidth)
                         .fillMaxHeight()
                         .background(background)
-                        // When armed, every action except the one that will fire
-                        // fades out. Leaving them visible under an expanded
-                        // destructive background reads as three buttons on one
-                        // red field, which is exactly the wrong signal.
-                        .graphicsLayer { alpha = if (armed && !isLast) 0f else 1f }
-                        // indication = null explicitly. Left to the default this
-                        // resolves LocalIndication, which is a ripple in any host
-                        // that has Material on the classpath - and a Material
-                        // ripple is the one thing every component here is written
-                        // to avoid.
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            action.onClick()
-                            onRevealedChange?.invoke(false)
-                            scope.launch {
-                                animate(offsetX, 0f, animationSpec = settleSpec) { v, _ ->
-                                    offsetX = v
+                        .graphicsLayer { alpha = if (hidden) 0f else 1f }
+                        // A hidden cell must not be TAPPABLE, and alpha does not
+                        // do that: graphicsLayer takes a composable out of the
+                        // picture and leaves it in the hit-test tree. Until
+                        // 2026-08-22 the expanded destructive field sat over
+                        // three invisible, full-size, still-clickable cells, so
+                        // tapping the left third of a button labelled "Delete"
+                        // fired Pin and the middle fired Archive. One visible
+                        // button, three outcomes. Found on a phone, by hand -
+                        // nothing that merely compiles or renders could have
+                        // caught it.
+                        .then(
+                            if (hidden) Modifier else Modifier
+                                // indication = null explicitly. Left to the
+                                // default this resolves LocalIndication, which
+                                // is a ripple in any host that has Material on
+                                // the classpath - and a Material ripple is the
+                                // one thing every component here is written to
+                                // avoid.
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    action.onClick()
+                                    onRevealedChange?.invoke(false)
+                                    scope.launch {
+                                        animate(offsetX, 0f, animationSpec = settleSpec) { v, _ ->
+                                            offsetX = v
+                                        }
+                                    }
                                 }
-                            }
-                        },
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     BasicText(
