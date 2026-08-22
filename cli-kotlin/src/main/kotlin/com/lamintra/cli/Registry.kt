@@ -1,6 +1,7 @@
 package com.lamintra.cli
 
 import java.io.File
+import java.io.IOException
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -54,6 +55,27 @@ object Registry {
     val base: String =
         System.getenv("LAMINTRA_REGISTRY")?.takeIf { it.isNotBlank() } ?: PUBLISHED_REGISTRY
 
+    /**
+     * Refuses a plaintext `http://` override to anywhere but the local machine.
+     *
+     * The override chooses the source code this tool writes into a project, so
+     * fetching it over plaintext lets anyone on the path substitute it. It was
+     * accepted silently until 2026-08-21. Loopback stays allowed because
+     * serving a working tree over `http://localhost` is a normal way to test a
+     * registry change, and there is no network to be on the path of.
+     */
+    private fun requirePrivateOrEncrypted(value: String) {
+        if (!value.startsWith("http://")) return
+        val host = value.removePrefix("http://").substringBefore('/').substringBefore(':')
+        val loopback = host == "localhost" || host == "127.0.0.1" || host == "[::1]" || host == "::1"
+        require(loopback) {
+            "LAMINTRA_REGISTRY is set to '$value', which is plaintext HTTP.\n" +
+                "Component source decides what gets written into your project, so it is " +
+                "fetched over HTTPS only. Use an https:// URL, a local directory path, or " +
+                "http://localhost for a registry you are serving yourself."
+        }
+    }
+
     private val client: HttpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NORMAL)
         .build()
@@ -62,6 +84,12 @@ object Registry {
     fun isLocal(): Boolean = !base.startsWith("http://") && !base.startsWith("https://")
 
     fun fetch(relativeUrl: String): String {
+        // Checked here rather than where `base` is initialised: a `require`
+        // that fails inside an object initialiser is wrapped in
+        // ExceptionInInitializerError, whose own message is null, so the user
+        // got "ExceptionInInitializerError with no further detail" instead of
+        // the explanation. Found by retesting the fix, not by reading it.
+        requirePrivateOrEncrypted(base)
         if (isLocal()) {
             val local = File(base, relativeUrl)
             if (!local.isFile) {
@@ -79,8 +107,27 @@ object Registry {
             .build()
 
         var lastStatus = -1
+        var lastTransportFailure: Exception? = null
         repeat(RETRIES) { attempt ->
-            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+            val response = try {
+                lastTransportFailure = null
+                client.send(request, HttpResponse.BodyHandlers.ofString())
+            } catch (e: IOException) {
+                // The request never produced a status: no route, DNS failure,
+                // refused connection, TLS problem, dropped mid-flight. This was
+                // unhandled until 2026-08-21, and because an IOException from
+                // the JDK's HttpClient frequently carries a null message, the
+                // user saw the literal text "Error: null" and was told nothing
+                // at all. Offline is the single most common way this command
+                // fails, so it deserves better than the worst message we have.
+                lastTransportFailure = e
+                if (attempt == RETRIES - 1) error(describeTransportFailure(e))
+                Thread.sleep(BACKOFF_MS shl attempt)
+                return@repeat
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+                error("Interrupted while fetching $relativeUrl from the registry.")
+            }
             val status = response.statusCode()
             if (status == 200) return response.body()
             lastStatus = status
@@ -89,7 +136,33 @@ object Registry {
             }
             Thread.sleep(BACKOFF_MS shl attempt)
         }
+        lastTransportFailure?.let { error(describeTransportFailure(it)) }
         error(describeFailure(relativeUrl, lastStatus))
+    }
+
+    /**
+     * The message for a request that never got a status at all.
+     *
+     * Deliberately does not name the exception class: `UnknownHostException`
+     * tells a Kotlin developer nothing they can act on, and the underlying
+     * cause is almost always one of three mundane things. The registry host is
+     * named because a reader who suspects a corporate proxy or a blocked domain
+     * needs to know what to allow.
+     */
+    private fun describeTransportFailure(cause: Exception): String {
+        val host = base.removePrefix("https://").removePrefix("http://").substringBefore('/')
+        val detail = cause.message?.takeIf { it.isNotBlank() }
+        return buildString {
+            append("Couldn't reach the registry at $host, so nothing was installed ")
+            append("and your project is unchanged.\n")
+            append("This is a network problem rather than a problem with your ")
+            append("project or the name you typed. Check that you are online, ")
+            append("then run the same command again.\n")
+            append("Tried $RETRIES times over about ")
+            append((0 until RETRIES - 1).sumOf { BACKOFF_MS shl it })
+            append("ms.")
+            if (detail != null) append("\nUnderlying error: $detail")
+        }
     }
 
     /**
