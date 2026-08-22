@@ -47,11 +47,41 @@ object MiniJson {
         return result
     }
 
+    /**
+     * How deeply objects and arrays may nest.
+     *
+     * This parser is recursive descent, so nesting depth is stack depth. Until
+     * 2026-08-21 there was no limit, and a document of 50,000 open brackets -
+     * from a hostile registry, or simply a corrupted local config.json -
+     * produced a `StackOverflowError` and a 1,023-frame Java stack trace in the
+     * user's terminal. `StackOverflowError` is an `Error`, not an `Exception`,
+     * so nothing in the CLI caught it.
+     *
+     * 64 is far beyond anything a real manifest needs: the deepest document
+     * this tool reads is `.lamintra/config.json`, which nests twice.
+     */
+    private const val MAX_DEPTH = 64
+
     private class Parser(val input: String) {
         var pos = 0
+        private var depth = 0
 
         fun skipWhitespace() {
             while (pos < input.length && input[pos].isWhitespace()) pos++
+        }
+
+        fun <T> nested(block: () -> T): T {
+            if (++depth > MAX_DEPTH) {
+                error(
+                    "JSON is nested more than $MAX_DEPTH levels deep at position $pos. " +
+                        "This file is almost certainly corrupted rather than merely wrong."
+                )
+            }
+            try {
+                return block()
+            } finally {
+                depth--
+            }
         }
 
         fun expect(char: Char) {
@@ -66,8 +96,8 @@ object MiniJson {
             skipWhitespace()
             return when {
                 pos >= input.length -> error("Unexpected end of input")
-                input[pos] == '{' -> parseObject()
-                input[pos] == '[' -> parseArray()
+                input[pos] == '{' -> nested { parseObject() }
+                input[pos] == '[' -> nested { parseArray() }
                 input[pos] == '"' -> JsonValue.JsonString(parseStringLiteral())
                 input.startsWith("true", pos) -> { pos += 4; JsonValue.JsonBool(true) }
                 input.startsWith("false", pos) -> { pos += 5; JsonValue.JsonBool(false) }
@@ -126,6 +156,24 @@ object MiniJson {
                         'n' -> sb.append('\n')
                         't' -> sb.append('\t')
                         'r' -> sb.append('\r')
+                        'b' -> sb.append('\b')
+                        // \uXXXX fell through to the `else` branch until
+                        // 2026-08-21, which appended the literal 'u' and left
+                        // the four hex digits to be read as ordinary text - so
+                        // "A" became "u0041" rather than "A". Silent, and
+                        // it would land mangled characters in an installed
+                        // source file rather than failing.
+                        'u' -> {
+                            val hex = input.substring(
+                                (pos + 2).coerceAtMost(input.length),
+                                (pos + 6).coerceAtMost(input.length)
+                            )
+                            require(hex.length == 4 && hex.all { it.isDigit() || it.lowercaseChar() in 'a'..'f' }) {
+                                "Invalid \\u escape at position $pos: expected four hex digits."
+                            }
+                            sb.append(hex.toInt(16).toChar())
+                            pos += 4
+                        }
                         else -> sb.append(input[pos + 1])
                     }
                     pos += 2
