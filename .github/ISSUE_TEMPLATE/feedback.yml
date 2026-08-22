@@ -1,0 +1,30 @@
+name: Feedback - I looked and did not use it
+description: The most valuable report in this tracker. Why you bounced.
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Nobody outside the maintainer has built a product on this yet, so the
+        reasons people decide against it are the most valuable unknown here.
+        Blunt is welcome.
+  - type: textarea
+    id: reason
+    attributes:
+      label: What stopped you
+      description: Missing component, unclear docs, wrong look, licensing, a bug, or you did not trust it. Any of those is a real answer.
+    validations: { required: true }
+  - type: textarea
+    id: stuck
+    attributes:
+      label: Where you got stuck, if you got that far
+      description: If you tried to install it, the first moment you had to stop and think is the useful detail.
+  - type: dropdown
+    id: adopt
+    attributes:
+      label: Would you use this in a real project?
+      options:
+        - "Yes, as it is"
+        - "Yes, if one specific thing changed"
+        - "No"
+        - "I share logic but keep UI native, so probably never"

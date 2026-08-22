@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation and install guide
+    url: https://lamintra.com/install/
+    about: Components, install steps and the changelog.
+  - name: Security vulnerability
+    url: https://github.com/BalajiReddy1/lamintra/security/advisories/new
+    about: Report privately. Do not open a public issue.

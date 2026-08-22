@@ -1,0 +1,32 @@
+name: Component request
+description: Ask for a component that does not exist yet. The roadmap is whoever asks first.
+labels: ["component request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        There are eight components. Which one is missing for you is real
+        information and it genuinely decides what gets built next.
+  - type: input
+    id: component
+    attributes:
+      label: What component
+      placeholder: e.g. date picker, tabs, toast, dropdown menu
+    validations: { required: true }
+  - type: textarea
+    id: usecase
+    attributes:
+      label: What you are building with it
+      description: A sentence is enough. It decides which variant is worth building.
+    validations: { required: true }
+  - type: textarea
+    id: today
+    attributes:
+      label: What you use for this today
+      description: Material 3, your own, a library, or nothing. Saying "Material 3 and it looks wrong next to the rest" is a useful answer.
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Platforms you need it on
+      multiple: true
+      options: [Android, iOS, Desktop, Web]
