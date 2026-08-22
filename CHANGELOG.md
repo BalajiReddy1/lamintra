@@ -11,14 +11,21 @@ component source you receive. Both are listed for every release.
 
 | | |
 |---|---|
-| Current CLI | **v0.9.0** |
-| Registry it pins | **v0.8.0** |
+| Current CLI | **v0.10.0** |
+| Registry it pins | **v0.9.0** |
 
 ---
 
 ## [Unreleased]
 
-Fixes from an adversarial test run against the released v0.9.0. Each one was
+Nothing yet.
+
+## [0.10.0] - 2026-08-22
+
+Registry **v0.9.0**.
+
+Fixes from an adversarial test run against the released v0.9.0, and from the
+first session in which a human used the components on a real phone. Each one was
 reproduced, fixed, and re-tested against a jar built from the changed source.
 
 ### Fixed
@@ -57,6 +64,14 @@ reproduced, fixed, and re-tested against a jar built from the changed source.
   "Condition is always 'true'" warnings into every build that installed it.
 - **`LAMINTRA_REGISTRY` rejects plaintext `http://`** to anywhere but localhost.
 - **`\uXXXX` escapes in JSON are parsed**, rather than becoming literal text.
+- **`swipe-row` no longer shows one button and fires three.** A fully-open row
+  with three actions rested past the arming threshold, so it displayed a single
+  full-width red "Delete" field - and the hidden Pin and Archive cells beneath
+  it were still clickable, because `graphicsLayer` alpha 0 removes a composable
+  from the picture rather than from the hit-test tree. Tapping the left third of
+  a button labelled Delete fired Pin. The arming threshold now accounts for the
+  action count, and a hidden cell has no click handler at all. **Found by hand,
+  on a phone.**
 
 ### Added
 
@@ -219,7 +234,8 @@ tagged. That is the immutability guarantee working in the awkward direction, and
 it is the honest meaning of "retired" here: no new registry tag carries it, and
 no future CLI release will reach it.
 
-[Unreleased]: https://github.com/BalajiReddy1/lamintra/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/BalajiReddy1/lamintra/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/BalajiReddy1/lamintra/releases/tag/v0.10.0
 [0.9.0]: https://github.com/BalajiReddy1/lamintra/releases/tag/v0.9.0
 [0.8.0]: https://github.com/BalajiReddy1/lamintra/releases/tag/v0.8.0
 [0.7.0]: https://github.com/BalajiReddy1/lamintra/releases/tag/v0.7.0

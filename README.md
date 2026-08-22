@@ -24,8 +24,8 @@ Components use `compose.foundation` only - no Material 3, by design.
 
 | | Version | Verified |
 |---|---|---|
-| CLI | **0.9.0** | Installs all eight components into fresh KMP and Android projects; both compile |
-| Registry | **0.8.0** | Published tag is byte-identical to `registry/` in this repo |
+| CLI | **0.10.0** | Installs all eight components into fresh KMP and Android projects; both compile |
+| Registry | **0.9.0** | Published tag is byte-identical to `registry/` in this repo |
 
 Eight components: `button`, `card`, `list-row`, `segmented`, `sheet`,
 `swipe-row`, `switch`, `text-field`. Plus a shared `theme` every component
@@ -41,17 +41,17 @@ Download the jar from the
 [latest release](https://github.com/BalajiReddy1/lamintra/releases/latest):
 
 ```bash
-curl -LO https://github.com/BalajiReddy1/lamintra/releases/download/v0.9.0/lamintra-0.9.0.jar
+curl -LO https://github.com/BalajiReddy1/lamintra/releases/download/v0.10.0/lamintra-0.10.0.jar
 ```
 
 Run once per project, then once per component:
 
 ```bash
-java -jar lamintra-0.9.0.jar init
+java -jar lamintra-0.10.0.jar init
 ```
 
 ```bash
-java -jar lamintra-0.9.0.jar add button
+java -jar lamintra-0.10.0.jar add button
 ```
 
 There is no `lamintra` on your PATH - it is a jar, not an installer. The
@@ -67,7 +67,7 @@ prompts. It writes `.lamintra/config.json`, which every `add` reads.
 ## Scaffolds
 
 ```bash
-java -jar lamintra-0.9.0.jar scaffold ios-shell
+java -jar lamintra-0.10.0.jar scaffold ios-shell
 ```
 
 A scaffold is project structure rather than a component: `ios-shell`
@@ -114,7 +114,7 @@ cd cli-kotlin && ./gradlew test
 cd cli-kotlin && ./gradlew shadowJar
 ```
 
-That produces `cli-kotlin/build/libs/lamintra-0.9.0.jar`. The jar name
+That produces `cli-kotlin/build/libs/lamintra-0.10.0.jar`. The jar name
 derives from the single `version` property, and `release.yml` names the
 release asset from the git tag - a mismatch fails the release rather than
 publishing one.
@@ -158,12 +158,8 @@ affordance - leave it unset and you get what everyone else gets.
   the component's public signature exposes Compose types (`Modifier`,
   `Color`, `Dp`, `@Composable`).
 - **Every component depends on `theme`**, so every `add` touches
-  `LamintraTheme.kt`. In v0.9.0 that means an edit to it is overwritten -
-  **back it up before installing anything else.** Fixed in the next release:
-  see [Unreleased](CHANGELOG.md#unreleased).
-- **A failed install is not rolled back in v0.9.0.** If a write fails partway
-  through a multi-file component, the files already written stay. Re-run the
-  same `add` once the cause is fixed. Also fixed in the next release.
+  `LamintraTheme.kt`. If you have edited it, `add` keeps your version and says
+  so; `--force` takes the registry's.
 - **Duplicate component trees are refused, not merged.** If `theme`
   already exists somewhere else in the module, `add` stops and names both
   paths rather than creating a second copy that would break the build.

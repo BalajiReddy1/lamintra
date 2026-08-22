@@ -28,7 +28,7 @@ object Registry {
     // URLs are immutable - bump the tag here (and re-release the jar)
     // to pick up registry changes.
     private const val PUBLISHED_REGISTRY =
-        "https://raw.githubusercontent.com/BalajiReddy1/lamintra-registry/v0.8.0"
+        "https://raw.githubusercontent.com/BalajiReddy1/lamintra-registry/v0.9.0"
 
     /**
      * Where content is read from. The published tag, unless overridden.
