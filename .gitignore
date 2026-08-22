@@ -19,3 +19,8 @@ build/
 # committed BEFORE this line existed, and git keeps tracking what is already in
 # the index. Every component added after it would have hit the same wall.
 /internal/
+
+# Local agent/editor tooling - config for this machine, not for users.
+.agents/
+.claude/
+skills-lock.json
