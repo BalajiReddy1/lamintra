@@ -9,21 +9,21 @@ data class ResolvedTarget(
 )
 
 /**
- * This object is a direct port of cli-prototype/rewrite-engine.js, which
- * was executed against real fixtures today and passed all 17 correctness
- * assertions, including:
+ * Originally a direct port of a day-1 JavaScript prototype, which validated
+ * the rewrite algorithm against real fixtures before any Kotlin existed. That
+ * prototype has been removed from the repository; the properties it proved are
+ * now covered by `RewriterTest.kt` and by the rules below:
  *   - boundary-safe rewriting (doesn't corrupt "glassy" or "glass2" when
  *     rewriting "glass")
  *   - cross-file internal imports resolving correctly
- *   - two components sharing a filename (ModifierExtensions.kt) landing
- *     at different paths with different packages, no collision
+ *   - two components sharing a filename landing at different paths with
+ *     different packages, no collision
  *   - every installed file's path exactly matching its own package
  *     declaration (the specific rule Kotlin enforces at compile time)
  *
- * This Kotlin version has NOT been compiled in the sandbox that produced
- * it (no javac/kotlinc available there - see the Day 1 report). Compile
- * and run it for real as your first step on your own machine; the logic
- * itself is already validated, only the JVM/Kotlin-specific syntax is new.
+ * The paragraph that stood here until 2026-08-21 said this Kotlin had never
+ * been compiled and should be run "as your first step on your own machine".
+ * That was true on day one and has been false since the first release.
  */
 object Rewriter {
 
@@ -160,21 +160,46 @@ object Rewriter {
 
     /**
      * Resolves [relativePath] against [projectDir] and fails if it escapes.
-     * Canonicalizes both sides first so `..`, symlinks, and mixed separators
-     * can't smuggle a path past a plain string check.
+     *
+     * Resolves `..`, mixed separators, symlinks AND Windows directory
+     * junctions, so none of them can smuggle a path past a plain string check.
+     *
+     * **Why `toRealPath` and not `canonicalFile`.** This used `canonicalFile`
+     * until 2026-08-21, and on Windows `File.getCanonicalPath` does not
+     * traverse a directory junction. A junction placed inside a project and
+     * pointing outside it therefore canonicalised to a path that still looked
+     * contained, the containment check passed, and the OS followed the link
+     * when the bytes were written - four files landed outside the project
+     * while the tool printed paths that looked innocent and reported success.
+     * `Path.toRealPath` resolves reparse points and is the correct instrument.
+     *
+     * The target does not exist yet, so the real path of its deepest existing
+     * ancestor is resolved instead and the remaining segments appended. That is
+     * what closes the hole: every directory that could be a link is on the
+     * ancestor side.
      */
     internal fun resolveSafeTarget(projectDir: File, relativePath: String): File {
         require(!File(relativePath).isAbsolute) {
             "Refusing to install \"$relativePath\": absolute paths are not allowed."
         }
-        val root = projectDir.canonicalFile
-        val target = File(root, relativePath).canonicalFile
-        val rootPath = root.path + File.separator
-        require(target.path.startsWith(rootPath)) {
-            "Refusing to install \"$relativePath\": it resolves outside the project " +
-                "directory (${target.path}). This usually means a malformed or " +
-                "untrusted component manifest."
+        val root = projectDir.toPath().toRealPath()
+        val requested = root.resolve(relativePath).normalize()
+
+        // Walk up to the deepest part of the path that exists on disk, resolve
+        // links there, then re-attach what does not exist yet.
+        var existing = requested
+        while (!java.nio.file.Files.exists(existing)) {
+            existing = existing.parent
+                ?: error("Refusing to install \"$relativePath\": it has no resolvable parent.")
         }
-        return target
+        val resolved = existing.toRealPath().resolve(existing.relativize(requested)).normalize()
+
+        require(resolved.startsWith(root) && resolved != root) {
+            "Refusing to install \"$relativePath\": it resolves outside the project " +
+                "directory ($resolved). This usually means a malformed or " +
+                "untrusted component manifest, or a symlink inside the project " +
+                "that points out of it."
+        }
+        return resolved.toFile()
     }
 }
