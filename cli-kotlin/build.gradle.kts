@@ -49,6 +49,17 @@ tasks.shadowJar {
     archiveBaseName.set("lamintra")
     archiveClassifier.set("")
     archiveVersion.set(project.version.toString())
+
+    // Stamps the version into the jar so `lamintra --version` can report it.
+    // Read at runtime via Package.getImplementationVersion() rather than
+    // duplicated as a Kotlin constant, because one version held in two places
+    // is exactly how a release once shipped a jar named for the wrong one.
+    manifest {
+        attributes(
+            "Implementation-Title" to "lamintra",
+            "Implementation-Version" to project.version.toString()
+        )
+    }
 }
 
 tasks.test {
