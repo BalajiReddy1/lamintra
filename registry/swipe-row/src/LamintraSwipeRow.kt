@@ -240,6 +240,14 @@ fun LamintraSwipeRow(
         rowWidthPx > 0f &&
         -offsetX > rowWidthPx * fullSwipeFraction
 
+    // The armed action, or null. Carrying the action rather than re-testing
+    // `armed && fullSwipeAction != null` at each use site: the compiler can
+    // prove that second half always true from `armed`'s own definition, and
+    // emitted two "Condition is always 'true'" warnings into every build that
+    // installed this component - four lines in a KMP build, where commonMain
+    // is compiled once per target.
+    val armedAction = fullSwipeAction?.takeIf { armed }
+
     val dragState = rememberDraggableState { delta ->
         val next = offsetX + delta
         offsetX = when {
@@ -347,7 +355,7 @@ fun LamintraSwipeRow(
         // The expanded destructive field. Drawn over the action cells and under
         // nothing, sized to the whole revealed strip, so the row commits to one
         // colour before the finger lifts.
-        if (armed && fullSwipeAction != null) {
+        if (armedAction != null) {
             // Two levels, and it is not redundant. matchParentSize resolves
             // against the row's MEASURED size; fillMaxHeight alone resolves
             // against the incoming constraints, which in a Box are the whole
@@ -363,7 +371,7 @@ fun LamintraSwipeRow(
                     contentAlignment = Alignment.Center
                 ) {
                     BasicText(
-                        text = fullSwipeAction.label,
+                        text = armedAction.label,
                         style = actionTextStyle.copy(
                             color = colors.dangerContent,
                             textAlign = TextAlign.Center
@@ -381,8 +389,8 @@ fun LamintraSwipeRow(
                     state = dragState,
                     orientation = Orientation.Horizontal,
                     onDragStopped = { velocity ->
-                        if (armed && fullSwipeAction != null) {
-                            fullSwipeAction.onClick()
+                        if (armedAction != null) {
+                            armedAction.onClick()
                             onRevealedChange?.invoke(false)
                             animate(offsetX, 0f, velocity, settleSpec) { v, _ -> offsetX = v }
                         } else {
